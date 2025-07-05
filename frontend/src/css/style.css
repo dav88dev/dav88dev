@@ -238,8 +238,14 @@ body {
     transition: width 0.3s ease;
 }
 
-.nav-link:hover::after {
+.nav-link:hover::after,
+.nav-link.active::after {
     width: 100%;
+}
+
+.nav-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
 .hamburger {
@@ -254,6 +260,18 @@ body {
     height: 3px;
     background: var(--text-primary);
     transition: all 0.3s ease;
+}
+
+.hamburger.active span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
 }
 
 /* Hero Section */
@@ -1560,13 +1578,14 @@ section {
     position: absolute;
     top: -40px;
     left: 6px;
-    background: var(--primary-color);
-    color: white;
+    background: #000000;
+    color: #ffffff;
     padding: 8px;
     text-decoration: none;
     border-radius: 4px;
     z-index: 10000;
     font-weight: 600;
+    border: 2px solid #ffffff;
 }
 
 .skip-link:focus {

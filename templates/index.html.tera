@@ -8,7 +8,15 @@
     <meta name="keywords" content="Senior Software Engineer, Site Reliability Engineer, SRE, AI Machine Learning, PHP Laravel, Python, DevOps, AWS, Kubernetes, Vue.js, Full Stack Developer, Armenia, Remote">
     <meta name="author" content="{{ cv_data.personal_info.name }}">
     <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="canonical" href="https://dav88.dev/">
+    
+    <!-- Additional SEO meta tags -->
+    <meta property="article:author" content="{{ cv_data.personal_info.name }}">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -64,7 +72,12 @@
     }
     </script>
     
-    <link rel="stylesheet" href="{{ assets.css_main }}">
+    <!-- Critical CSS for above-the-fold content -->
+    <style>
+        :root{--primary-color:#6366f1;--text-primary:#1f2937;--text-secondary:#6b7280;--bg-primary:#ffffff;--border-color:#e5e7eb;--shadow-md:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -1px rgba(0,0,0,0.06)}*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:var(--text-primary);background-color:var(--bg-primary);overflow-x:hidden;opacity:0;animation:fadeInBody 0.5s ease-in-out forwards}@keyframes fadeInBody{to{opacity:1}}.navbar{position:fixed;top:0;left:0;width:100%;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border-color);z-index:1000;transition:all 0.3s ease}.nav-container{max-width:1200px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:70px}.nav-logo{font-size:1.5rem;font-weight:700;color:var(--primary-color);text-decoration:none;display:flex;align-items:center;gap:0.75rem}.nav-menu{display:flex;list-style:none;gap:2rem}.nav-link{color:var(--text-primary);text-decoration:none;font-weight:500;position:relative;transition:color 0.3s ease}.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:0 2rem}.hero-content{text-align:center;max-width:800px}.hero-name{display:block;font-size:3rem;font-weight:700;margin-bottom:1rem}.loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#111827;display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1}
+    </style>
+    <link rel="preload" href="{{ assets.css_main }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ assets.css_main }}"></noscript>
     <link rel="manifest" href="/static/manifest.json">
     
     <!-- Favicon and app icons -->
@@ -73,15 +86,46 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicons/favicon-16x16.png">
     <link rel="manifest" href="/static/images/favicons/site.webmanifest">
+    <!-- Resource hints for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://unpkg.com">
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
-    <script src="https://unpkg.com/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="/static/images/logo.png" as="image">
+    
+    <!-- Load fonts with optimal performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"  media="print" onload="this.media='all'; this.onload=null;">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
+    <!-- Load critical libraries after page load -->
+    <script>
+        // Lazy load Three.js and GSAP after initial page render
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const scripts = [
+                    'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js',
+                    'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js'
+                ];
+                
+                // Load Three.js only if needed (detect if canvas exists and is visible)
+                const canvas = document.getElementById('three-canvas');
+                if (canvas && window.innerWidth > 768) {
+                    scripts.unshift(
+                        'https://unpkg.com/three@0.158.0/build/three.min.js',
+                        'https://unpkg.com/three@0.158.0/examples/js/controls/OrbitControls.js'
+                    );
+                }
+                
+                scripts.forEach((src, index) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.async = true;
+                    document.head.appendChild(script);
+                });
+            }, 100);
+        });
+    </script>
 </head>
 <body>
     <a href="#about" class="skip-link">Skip to main content</a>\n    \n    <div id="loader" class="loader">
@@ -301,7 +345,7 @@
                                 </svg>
                             </div>
                             <div class="contact-details">
-                                <h4>Email</h4>
+                                <h3>Email</h3>
                                 <p>{{ cv_data.personal_info.email }}</p>
                             </div>
                         </div>
@@ -312,7 +356,7 @@
                                 </svg>
                             </div>
                             <div class="contact-details">
-                                <h4>Location</h4>
+                                <h3>Location</h3>
                                 <p>{{ cv_data.personal_info.location }}</p>
                             </div>
                         </div>

@@ -3,22 +3,47 @@ import '../css/style.css'
 
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize GSAP
-    gsap.registerPlugin(ScrollTrigger);
-    
-    // Initialize components
+    // Initialize core components first (no dependencies)
     initNavigation();
-    initScrollAnimations();
     initFormHandling();
-    initSkillBars();
-    initTiltEffect();
     initSmoothScroll();
-    initCursorEffects();
-    initParticleSystem();
-    initTypingEffect();
-    initMagneticButtons();
-    initScrollProgress();
-    initParallaxEffect();
+    
+    // Wait for libraries to load, then initialize enhanced features
+    function initEnhancedFeatures() {
+        if (typeof gsap !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
+            initScrollAnimations();
+            initSkillBars();
+            initTiltEffect();
+            initTypingEffect();
+            initMagneticButtons();
+            initParallaxEffect();
+        }
+        
+        // Initialize features that don't require external libraries
+        initCursorEffects();
+        initParticleSystem();
+        initScrollProgress();
+    }
+    
+    // Check if libraries are loaded, if not wait for them
+    if (typeof gsap !== 'undefined') {
+        initEnhancedFeatures();
+    } else {
+        // Wait for libraries to load
+        const checkLibraries = setInterval(() => {
+            if (typeof gsap !== 'undefined') {
+                clearInterval(checkLibraries);
+                initEnhancedFeatures();
+            }
+        }, 100);
+        
+        // Fallback timeout to ensure basic functionality works
+        setTimeout(() => {
+            clearInterval(checkLibraries);
+            initEnhancedFeatures();
+        }, 2000);
+    }
     
     // Skills visualization will be loaded via separate script tag
     
@@ -94,18 +119,27 @@ function initNavigation() {
         });
     });
     
-    // Active nav link highlighting
+    // Active nav link highlighting with improved detection
     const sections = document.querySelectorAll('section[id]');
     
-    window.addEventListener('scroll', () => {
+    const updateActiveNavLink = throttle(() => {
         let current = '';
+        const scrollPosition = window.scrollY + 100; // Offset for navbar height
+        
         sections.forEach(section => {
             const sectionTop = section.offsetTop;
             const sectionHeight = section.clientHeight;
-            if (scrollY >= sectionTop - 200) {
+            const sectionBottom = sectionTop + sectionHeight;
+            
+            if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
                 current = section.getAttribute('id');
             }
         });
+        
+        // If we're at the very top, highlight the first section
+        if (window.scrollY < 100) {
+            current = 'hero';
+        }
         
         navLinks.forEach(link => {
             link.classList.remove('active');
@@ -113,7 +147,12 @@ function initNavigation() {
                 link.classList.add('active');
             }
         });
-    });
+    }, 100);
+    
+    window.addEventListener('scroll', updateActiveNavLink);
+    
+    // Initial call to set active state
+    updateActiveNavLink();
 }
 
 // Scroll animations
@@ -343,11 +382,38 @@ function initSmoothScroll() {
             if (targetElement) {
                 const offsetTop = targetElement.offsetTop - 70; // Account for fixed navbar
                 
-                gsap.to(window, {
-                    duration: 1,
-                    scrollTo: offsetTop,
-                    ease: 'power2.inOut'
-                });
+                // Use native smooth scrolling with fallback animation
+                if ('scrollBehavior' in document.documentElement.style) {
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    // Fallback smooth scroll animation for older browsers
+                    const startPosition = window.pageYOffset;
+                    const distance = offsetTop - startPosition;
+                    const duration = 1000;
+                    let start = null;
+                    
+                    function step(timestamp) {
+                        if (!start) start = timestamp;
+                        const progress = timestamp - start;
+                        const percentage = Math.min(progress / duration, 1);
+                        
+                        // Easing function (ease-in-out)
+                        const easing = percentage < 0.5 
+                            ? 2 * percentage * percentage 
+                            : 1 - Math.pow(-2 * percentage + 2, 2) / 2;
+                        
+                        window.scrollTo(0, startPosition + distance * easing);
+                        
+                        if (progress < duration) {
+                            requestAnimationFrame(step);
+                        }
+                    }
+                    
+                    requestAnimationFrame(step);
+                }
             }
         });
     });

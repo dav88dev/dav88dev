@@ -10,12 +10,22 @@ class ThreeScene {
         this.mouse = { x: 0, y: 0 };
         this.animationId = null;
         this.isLoaded = false;
-        this.clock = new THREE.Clock();
+        this.clock = null;
         this.composer = null;
         this.bloomPass = null;
         
-        this.init();
-        this.setupEventListeners();
+        // Performance optimization: only initialize on larger screens
+        if (window.innerWidth > 768 && typeof THREE !== 'undefined') {
+            this.clock = new THREE.Clock();
+            this.init();
+            this.setupEventListeners();
+        } else {
+            // Fallback: hide canvas on mobile for better performance
+            const canvas = document.getElementById('three-canvas');
+            if (canvas && window.innerWidth <= 768) {
+                canvas.style.display = 'none';
+            }
+        }
     }
 
     init() {
