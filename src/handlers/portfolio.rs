@@ -7,13 +7,16 @@ use std::sync::Arc;
 use tera::{Tera, Context};
 use serde_json::json;
 use crate::models::CVData;
+use crate::services::AssetPaths;
 
 pub async fn index(
     Extension(templates): Extension<Arc<Tera>>,
     Extension(cv_data): Extension<Arc<CVData>>,
+    Extension(asset_paths): Extension<Arc<AssetPaths>>,
 ) -> Result<Html<String>, StatusCode> {
     let mut context = Context::new();
     context.insert("cv_data", cv_data.as_ref());
+    context.insert("assets", asset_paths.as_ref());
 
     templates
         .render("index.html.tera", &context)

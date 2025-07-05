@@ -22,7 +22,7 @@ use personal_website::{
         get_cv_data, get_cv_json,
         health_check, readiness_check,
     },
-    services::template::create_template_engine,
+    services::{template::create_template_engine, load_asset_paths},
 };
 
 #[tokio::main(flavor = "current_thread")]
@@ -48,8 +48,12 @@ async fn main() -> anyhow::Result<()> {
     let cv_data = Arc::new(CVData::default());
     tracing::info!("CV data loaded");
 
+    // Load asset paths from Vite manifest
+    let asset_paths = Arc::new(load_asset_paths(&config.static_dir)?);
+    tracing::info!("Asset paths loaded");
+
     // Build the application with middleware
-    let app = create_app(templates, cv_data, &config).await?;
+    let app = create_app(templates, cv_data, asset_paths, &config).await?;
 
     // Create TCP listener
     let listener = tokio::net::TcpListener::bind(&config.bind_address()).await?;
@@ -68,6 +72,7 @@ async fn main() -> anyhow::Result<()> {
 async fn create_app(
     templates: Arc<tera::Tera>,
     cv_data: Arc<CVData>,
+    asset_paths: Arc<personal_website::services::AssetPaths>,
     config: &AppConfig,
 ) -> anyhow::Result<Router> {
     // Static file service
@@ -86,7 +91,8 @@ async fn create_app(
         .layer(CompressionLayer::new())
         .layer(CorsLayer::permissive()) // Configure as needed
         .layer(Extension(templates))
-        .layer(Extension(cv_data));
+        .layer(Extension(cv_data))
+        .layer(Extension(asset_paths));
 
     // Build routes
     let app = Router::new()

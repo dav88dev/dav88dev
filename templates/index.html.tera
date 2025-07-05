@@ -64,7 +64,7 @@
     }
     </script>
     
-    <link rel="stylesheet" href="/static/css/style-D8qaB-wy.css">
+    <link rel="stylesheet" href="{{ assets.css_main }}">
     <link rel="manifest" href="/static/manifest.json">
     
     <!-- Favicon and app icons -->
@@ -371,14 +371,14 @@
         </div>
     </footer>
 
-    <script src="/static/js/main-5mxABDvO.js" type="module"></script>
-    <script src="/static/js/threeScene-BtBc6glY.js" type="module"></script>
+    <script src="{{ assets.js_main }}" type="module"></script>
+    <script src="{{ assets.js_three_scene }}" type="module"></script>
     <!-- Clean WASM Skills Visualization (Simple & Elegant) -->
     <script src="/static/js/clean-skills.js" type="module"></script>
     <!-- Legacy browser support -->
-    <script nomodule src="/static/js/polyfills-legacy-Dztsy6Qx.js"></script>
-    <script nomodule src="/static/js/main-legacy-COGfTn07.js"></script>
-    <script nomodule src="/static/js/threeScene-legacy-Da9xgOaj.js"></script>
+    <script nomodule src="{{ assets.js_polyfills_legacy }}"></script>
+    <script nomodule src="{{ assets.js_main_legacy }}"></script>
+    <script nomodule src="{{ assets.js_three_scene_legacy }}"></script>
     <script>
         // Register service worker for PWA functionality
         if ('serviceWorker' in navigator) {
