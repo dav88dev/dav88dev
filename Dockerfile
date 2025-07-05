@@ -4,7 +4,7 @@ FROM node:18-alpine AS frontend-builder
 # Install frontend dependencies and build assets
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy frontend source and build
 COPY frontend/ ./

@@ -81,7 +81,7 @@ async fn create_app(
             tracing::error!("Static file error: {}", error);
             (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Unhandled internal error: {}", error),
+                format!("Unhandled internal error: {error}"),
             )
         });
 

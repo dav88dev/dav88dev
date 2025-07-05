@@ -6,6 +6,7 @@
 use anyhow::Result;
 use crate::models::{BlogPost, CreateBlogPost};
 
+#[allow(async_fn_in_trait)]
 pub trait BlogRepository {
     async fn get_all_posts(&self) -> Result<Vec<BlogPost>>;
     async fn get_post_by_id(&self, id: uuid::Uuid) -> Result<Option<BlogPost>>;
@@ -39,6 +40,12 @@ pub struct InMemoryBlogRepository {
 }
 
 #[allow(dead_code)]
+impl Default for InMemoryBlogRepository {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InMemoryBlogRepository {
     pub fn new() -> Self {
         Self {}

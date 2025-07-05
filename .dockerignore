@@ -6,12 +6,10 @@ docs/
 
 # Rust build artifacts
 target/
-Cargo.lock
 
 # Frontend build artifacts and dependencies
 frontend/node_modules/
 frontend/dist/
-static/
 
 # WASM build artifacts
 wasm-frontend/target/
