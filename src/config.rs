@@ -8,6 +8,10 @@ pub struct AppConfig {
     pub templates_dir: String,
     pub database_url: Option<String>,
     pub environment: Environment,
+    pub https_enabled: bool,
+    pub https_port: u16,
+    pub cert_path: Option<String>,
+    pub key_path: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -31,6 +35,16 @@ impl AppConfig {
                 Ok("production") => Environment::Production,
                 _ => Environment::Development,
             },
+            https_enabled: env::var("HTTPS_ENABLED")
+                .unwrap_or_else(|_| "false".to_string())
+                .parse()
+                .unwrap_or(false),
+            https_port: env::var("HTTPS_PORT")
+                .unwrap_or_else(|_| "8443".to_string())
+                .parse()
+                .expect("HTTPS_PORT must be a valid number"),
+            cert_path: env::var("SSL_CERT_PATH").ok(),
+            key_path: env::var("SSL_KEY_PATH").ok(),
         }
     }
 
@@ -40,5 +54,13 @@ impl AppConfig {
 
     pub fn bind_address(&self) -> String {
         format!("{}:{}", self.host, self.port)
+    }
+
+    pub fn https_bind_address(&self) -> String {
+        format!("{}:{}", self.host, self.https_port)
+    }
+
+    pub fn should_force_https(&self) -> bool {
+        self.environment == Environment::Production && self.https_enabled
     }
 }

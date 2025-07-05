@@ -21,6 +21,7 @@ use personal_website::{
         index, robots_txt, sitemap_xml, manifest_json,
         get_cv_data, get_cv_json,
         health_check, readiness_check,
+        https_redirect_middleware, security_headers_middleware,
     },
     services::{template::create_template_engine, load_asset_paths},
 };
@@ -61,7 +62,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("📊 Health check: http://{}/health", config.bind_address());
     tracing::info!("🎯 API endpoint: http://{}/api/cv", config.bind_address());
 
-    // Start the server with graceful shutdown
+    // Start the server with graceful shutdown and HTTP/2 support
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
@@ -90,6 +91,8 @@ async fn create_app(
         .layer(TraceLayer::new_for_http())
         .layer(CompressionLayer::new())
         .layer(CorsLayer::permissive()) // Configure as needed
+        .layer(axum::middleware::from_fn(security_headers_middleware))
+        .layer(axum::middleware::from_fn(https_redirect_middleware))
         .layer(Extension(templates))
         .layer(Extension(cv_data))
         .layer(Extension(asset_paths));
