@@ -327,6 +327,28 @@ body {
     margin-bottom: 1.5rem;
 }
 
+.elite-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    font-size: 1.2em;
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    animation: eliteGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes eliteGlow {
+    0% { 
+        filter: brightness(1);
+        transform: scale(1);
+    }
+    100% { 
+        filter: brightness(1.2);
+        transform: scale(1.05);
+    }
+}
+
 .hero-description {
     font-size: 1.1rem;
     color: var(--text-light);
@@ -831,18 +853,21 @@ section {
 /* Skills Container */
 .skills-container {
     position: relative;
-    min-height: 100vh;
+    min-height: 80vh;
     width: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #1e1b4b 100%);
     overflow: hidden;
+    border-radius: 20px;
+    margin: 2rem 0;
 }
 
 /* Three.js Canvas */
 #skills-canvas {
-    width: 100%;
-    height: 100vh;
-    display: block;
-    background: transparent;
+    width: 100% !important;
+    height: 80vh !important;
+    display: block !important;
+    background: transparent !important;
+    border-radius: 20px;
 }
 
 /* Control Buttons */
