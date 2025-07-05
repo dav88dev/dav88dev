@@ -6,18 +6,18 @@
     "isEntry": true
   },
   "css/style-legacy.css": {
-    "file": "js/style-legacy-D8a6vBUu.js",
+    "file": "js/style-legacy-D6s5VyR-.js",
     "name": "style",
     "src": "css/style-legacy.css",
     "isEntry": true
   },
   "css/style.css": {
-    "file": "css/style-CvfD0Hgs.css",
+    "file": "css/style-BAFlbfBe.css",
     "src": "css/style.css",
     "isEntry": true
   },
   "js/main-legacy.js": {
-    "file": "js/main-legacy-COGfTn07.js",
+    "file": "js/main-legacy-oBQRTS-j.js",
     "name": "main",
     "src": "js/main-legacy.js",
     "isEntry": true,
@@ -26,12 +26,12 @@
     ]
   },
   "js/main.js": {
-    "file": "js/main-5mxABDvO.js",
+    "file": "js/main-ENLMaSw5.js",
     "name": "main",
     "src": "js/main.js",
     "isEntry": true,
     "css": [
-      "css/style-CvfD0Hgs.css"
+      "css/style-BAFlbfBe.css"
     ]
   },
   "js/three-scene-legacy.js": {

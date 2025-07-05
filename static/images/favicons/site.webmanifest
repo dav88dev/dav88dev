@@ -1,7 +1,7 @@
 {
-  "name": "David Aghayan - Elite Senior Software Engineer & SRE",
-  "short_name": "David Aghayan",
-  "description": "Elite Senior Software Engineer & Site Reliability Engineer with 10+ years experience in AI/ML, PHP, Python, DevOps.",
+  "name": "David Aghayan - Elite Software Engineer",
+  "short_name": "DAV88DEV",
+  "description": "Elite Senior Software Engineer & Site Reliability Engineer portfolio",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -17,9 +17,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "categories": ["business", "productivity", "utilities"],
-  "lang": "en",
-  "dir": "ltr",
-  "orientation": "portrait-primary"
+  ]
 }

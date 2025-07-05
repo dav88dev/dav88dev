@@ -1,5 +1,5 @@
 // Clean Skills Visualization - Simple and Elegant
-import init, { CleanSkillsRenderer } from '../wasm/wasm_frontend.js';
+// Try to import WASM, fallback to JavaScript if it fails
 
 class CleanSkills {
     constructor() {
@@ -13,11 +13,12 @@ class CleanSkills {
         console.log('🎨 Initializing Clean Skills Visualization...');
         
         try {
-            // Initialize WASM module
-            await init();
+            // Try to load WASM module
+            const wasmModule = await import('../wasm/wasm_frontend.js');
+            await wasmModule.default();
             
             // Create clean renderer
-            this.renderer = new CleanSkillsRenderer();
+            this.renderer = new wasmModule.CleanSkillsRenderer();
             
             // Initialize with canvas
             await this.renderer.init('skills-canvas');
@@ -29,11 +30,28 @@ class CleanSkills {
             this.startAnimationLoop();
             
             this.isInitialized = true;
-            console.log('✅ Clean Skills Visualization ready!');
+            console.log('✅ Clean Skills WASM Visualization ready!');
             
         } catch (error) {
-            console.error('❌ Failed to initialize Clean Skills:', error);
-            this.showFallback();
+            console.error('❌ WASM failed, loading JavaScript fallback:', error);
+            
+            // Load and initialize JavaScript fallback
+            const script = document.createElement('script');
+            script.src = '/static/js/skills-fallback.js';
+            script.onload = () => {
+                if (window.skillsFallback && window.skillsFallback.init()) {
+                    console.log('✅ JavaScript fallback loaded successfully');
+                    this.isInitialized = true;
+                } else {
+                    console.log('❌ Fallback failed, showing static fallback');
+                    this.showFallback();
+                }
+            };
+            script.onerror = () => {
+                console.log('❌ Could not load fallback, showing static skills');
+                this.showFallback();
+            };
+            document.head.appendChild(script);
         }
     }
 

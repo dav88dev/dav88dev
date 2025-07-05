@@ -68,10 +68,11 @@
     <link rel="manifest" href="/static/manifest.json">
     
     <!-- Favicon and app icons -->
-    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicons/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicons/favicon-16x16.png">
+    <link rel="manifest" href="/static/images/favicons/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -96,7 +97,10 @@
     
     <nav class="navbar">
         <div class="nav-container">
-            <a href="#hero" class="nav-logo">{{ cv_data.personal_info.name }}</a>
+            <a href="#hero" class="nav-logo">
+                <img src="/static/images/logo.png" alt="David Aghayan Logo" class="nav-logo-img">
+                <span class="nav-logo-text">{{ cv_data.personal_info.name }}</span>
+            </a>
             <ul class="nav-menu">
                 <li><a href="#hero" class="nav-link">Home</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
