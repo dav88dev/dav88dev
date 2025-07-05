@@ -1,0 +1,92 @@
+Oracle Cloud Part of always free : 
+
+Autonomous Database
+Oracle Autonomous Transaction Processing, Autonomous Data Warehouse, Autonomous JSON Database, or APEX Application Development.
+
+Always Free
+Up to Two databases total
+
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+
+HeatWave
+Automated and integrated generative AI and machine learning in one cloud service for transactions and lakehouse-scale analytics.
+
+Always Free
+One standalone HeatWave instance in OCI in your home region, along with up to 50 GB of storage and up to 50 GB of backup storage
+
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+Oracle Databases
+NoSQL Database
+NoSQL is a fully managed database cloud service that offers predictable low latency, dynamic scalability, high performance, and reliable data storage for document, key-value, and fixed-schema data.
+
+Always Free
+Up to 133 million reads per month, 133 million writes per month, 25 GB storage per table, up to 3 tables
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+Storage
+Archive Storage
+Unstructured storage - archive
+
+Always Free
+Up to 20GB total for standard, infrequent and archive
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+Storage
+Block Volume Storage
+Boot and block volume storage
+
+Always Free
+Up to 2 block volumes, 200 GB total. Plus 5 volume backups.
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Object Storage
+Object Storage API requests
+
+Always Free
+Up to 50,000 Object Storage API requests per month
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+Object Storage-Standard
+Unstructured storage - standard
+
+Always Free
+Up to 20GB total for standard, infrequent and archive
+
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+MongoDB \Atlas Cloud Platform
+
+For learning and exploring MongoDB in a cloud environment.
+
+STORAGE
+
+512 MB
+
+RAM
+
+Shared
+
+vCPU
+
+Shared
+
+
+Anything you suggest 

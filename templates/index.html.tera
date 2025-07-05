@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ cv_data.personal_info.name }} - Elite Senior Software Engineer & SRE | AI/ML Expert</title>
+    <meta name="description" content="David Aghayan - Elite Senior Software Engineer & Site Reliability Engineer with 10+ years experience in AI/ML, PHP, Python, DevOps. Expert in Laravel, Vue.js, AWS, Kubernetes. Building scalable systems that impact millions.">
+    <meta name="keywords" content="Senior Software Engineer, Site Reliability Engineer, SRE, AI Machine Learning, PHP Laravel, Python, DevOps, AWS, Kubernetes, Vue.js, Full Stack Developer, Armenia, Remote">
+    <meta name="author" content="{{ cv_data.personal_info.name }}">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dav88.dev/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ cv_data.personal_info.name }} - Elite Senior Software Engineer & SRE">
+    <meta property="og:description" content="Elite Senior Software Engineer & Site Reliability Engineer with 10+ years experience in AI/ML, PHP, Python, DevOps. Expert in Laravel, Vue.js, AWS, Kubernetes.">
+    <meta property="og:url" content="https://dav88.dev/">
+    <meta property="og:site_name" content="David Aghayan Portfolio">
+    <meta property="og:image" content="https://dav88.dev/static/images/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ cv_data.personal_info.name }} - Elite Senior Software Engineer & SRE">
+    <meta name="twitter:description" content="Elite Senior Software Engineer & Site Reliability Engineer with 10+ years experience in AI/ML, PHP, Python, DevOps. Expert in Laravel, Vue.js, AWS, Kubernetes.">
+    <meta name="twitter:image" content="https://dav88.dev/static/images/og-image.jpg">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "{{ cv_data.personal_info.name }}",
+      "jobTitle": "{{ cv_data.personal_info.title }}",
+      "description": "{{ cv_data.personal_info.summary }}",
+      "url": "https://dav88.dev/",
+      "email": "{{ cv_data.personal_info.email }}",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Yerevan",
+        "addressCountry": "Armenia"
+      },
+      "sameAs": [
+        "https://github.com/dav88dev",
+        "https://www.linkedin.com/in/dav88dev",
+        "https://www.dav88.dev/"
+      ],
+      "worksFor": {
+        "@type": "Organization",
+        "name": "LenderHomePage.com"
+      },
+      "alumniOf": [
+        {
+          "@type": "EducationalOrganization",
+          "name": "National Polytechnic University of Armenia",
+          "description": "MSc Informatics"
+        }
+      ],
+      "knowsAbout": [
+        "Software Engineering", "Site Reliability Engineering", "PHP", "Laravel", "Python", 
+        "JavaScript", "Vue.js", "DevOps", "AWS", "Kubernetes", "Machine Learning", "AI"
+      ]
+    }
+    </script>
+    
+    <link rel="stylesheet" href="/static/css/style-D8qaB-wy.css">
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- Favicon and app icons -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+</head>
+<body>
+    <a href="#about" class="skip-link">Skip to main content</a>\n    \n    <div id="loader" class="loader">
+        <div class="loader-content">
+            <div class="loader-text">Loading Experience...</div>
+            <div class="loader-progress">
+                <div class="loader-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="three-canvas"></canvas>
+    
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#hero" class="nav-logo">{{ cv_data.personal_info.name }}</a>
+            <ul class="nav-menu">
+                <li><a href="#hero" class="nav-link">Home</a></li>
+                <li><a href="#about" class="nav-link">About</a></li>
+                <li><a href="#experience" class="nav-link">Experience</a></li>
+                <li><a href="#education" class="nav-link">Education</a></li>
+                <li><a href="#skills" class="nav-link">Skills</a></li>
+                <li><a href="#projects" class="nav-link">Projects</a></li>
+                <li><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section id="hero" class="hero" role="banner">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="hero-greeting">Hello, I'm</span>
+                    <span class="hero-name">{{ cv_data.personal_info.name }}</span>
+                </h1>
+                <p class="hero-subtitle">Elite {{ cv_data.personal_info.title }}</p>
+                <p class="hero-description">{{ cv_data.personal_info.summary }} I specialize in building AI-powered systems that scale to millions of users and drive business transformation.</p>
+                <div class="hero-buttons">
+                    <a href="#contact" class="btn btn-primary" aria-label="Contact David Aghayan">Get In Touch</a>
+                    <a href="#projects" class="btn btn-secondary" aria-label="View David's portfolio projects">View My Work</a>
+                    <a href="/static/assets/David_Aghayan_Resume.pdf" class="btn btn-secondary" download aria-label="Download David's resume PDF">Download Resume</a>
+                </div>
+            </div>
+            <div class="hero-scroll">
+                <div class="scroll-indicator" role="img" aria-label="Scroll down to see more content">
+                    <span>Scroll</span>
+                    <div class="scroll-arrow"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about" role="main">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">About Me</h2>
+                    <p class="section-subtitle">Elite Engineer Building Tomorrow's Technology</p>
+                </div>
+                <div class="about-content">
+                    <div class="about-text">
+                        <p>{{ cv_data.personal_info.summary }}</p>
+                        <div class="about-info">
+                            <div class="info-item">
+                                <span class="info-label">Location:</span>
+                                <span class="info-value">{{ cv_data.personal_info.location }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Email:</span>
+                                <span class="info-value">{{ cv_data.personal_info.email }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="about-visual">
+                        <div class="floating-card" data-tilt role="img" aria-label="Professional highlight card">
+                            <div class="card-content">
+                                <h3>Elite Technology Leader</h3>
+                                <p>Architecting AI-powered solutions that transform businesses and impact millions of users worldwide</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="experience" class="experience">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Professional Experience</h2>
+                    <p class="section-subtitle">10+ Years of Technical Excellence & Leadership</p>
+                </div>
+                <div class="timeline" role="list">
+                    {% for exp in cv_data.experience %}
+                    <div class="timeline-item" role="listitem">
+                        <div class="timeline-dot" role="img" aria-label="Timeline marker"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <h3>{{ exp.title }}</h3>
+                                <span class="timeline-company">{{ exp.company }}</span>
+                                <span class="timeline-duration">{{ exp.duration }}</span>
+                            </div>
+                            <ul class="timeline-description">
+                                {% for desc in exp.description %}
+                                <li>{{ desc }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section id="education" class="education">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Education & Certifications</h2>
+                    <p class="section-subtitle">Advanced Degrees in Technology & Innovation</p>
+                </div>
+                <div class="education-grid" role="list">
+                    {% for edu in cv_data.education %}
+                    <div class="education-card" role="listitem">
+                        <div class="education-icon" role="img" aria-label="Education degree icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+                            </svg>
+                        </div>
+                        <div class="education-content">
+                            <h3>{{ edu.degree }}</h3>
+                            <h4>{{ edu.institution }}</h4>
+                            <span class="education-year">{{ edu.year }}</span>
+                            {% if edu.gpa %}
+                            <p class="education-details">{{ edu.gpa }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section id="skills" class="skills">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Technical Expertise</h2>
+                    <p class="section-subtitle">Interactive 3D Skills Visualization</p>
+                </div>
+                <div class="skills-container">
+                    <div class="skills-controls">
+                        <button class="skills-control-btn active" data-mode="orbit">🌍 Orbit</button>
+                    </div>
+                    
+                    <div class="skills-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #6366f1;"></div>
+                            <span>Backend</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8b5cf6;"></div>
+                            <span>Frontend</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #06b6d4;"></div>
+                            <span>Database</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #10b981;"></div>
+                            <span>DevOps</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f59e0b;"></div>
+                            <span>AI/ML</span>
+                        </div>
+                    </div>
+                    
+                    <canvas id="skills-canvas"></canvas>
+                    
+                    <div class="skills-info" id="skill-info">
+                        <h3 id="skill-name">Hover over a skill to learn more</h3>
+                        <p id="skill-description">Interactive 3D visualization of technical expertise. Use controls to change the animation mode.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="projects" class="projects">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Featured Projects</h2>
+                    <p class="section-subtitle">Innovative Solutions That Drive Real Impact</p>
+                </div>
+                <div class="projects-grid" role="list">
+                    {% for project in cv_data.projects %}
+                    <div class="project-card" role="listitem">
+                        <div class="project-image" role="img" aria-label="{{ project.name }} project preview">
+                            <div class="project-overlay">
+                                <div class="project-links">
+                                    {% if project.github_url %}
+                                    <a href="{{ project.github_url }}" target="_blank" rel="noopener noreferrer" class="project-link" aria-label="View {{ project.name }} source code on GitHub">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/>
+                                        </svg>
+                                    </a>
+                                    {% endif %}
+                                    {% if project.demo_url %}
+                                    <a href="{{ project.demo_url }}" target="_blank" rel="noopener noreferrer" class="project-link" aria-label="View {{ project.name }} live demo">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                            <path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+                                            <path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7z"/>
+                                        </svg>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-content">
+                            <h3>{{ project.name }}</h3>
+                            <p>{{ project.description }}</p>
+                            <div class="project-tech">
+                                {% for tech in project.technologies %}
+                                <span class="tech-tag">{{ tech }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Let's Build Something Amazing</h2>
+                    <p class="section-subtitle">Ready to transform your ideas into scalable solutions</p>
+                </div>
+                <div class="contact-content">
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                                </svg>
+                            </div>
+                            <div class="contact-details">
+                                <h4>Email</h4>
+                                <p>{{ cv_data.personal_info.email }}</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                </svg>
+                            </div>
+                            <div class="contact-details">
+                                <h4>Location</h4>
+                                <p>{{ cv_data.personal_info.location }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-form">
+                        <form id="contactForm" role="form" aria-label="Contact form">
+                            <div class="form-group">
+                                <label for="name" class="sr-only">Your Name</label>
+                                <input type="text" id="name" name="name" placeholder="Your Name" required aria-required="true" aria-describedby="name-help">
+                                <div id="name-help" class="sr-only">Enter your full name</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="email" class="sr-only">Your Email</label>
+                                <input type="email" id="email" name="email" placeholder="Your Email" required aria-required="true" aria-describedby="email-help">
+                                <div id="email-help" class="sr-only">Enter your email address</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="subject" class="sr-only">Subject</label>
+                                <input type="text" id="subject" name="subject" placeholder="Subject" required aria-required="true" aria-describedby="subject-help">
+                                <div id="subject-help" class="sr-only">Enter message subject</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="message" class="sr-only">Your Message</label>
+                                <textarea id="message" name="message" placeholder="Your Message" required aria-required="true" aria-describedby="message-help"></textarea>
+                                <div id="message-help" class="sr-only">Enter your message</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full" aria-label="Send contact message">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 {{ cv_data.personal_info.name }}. All rights reserved. Elite Software Engineering Excellence.</p>
+                <div class="footer-social" role="navigation" aria-label="Social media links">
+                    <a href="https://github.com/dav88dev" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Visit David's GitHub profile">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0012 2z"/>
+                        </svg>
+                        GitHub
+                    </a>
+                    <a href="https://www.linkedin.com/in/dav88dev" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Connect with David on LinkedIn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                        LinkedIn
+                    </a>
+                    <a href="https://www.dav88.dev/" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Visit David's website">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                        Website
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main-CxKBHCy5.js" type="module"></script>
+    <script src="/static/js/threeScene-BtBc6glY.js" type="module"></script>
+    <script src="/static/js/skillsVisualization.js"></script>
+    <!-- Legacy browser support -->
+    <script nomodule src="/static/js/polyfills-legacy-Dztsy6Qx.js"></script>
+    <script nomodule src="/static/js/main-legacy-DAX66ppu.js"></script>
+    <script nomodule src="/static/js/threeScene-legacy-Da9xgOaj.js"></script>
+    <script>
+        // Register service worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registered successfully');
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed');
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
