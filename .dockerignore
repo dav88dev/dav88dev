@@ -1,0 +1,37 @@
+# Git and documentation
+.git/
+.gitignore
+*.md
+docs/
+
+# Rust build artifacts
+target/
+
+# Frontend build artifacts and dependencies
+frontend/node_modules/
+frontend/dist/
+
+# WASM build artifacts
+wasm-frontend/target/
+
+# Development files
+.env
+.env.local
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+.cache/
+
+# Test and development outputs
+report_*.json

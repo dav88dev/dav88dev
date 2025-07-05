@@ -64,14 +64,15 @@
     }
     </script>
     
-    <link rel="stylesheet" href="/static/css/style-D8qaB-wy.css">
+    <link rel="stylesheet" href="{{ assets.css_main }}">
     <link rel="manifest" href="/static/manifest.json">
     
     <!-- Favicon and app icons -->
-    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+    <link rel="icon" type="image/x-icon" href="/static/images/favicons/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicons/favicon-16x16.png">
+    <link rel="manifest" href="/static/images/favicons/site.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -96,7 +97,10 @@
     
     <nav class="navbar">
         <div class="nav-container">
-            <a href="#hero" class="nav-logo">{{ cv_data.personal_info.name }}</a>
+            <a href="#hero" class="nav-logo">
+                <img src="/static/images/logo.png" alt="David Aghayan Logo" class="nav-logo-img">
+                <span class="nav-logo-text">{{ cv_data.personal_info.name }}</span>
+            </a>
             <ul class="nav-menu">
                 <li><a href="#hero" class="nav-link">Home</a></li>
                 <li><a href="#about" class="nav-link">About</a></li>
@@ -121,7 +125,7 @@
                     <span class="hero-greeting">Hello, I'm</span>
                     <span class="hero-name">{{ cv_data.personal_info.name }}</span>
                 </h1>
-                <p class="hero-subtitle">Elite {{ cv_data.personal_info.title }}</p>
+                <p class="hero-subtitle"><span class="elite-text">Elite</span> {{ cv_data.personal_info.title }}</p>
                 <p class="hero-description">{{ cv_data.personal_info.summary }} I specialize in building AI-powered systems that scale to millions of users and drive business transformation.</p>
                 <div class="hero-buttons">
                     <a href="#contact" class="btn btn-primary" aria-label="Contact David Aghayan">Get In Touch</a>
@@ -229,42 +233,10 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Technical Expertise</h2>
-                    <p class="section-subtitle">Interactive 3D Skills Visualization</p>
+                    <p class="section-subtitle">Hover over skills to explore connections and experience</p>
                 </div>
                 <div class="skills-container">
-                    <div class="skills-controls">
-                        <button class="skills-control-btn active" data-mode="orbit">🌍 Orbit</button>
-                    </div>
-                    
-                    <div class="skills-legend">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #6366f1;"></div>
-                            <span>Backend</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #8b5cf6;"></div>
-                            <span>Frontend</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #06b6d4;"></div>
-                            <span>Database</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #10b981;"></div>
-                            <span>DevOps</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #f59e0b;"></div>
-                            <span>AI/ML</span>
-                        </div>
-                    </div>
-                    
-                    <canvas id="skills-canvas"></canvas>
-                    
-                    <div class="skills-info" id="skill-info">
-                        <h3 id="skill-name">Hover over a skill to learn more</h3>
-                        <p id="skill-description">Interactive 3D visualization of technical expertise. Use controls to change the animation mode.</p>
-                    </div>
+                    <canvas id="skills-canvas" style="width: 100%; height: 500px; border-radius: 12px; background: #f8fafc;"></canvas>
                 </div>
             </div>
         </section>
@@ -403,13 +375,14 @@
         </div>
     </footer>
 
-    <script src="/static/js/main-CxKBHCy5.js" type="module"></script>
-    <script src="/static/js/threeScene-BtBc6glY.js" type="module"></script>
-    <script src="/static/js/skillsVisualization.js"></script>
+    <script src="{{ assets.js_main }}" type="module"></script>
+    <script src="{{ assets.js_three_scene }}" type="module"></script>
+    <!-- Clean WASM Skills Visualization (Simple & Elegant) -->
+    <script src="/static/js/clean-skills.js" type="module"></script>
     <!-- Legacy browser support -->
-    <script nomodule src="/static/js/polyfills-legacy-Dztsy6Qx.js"></script>
-    <script nomodule src="/static/js/main-legacy-DAX66ppu.js"></script>
-    <script nomodule src="/static/js/threeScene-legacy-Da9xgOaj.js"></script>
+    <script nomodule src="{{ assets.js_polyfills_legacy }}"></script>
+    <script nomodule src="{{ assets.js_main_legacy }}"></script>
+    <script nomodule src="{{ assets.js_three_scene_legacy }}"></script>
     <script>
         // Register service worker for PWA functionality
         if ('serviceWorker' in navigator) {
