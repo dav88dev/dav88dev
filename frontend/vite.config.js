@@ -12,6 +12,7 @@ export default defineConfig({
   build: {
     outDir: '../../static',
     emptyOutDir: false,
+    manifest: true,
     rollupOptions: {
       input: {
         main: 'src/js/main.js',
