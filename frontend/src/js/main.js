@@ -287,7 +287,8 @@ function initSkillBars() {
 
 // Enhanced tilt effect for cards
 function initTiltEffect() {
-    const tiltElements = document.querySelectorAll('[data-tilt], .project-card, .floating-card');
+    const tiltElements = document.querySelectorAll('[data-tilt], .project-card');
+    const floatingCard = document.querySelector('.floating-card');
     
     tiltElements.forEach(element => {
         element.addEventListener('mousemove', function(e) {
@@ -327,6 +328,40 @@ function initTiltEffect() {
             element.style.boxShadow = '';
         });
     });
+    
+    // Special gentle tilt for floating card
+    if (floatingCard) {
+        floatingCard.addEventListener('mousemove', function(e) {
+            const rect = floatingCard.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = (y - centerY) / 30; // More subtle rotation
+            const rotateY = (centerX - x) / 30; // More subtle rotation
+            
+            gsap.to(floatingCard, {
+                duration: 0.6,
+                rotateX: rotateX,
+                rotateY: rotateY,
+                transformPerspective: 1000,
+                ease: 'power2.out',
+                force3D: true // Better performance
+            });
+        });
+        
+        floatingCard.addEventListener('mouseleave', function() {
+            gsap.to(floatingCard, {
+                duration: 0.8,
+                rotateX: 0,
+                rotateY: 0,
+                ease: 'power2.out',
+                force3D: true
+            });
+        });
+    }
 }
 
 // Smooth scrolling
@@ -623,13 +658,13 @@ function initScrollProgress() {
 
 // Parallax effect
 function initParallaxEffect() {
-    const parallaxElements = document.querySelectorAll('.hero, .about-visual, .floating-card');
+    const parallaxElements = document.querySelectorAll('.hero');
     
     function updateParallax() {
         const scrollTop = window.pageYOffset;
         
         parallaxElements.forEach((element, index) => {
-            const speed = 0.5 + (index * 0.1);
+            const speed = 0.2 + (index * 0.1);
             const yPos = -(scrollTop * speed);
             element.style.transform = `translateY(${yPos}px)`;
         });
