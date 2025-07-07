@@ -543,6 +543,65 @@ section .container {
     min-height: calc(100vh - 10rem);
 }
 
+/* Special handling for sections with long content */
+.experience .container {
+    justify-content: flex-start;
+    padding-top: 2rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 10rem);
+}
+
+.experience .section-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    z-index: 10;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+}
+
+/* Footer integrated into contact section */
+.contact .footer-content {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.contact .footer-content p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.contact .footer-social {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.contact .social-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.contact .social-link:hover {
+    color: var(--primary-color);
+}
+
+.contact .social-link svg {
+    transition: transform 0.3s ease;
+}
+
+.contact .social-link:hover svg {
+    transform: scale(1.1);
+}
+
 .section-header {
     text-align: center;
     margin-bottom: 4rem;
