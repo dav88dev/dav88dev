@@ -3,7 +3,7 @@ import '../css/style.css'
 
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize GSAP
+    // Initialize GSAP (ScrollToPlugin will be available from CDN)
     gsap.registerPlugin(ScrollTrigger);
     
     // Initialize components
@@ -378,11 +378,20 @@ function initSmoothScroll() {
             if (targetElement) {
                 const offsetTop = targetElement.offsetTop - 70; // Account for fixed navbar
                 
-                gsap.to(window, {
-                    duration: 1,
-                    scrollTo: offsetTop,
-                    ease: 'power2.inOut'
-                });
+                // Try GSAP scrollTo first, fallback to native scrollTo
+                if (typeof gsap !== 'undefined' && gsap.plugins && gsap.plugins.ScrollToPlugin) {
+                    gsap.to(window, {
+                        duration: 1,
+                        scrollTo: offsetTop,
+                        ease: 'power2.inOut'
+                    });
+                } else {
+                    // Fallback to native smooth scroll
+                    window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
             }
         });
     });
