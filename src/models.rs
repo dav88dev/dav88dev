@@ -10,6 +10,7 @@ pub struct PersonalInfo {
     pub email: String,
     pub location: String,
     pub summary: String,
+    pub about_me: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -111,6 +112,7 @@ impl Default for CVData {
                 email: "dav88dev@gmail.com".to_string(),
                 location: "International".to_string(),
                 summary: "Results-driven Senior Software Engineer & Site Reliability Specialist with 10+ years building and scaling full-stack, AI-powered systems. Expert in PHP, Python, Vue.js, Laravel, MySQL, and DevOps. Proven track record delivering features that matter and keeping platforms up 24/7. Architected robust data pipelines, handled critical incidents, and raised performance across the stack. Obsessed with AI, intelligent agents, and machine learning. Passionate about real-time analytics and automation.".to_string(),
+                about_me: "Over ten years building systems that deliver results, scale effortlessly, and stay rock-solid. I design, build, and maintain full-stack platforms-PHP, Laravel, Python, Vue.js, MySQL, and proven DevOps. My thing ? Making sure things stay fast, online, and ready to grow. I've led high-impact performance upgrades, built scalable data pipelines, and navigated tough production issues with a cool head. Lately, I'm diving deep into AI, intelligent agents, and automation-driving real-time systems to do more with less. Above all, I'm result-driven-every project, every line of code, every day. If you're building something bold and smart, I'm ready to make an impact.".to_string(),
             },
             experience: vec![
                 Experience {
