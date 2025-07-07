@@ -108,7 +108,7 @@ impl Default for CVData {
         CVData {
             personal_info: PersonalInfo {
                 name: "DAVID AGHAYAN".to_string(),
-                title: "Senior Software Engineer & SRE".to_string(),
+                title: "Senior Software Engineer".to_string(),
                 email: "dav88dev@gmail.com".to_string(),
                 location: "International".to_string(),
                 summary: "Results-driven Senior Software Engineer & Site Reliability Specialist with 10+ years building and scaling full-stack, AI-powered systems. Expert in PHP, Python, Vue.js, Laravel, MySQL, and DevOps. Proven track record delivering features that matter and keeping platforms up 24/7. Architected robust data pipelines, handled critical incidents, and raised performance across the stack. Obsessed with AI, intelligent agents, and machine learning. Passionate about real-time analytics and automation.".to_string(),
