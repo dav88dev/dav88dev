@@ -149,7 +149,7 @@
                 </div>
                 <div class="about-content">
                     <div class="about-text">
-                        <p>{{ cv_data.personal_info.summary }}</p>
+                        <p>{{ cv_data.personal_info.about_me }}</p>
                         <div class="about-info">
                             <div class="info-item">
                                 <span class="info-label">Location:</span>
