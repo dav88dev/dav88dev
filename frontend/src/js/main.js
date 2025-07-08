@@ -94,8 +94,9 @@ function initNavigation() {
         });
     });
     
-    // Active nav link highlighting
+    // Active nav link highlighting and footer visibility
     const sections = document.querySelectorAll('section[id]');
+    const footer = document.querySelector('.footer');
     
     window.addEventListener('scroll', () => {
         let current = '';
@@ -113,6 +114,15 @@ function initNavigation() {
                 link.classList.add('active');
             }
         });
+        
+        // Show footer only when at contact section
+        if (footer) {
+            if (current === 'contact') {
+                footer.classList.add('visible');
+            } else {
+                footer.classList.remove('visible');
+            }
+        }
     });
 }
 
@@ -387,7 +397,7 @@ function initSmoothScroll() {
         });
     });
     
-    // Enhanced wheel scrolling for better snap control
+    // Enhanced wheel scrolling for better snap control with Experience section handling
     let isScrolling = false;
     let scrollTimeout;
     
@@ -397,6 +407,26 @@ function initSmoothScroll() {
         clearTimeout(scrollTimeout);
         
         const currentSection = getCurrentSection();
+        
+        // Special handling for Experience section
+        if (currentSection && currentSection.id === 'experience') {
+            const experienceContainer = currentSection.querySelector('.container');
+            if (experienceContainer) {
+                const isAtTop = experienceContainer.scrollTop === 0;
+                const isAtBottom = experienceContainer.scrollTop + experienceContainer.clientHeight >= experienceContainer.scrollHeight - 10;
+                
+                // If scrolling down and not at bottom, scroll within experience section
+                if (e.deltaY > 0 && !isAtBottom) {
+                    return; // Let default scroll behavior handle it
+                }
+                
+                // If scrolling up and not at top, scroll within experience section
+                if (e.deltaY < 0 && !isAtTop) {
+                    return; // Let default scroll behavior handle it
+                }
+            }
+        }
+        
         const direction = e.deltaY > 0 ? 1 : -1; // 1 for down, -1 for up
         const nextSection = getNextSection(currentSection, direction);
         
