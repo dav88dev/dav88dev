@@ -115,6 +115,14 @@ impl CleanSkillsRenderer {
                 connections: vec!["Vue.js".to_string(), "Node.js".to_string(), "TypeScript".to_string()],
             },
             Skill {
+                name: "Rust".to_string(),
+                category: "Systems".to_string(),
+                color: "#CE422B".to_string(),
+                description: "Systems programming with Rust since 2022. Built high-performance web services and WASM applications. This website is powered by Rust!".to_string(),
+                years_experience: 2,
+                connections: vec!["WebAssembly".to_string(), "Axum".to_string()],
+            },
+            Skill {
                 name: "Vue.js".to_string(),
                 category: "Frontend".to_string(),
                 color: "#4FC08D".to_string(),
@@ -153,14 +161,6 @@ impl CleanSkillsRenderer {
                 description: "Cloud solutions architect since 2017. Built and managed scalable infrastructure on AWS. Expert in EC2, S3, RDS, Lambda, and CloudFormation.".to_string(),
                 years_experience: 7,
                 connections: vec!["Docker".to_string(), "Kubernetes".to_string(), "Terraform".to_string()],
-            },
-            Skill {
-                name: "Rust".to_string(),
-                category: "Systems".to_string(),
-                color: "#CE422B".to_string(),
-                description: "Systems programming with Rust since 2022. Built high-performance web services and WASM applications. This website is powered by Rust!".to_string(),
-                years_experience: 2,
-                connections: vec!["WebAssembly".to_string(), "Axum".to_string()],
             },
         ];
     }
