@@ -13,24 +13,8 @@ class CleanSkills {
         console.log('🎨 Initializing Clean Skills Visualization...');
         
         try {
-            // Try to load WASM module
-            const wasmModule = await import('../wasm/wasm_frontend.js');
-            await wasmModule.default();
-            
-            // Create clean renderer
-            this.renderer = new wasmModule.CleanSkillsRenderer();
-            
-            // Initialize with canvas
-            await this.renderer.init('skills-canvas');
-            
-            // Setup event listeners
-            this.setupEventListeners();
-            
-            // Start animation loop
-            this.startAnimationLoop();
-            
-            this.isInitialized = true;
-            console.log('✅ Clean Skills WASM Visualization ready!');
+            // FORCE FALLBACK: WASM contains old React data - disable until rebuilt
+            throw new Error('Using JavaScript fallback - WASM contains outdated skills data');
             
         } catch (error) {
             console.error('❌ WASM failed, loading JavaScript fallback:', error);
@@ -152,6 +136,10 @@ class CleanSkills {
                             <strong>JavaScript</strong><br>
                             <small>9+ years experience</small>
                         </div>
+                        <div style="background: #CE422B; color: white; padding: 15px; border-radius: 8px;">
+                            <strong>Rust</strong><br>
+                            <small>2+ years experience</small>
+                        </div>
                         <div style="background: #4FC08D; color: white; padding: 15px; border-radius: 8px;">
                             <strong>Vue.js</strong><br>
                             <small>6+ years experience</small>
@@ -171,10 +159,6 @@ class CleanSkills {
                         <div style="background: #FF9900; color: white; padding: 15px; border-radius: 8px;">
                             <strong>AWS</strong><br>
                             <small>7+ years experience</small>
-                        </div>
-                        <div style="background: #CE422B; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>Rust</strong><br>
-                            <small>2+ years experience</small>
                         </div>
                     </div>
                 </div>

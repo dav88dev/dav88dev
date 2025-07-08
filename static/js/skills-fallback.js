@@ -7,12 +7,12 @@ class SkillsFallback {
             { name: 'PHP', x: 0, y: 0, color: '#777BB4', description: 'Backend development with 10+ years experience' },
             { name: 'Laravel', x: 0, y: 0, color: '#FF2D20', description: 'Full-stack Laravel development since 2016' },
             { name: 'JavaScript', x: 0, y: 0, color: '#F7DF1E', description: 'Frontend and Node.js development' },
+            { name: 'Rust', x: 0, y: 0, color: '#CE422B', description: 'Systems programming and WebAssembly' },
             { name: 'Vue.js', x: 0, y: 0, color: '#4FC08D', description: 'Modern reactive frontend frameworks' },
             { name: 'Python', x: 0, y: 0, color: '#3776AB', description: 'Data science and backend automation' },
             { name: 'MySQL', x: 0, y: 0, color: '#4479A1', description: 'Database design and optimization' },
             { name: 'Docker', x: 0, y: 0, color: '#2496ED', description: 'Containerization and DevOps' },
             { name: 'AWS', x: 0, y: 0, color: '#FF9900', description: 'Cloud infrastructure and services' },
-            { name: 'Rust', x: 0, y: 0, color: '#CE422B', description: 'Systems programming and WebAssembly' },
             { name: 'Kubernetes', x: 0, y: 0, color: '#326CE5', description: 'Container orchestration' },
             { name: 'Redis', x: 0, y: 0, color: '#DC382D', description: 'Caching and session management' }
         ];
