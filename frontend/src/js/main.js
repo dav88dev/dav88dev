@@ -1,8 +1,33 @@
 // Import styles
 import '../css/style.css'
 
+// Immediately prevent any scroll on page load
+window.addEventListener('beforeunload', function() {
+    window.scrollTo(0, 0);
+});
+
+// Ensure page starts at top
+if (history.scrollRestoration) {
+    history.scrollRestoration = 'manual';
+}
+
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // Force page to top and prevent initial scroll adjustments
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
+    // Temporarily disable scroll snap during initial load
+    document.documentElement.style.scrollSnapType = 'none';
+    document.body.style.scrollSnapType = 'none';
+    
+    // Re-enable scroll snap after a brief delay
+    setTimeout(() => {
+        document.documentElement.style.scrollSnapType = 'y mandatory';
+        document.body.style.scrollSnapType = 'y mandatory';
+    }, 100);
+    
     // Initialize GSAP (ScrollToPlugin will be available from CDN)
     gsap.registerPlugin(ScrollTrigger);
     
@@ -727,7 +752,7 @@ function initTypingEffect() {
             currentText = fullText.substring(0, currentText.length + 1);
         }
         
-        subtitleElement.textContent = currentText;
+        subtitleElement.textContent = currentText || ' ';
         
         let typeSpeed = isDeleting ? 50 : 100;
         
