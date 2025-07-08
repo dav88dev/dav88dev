@@ -11,29 +11,49 @@ if (history.scrollRestoration) {
     history.scrollRestoration = 'manual';
 }
 
+// Force immediate scroll to top before any rendering
+window.scrollTo(0, 0);
+document.documentElement.scrollTop = 0;
+document.body.scrollTop = 0;
+
+// Disable scroll snap immediately
+document.documentElement.style.scrollSnapType = 'none';
+document.body.style.scrollSnapType = 'none';
+
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Force page to top and prevent initial scroll adjustments
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    // Aggressively force page to top multiple times
+    const forceToTop = () => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    };
     
-    // Temporarily disable scroll snap during initial load
-    document.documentElement.style.scrollSnapType = 'none';
-    document.body.style.scrollSnapType = 'none';
+    forceToTop();
     
-    // Re-enable scroll snap after a brief delay
+    // Force to top again after a micro delay
+    requestAnimationFrame(forceToTop);
+    
+    // And once more after DOM is fully ready
+    setTimeout(forceToTop, 1);
+    
+    // Initialize GSAP (ScrollToPlugin will be available from CDN) - temporarily disable ScrollTrigger
+    // gsap.registerPlugin(ScrollTrigger); // Temporarily disabled for debugging
+    
+    // Initialize components with delay to ensure scroll position is set
     setTimeout(() => {
-        document.documentElement.style.scrollSnapType = 'y mandatory';
-        document.body.style.scrollSnapType = 'y mandatory';
-    }, 100);
-    
-    // Initialize GSAP (ScrollToPlugin will be available from CDN)
-    gsap.registerPlugin(ScrollTrigger);
-    
-    // Initialize components
-    initNavigation();
-    initScrollAnimations();
+        initNavigation();
+        // initScrollAnimations(); // Temporarily disabled - uses ScrollTrigger
+        
+        // Re-enable scroll snap after everything is initialized - much longer delay
+        setTimeout(() => {
+            document.documentElement.style.scrollSnapType = 'y mandatory';
+            document.body.style.scrollSnapType = 'y mandatory';
+            
+            // Final force to top after scroll snap is re-enabled
+            forceToTop();
+        }, 2000); // Increased to 2 seconds
+    }, 50);
     initFormHandling();
     initSkillBars();
     initTiltEffect();
@@ -835,6 +855,11 @@ function initParallaxEffect() {
 
 // Enhanced preloader functionality
 window.addEventListener('load', () => {
+    // Final aggressive scroll position reset after everything is loaded
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
     const loader = document.getElementById('loader');
     if (loader) {
         // Animate loader bar
