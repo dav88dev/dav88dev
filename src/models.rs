@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
-// CV/Portfolio related models
+// CV/ Portfolio-related models
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PersonalInfo {
     pub name: String,
@@ -70,7 +70,7 @@ pub struct BlogPost {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CreateBlogPost {
-    pub title: String,
+pub title: String,
     pub content: String,
     pub excerpt: Option<String>,
     pub published: bool,
