@@ -94,8 +94,9 @@ function initNavigation() {
         });
     });
     
-    // Active nav link highlighting
+    // Active nav link highlighting and footer visibility
     const sections = document.querySelectorAll('section[id]');
+    const footer = document.querySelector('.footer');
     
     window.addEventListener('scroll', () => {
         let current = '';
@@ -113,6 +114,15 @@ function initNavigation() {
                 link.classList.add('active');
             }
         });
+        
+        // Show footer only when at contact section
+        if (footer) {
+            if (current === 'contact') {
+                footer.classList.add('visible');
+            } else {
+                footer.classList.remove('visible');
+            }
+        }
     });
 }
 
@@ -134,7 +144,7 @@ function initScrollAnimations() {
         });
     });
     
-    // Timeline items animation
+    // Timeline items animation - removed x transform to fix alignment
     gsap.utils.toArray('.timeline-item').forEach((item, index) => {
         gsap.from(item, {
             scrollTrigger: {
@@ -144,8 +154,6 @@ function initScrollAnimations() {
                 toggleActions: 'play none none reverse'
             },
             duration: 0.8,
-            x: index % 2 === 0 ? -100 : 100,
-            opacity: 0,
             ease: 'power2.out',
             delay: index * 0.1
         });
@@ -364,10 +372,12 @@ function initTiltEffect() {
     }
 }
 
-// Smooth scrolling
+// Enhanced snap scrolling with navigation
 function initSmoothScroll() {
     const navLinks = document.querySelectorAll('a[href^=\"#\"]');
+    const sections = document.querySelectorAll('section[id]');
     
+    // Navigate to specific section with snap behavior
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -376,24 +386,140 @@ function initSmoothScroll() {
             const targetElement = document.querySelector(targetId);
             
             if (targetElement) {
-                const offsetTop = targetElement.offsetTop - 70; // Account for fixed navbar
-                
-                // Try GSAP scrollTo first, fallback to native scrollTo
-                if (typeof gsap !== 'undefined' && gsap.plugins && gsap.plugins.ScrollToPlugin) {
-                    gsap.to(window, {
-                        duration: 1,
-                        scrollTo: offsetTop,
-                        ease: 'power2.inOut'
-                    });
-                } else {
-                    // Fallback to native smooth scroll
-                    window.scrollTo({
-                        top: offsetTop,
-                        behavior: 'smooth'
-                    });
-                }
+                // Use scrollIntoView for better snap behavior
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
             }
         });
+    });
+    
+    // Enhanced wheel scrolling for better snap control with Experience section handling
+    let isScrolling = false;
+    let scrollTimeout;
+    
+    window.addEventListener('wheel', function(e) {
+        if (isScrolling) return;
+        
+        clearTimeout(scrollTimeout);
+        
+        const currentSection = getCurrentSection();
+        
+        // Special handling for Experience section
+        if (currentSection && currentSection.id === 'experience') {
+            const experienceContainer = currentSection.querySelector('.container');
+            if (experienceContainer) {
+                const isAtTop = experienceContainer.scrollTop === 0;
+                const isAtBottom = experienceContainer.scrollTop + experienceContainer.clientHeight >= experienceContainer.scrollHeight - 10;
+                
+                // If scrolling down and not at bottom, scroll within experience section
+                if (e.deltaY > 0 && !isAtBottom) {
+                    return; // Let default scroll behavior handle it
+                }
+                
+                // If scrolling up and not at top, scroll within experience section
+                if (e.deltaY < 0 && !isAtTop) {
+                    return; // Let default scroll behavior handle it
+                }
+            }
+        }
+        
+        const direction = e.deltaY > 0 ? 1 : -1; // 1 for down, -1 for up
+        const nextSection = getNextSection(currentSection, direction);
+        
+        if (nextSection) {
+            e.preventDefault();
+            isScrolling = true;
+            
+            // Reset Experience section scroll position to top when entering
+            if (nextSection.id === 'experience') {
+                const experienceContainer = nextSection.querySelector('.container');
+                if (experienceContainer) {
+                    experienceContainer.scrollTop = 0;
+                }
+            }
+            
+            nextSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            
+            // Reset scrolling flag after animation
+            setTimeout(() => {
+                isScrolling = false;
+            }, 1000);
+        }
+    }, { passive: false });
+    
+    // Get currently visible section
+    function getCurrentSection() {
+        const scrollPos = window.scrollY + window.innerHeight / 2;
+        let currentSection = sections[0];
+        
+        sections.forEach(section => {
+            if (section.offsetTop <= scrollPos) {
+                currentSection = section;
+            }
+        });
+        
+        return currentSection;
+    }
+    
+    // Get next section based on direction
+    function getNextSection(currentSection, direction) {
+        const currentIndex = Array.from(sections).indexOf(currentSection);
+        const nextIndex = currentIndex + direction;
+        
+        if (nextIndex >= 0 && nextIndex < sections.length) {
+            return sections[nextIndex];
+        }
+        
+        return null;
+    }
+    
+    // Keyboard navigation for sections
+    document.addEventListener('keydown', function(e) {
+        if (isScrolling) return;
+        
+        let direction = 0;
+        
+        switch(e.key) {
+            case 'ArrowDown':
+            case 'PageDown':
+                direction = 1;
+                break;
+            case 'ArrowUp':
+            case 'PageUp':
+                direction = -1;
+                break;
+            case 'Home':
+                sections[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
+            case 'End':
+                sections[sections.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                return;
+            default:
+                return;
+        }
+        
+        if (direction !== 0) {
+            e.preventDefault();
+            const currentSection = getCurrentSection();
+            const nextSection = getNextSection(currentSection, direction);
+            
+            if (nextSection) {
+                isScrolling = true;
+                nextSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                setTimeout(() => {
+                    isScrolling = false;
+                }, 1000);
+            }
+        }
     });
 }
 
