@@ -8,7 +8,6 @@ class SkillsFallback {
             { name: 'Laravel', x: 0, y: 0, color: '#FF2D20', description: 'Full-stack Laravel development since 2016' },
             { name: 'JavaScript', x: 0, y: 0, color: '#F7DF1E', description: 'Frontend and Node.js development' },
             { name: 'Vue.js', x: 0, y: 0, color: '#4FC08D', description: 'Modern reactive frontend frameworks' },
-            { name: 'React', x: 0, y: 0, color: '#61DAFB', description: 'Component-based UI development' },
             { name: 'Python', x: 0, y: 0, color: '#3776AB', description: 'Data science and backend automation' },
             { name: 'MySQL', x: 0, y: 0, color: '#4479A1', description: 'Database design and optimization' },
             { name: 'Docker', x: 0, y: 0, color: '#2496ED', description: 'Containerization and DevOps' },
@@ -19,7 +18,7 @@ class SkillsFallback {
         ];
         this.connections = [
             ['PHP', 'Laravel'], ['Laravel', 'MySQL'], ['JavaScript', 'Vue.js'], 
-            ['JavaScript', 'React'], ['Python', 'AWS'], ['Docker', 'Kubernetes'],
+            ['Python', 'AWS'], ['Docker', 'Kubernetes'],
             ['MySQL', 'Redis'], ['AWS', 'Docker'], ['Rust', 'JavaScript'],
             ['PHP', 'JavaScript'], ['Python', 'Docker']
         ];

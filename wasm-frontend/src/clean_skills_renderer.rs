@@ -112,15 +112,7 @@ impl CleanSkillsRenderer {
                 color: "#F7DF1E".to_string(),
                 description: "Full-stack JavaScript development since 2015. From vanilla JS to modern ES6+, building interactive web experiences that users love.".to_string(),
                 years_experience: 9,
-                connections: vec!["React".to_string(), "Vue.js".to_string(), "Node.js".to_string(), "TypeScript".to_string()],
-            },
-            Skill {
-                name: "React".to_string(),
-                category: "Frontend".to_string(),
-                color: "#61DAFB".to_string(),
-                description: "React specialist since 2017. Built complex SPAs with hooks, context, and modern patterns. Expert in performance optimization and component architecture.".to_string(),
-                years_experience: 7,
-                connections: vec!["JavaScript".to_string(), "TypeScript".to_string(), "Node.js".to_string()],
+                connections: vec!["Vue.js".to_string(), "Node.js".to_string(), "TypeScript".to_string()],
             },
             Skill {
                 name: "Vue.js".to_string(),
