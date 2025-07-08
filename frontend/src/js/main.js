@@ -1,14 +1,59 @@
 // Import styles
 import '../css/style.css'
 
+// Immediately prevent any scroll on page load
+window.addEventListener('beforeunload', function() {
+    window.scrollTo(0, 0);
+});
+
+// Ensure page starts at top
+if (history.scrollRestoration) {
+    history.scrollRestoration = 'manual';
+}
+
+// Force immediate scroll to top before any rendering
+window.scrollTo(0, 0);
+document.documentElement.scrollTop = 0;
+document.body.scrollTop = 0;
+
+// Disable scroll snap immediately
+document.documentElement.style.scrollSnapType = 'none';
+document.body.style.scrollSnapType = 'none';
+
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize GSAP (ScrollToPlugin will be available from CDN)
-    gsap.registerPlugin(ScrollTrigger);
+    // Aggressively force page to top multiple times
+    const forceToTop = () => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    };
     
-    // Initialize components
-    initNavigation();
-    initScrollAnimations();
+    forceToTop();
+    
+    // Force to top again after a micro delay
+    requestAnimationFrame(forceToTop);
+    
+    // And once more after DOM is fully ready
+    setTimeout(forceToTop, 1);
+    
+    // Initialize GSAP (ScrollToPlugin will be available from CDN) - temporarily disable ScrollTrigger
+    // gsap.registerPlugin(ScrollTrigger); // Temporarily disabled for debugging
+    
+    // Initialize components with delay to ensure scroll position is set
+    setTimeout(() => {
+        initNavigation();
+        // initScrollAnimations(); // Temporarily disabled - uses ScrollTrigger
+        
+        // Re-enable scroll snap after everything is initialized - much longer delay
+        setTimeout(() => {
+            document.documentElement.style.scrollSnapType = 'y mandatory';
+            document.body.style.scrollSnapType = 'y mandatory';
+            
+            // Final force to top after scroll snap is re-enabled
+            forceToTop();
+        }, 2000); // Increased to 2 seconds
+    }, 50);
     initFormHandling();
     initSkillBars();
     initTiltEffect();
@@ -727,7 +772,7 @@ function initTypingEffect() {
             currentText = fullText.substring(0, currentText.length + 1);
         }
         
-        subtitleElement.textContent = currentText;
+        subtitleElement.textContent = currentText || ' ';
         
         let typeSpeed = isDeleting ? 50 : 100;
         
@@ -810,6 +855,11 @@ function initParallaxEffect() {
 
 // Enhanced preloader functionality
 window.addEventListener('load', () => {
+    // Final aggressive scroll position reset after everything is loaded
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
     const loader = document.getElementById('loader');
     if (loader) {
         // Animate loader bar

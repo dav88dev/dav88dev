@@ -36,8 +36,9 @@ html {
     scroll-behavior: smooth;
     scroll-snap-type: y mandatory;
     scroll-snap-stop: always;
+    /* Prevent initial scroll adjustments */
+    overflow-anchor: none;
 }
-
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -46,9 +47,14 @@ body {
     background-color: var(--bg-primary);
     overflow-x: hidden;
     scroll-behavior: smooth;
+    scroll-snap-type: y mandatory;
     min-height: 100vh;
     opacity: 0;
     animation: fadeInBody 0.5s ease-in-out forwards;
+    /* Prevent margin collapse and ensure start at top */
+    margin: 0;
+    padding: 0;
+    position: relative;
 }
 
 @keyframes fadeInBody {
@@ -145,7 +151,7 @@ body {
     100% { width: 100%; }
 }
 
-/* Three.js Canvas */
+/* Three.js Canvas - temporarily disabled for debugging */
 #three-canvas {
     position: fixed;
     top: 0;
@@ -154,6 +160,8 @@ body {
     height: 100%;
     z-index: -1;
     opacity: 0.8;
+    /* Temporarily disable to test if causing scroll issue */
+    display: none;
 }
 
 /* Navigation */
@@ -166,11 +174,18 @@ body {
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-color);
     z-index: 1000;
-    transition: all 0.3s ease;
-    transform: translateY(0);
-    will-change: transform;
-    scroll-snap-align: none;
-    scroll-snap-stop: normal;
+    transition: none;
+    transform: translate3d(0, 0, 0);
+    will-change: auto;
+    scroll-snap-align: none !important;
+    scroll-snap-stop: normal !important;
+    /* Ensure header stays at top and is completely isolated */
+    contain: layout style paint;
+    isolation: isolate;
+    pointer-events: auto;
+    /* Force hardware acceleration */
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
 }
 
 .navbar.scrolled {
@@ -275,6 +290,10 @@ body {
     scroll-snap-align: start;
     scroll-snap-stop: always;
     overflow-y: auto;
+    /* Ensure hero starts at absolute top */
+    margin-top: -70px;
+    padding-top: 70px;
+    scroll-margin-top: 0;
 }
 
 .hero-content {
@@ -352,6 +371,12 @@ body {
     font-size: 1.5rem;
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
+    height: 2.4rem;
+    line-height: 2.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 }
 
 .elite-text {
