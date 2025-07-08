@@ -144,7 +144,7 @@ function initScrollAnimations() {
         });
     });
     
-    // Timeline items animation
+    // Timeline items animation - removed x transform to fix alignment
     gsap.utils.toArray('.timeline-item').forEach((item, index) => {
         gsap.from(item, {
             scrollTrigger: {
@@ -154,8 +154,6 @@ function initScrollAnimations() {
                 toggleActions: 'play none none reverse'
             },
             duration: 0.8,
-            x: index % 2 === 0 ? -100 : 100,
-            opacity: 0,
             ease: 'power2.out',
             delay: index * 0.1
         });
@@ -433,6 +431,14 @@ function initSmoothScroll() {
         if (nextSection) {
             e.preventDefault();
             isScrolling = true;
+            
+            // Reset Experience section scroll position to top when entering
+            if (nextSection.id === 'experience') {
+                const experienceContainer = nextSection.querySelector('.container');
+                if (experienceContainer) {
+                    experienceContainer.scrollTop = 0;
+                }
+            }
             
             nextSection.scrollIntoView({
                 behavior: 'smooth',
