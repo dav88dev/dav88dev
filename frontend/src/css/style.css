@@ -151,7 +151,7 @@ body {
     100% { width: 100%; }
 }
 
-/* Three.js Canvas - temporarily disabled for debugging */
+/* Three.js Canvas */
 #three-canvas {
     position: fixed;
     top: 0;
@@ -160,8 +160,6 @@ body {
     height: 100%;
     z-index: -1;
     opacity: 0.8;
-    /* Temporarily disable to test if causing scroll issue */
-    display: none;
 }
 
 /* Navigation */

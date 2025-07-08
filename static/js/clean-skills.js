@@ -152,10 +152,6 @@ class CleanSkills {
                             <strong>JavaScript</strong><br>
                             <small>9+ years experience</small>
                         </div>
-                        <div style="background: #61DAFB; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>React</strong><br>
-                            <small>7+ years experience</small>
-                        </div>
                         <div style="background: #4FC08D; color: white; padding: 15px; border-radius: 8px;">
                             <strong>Vue.js</strong><br>
                             <small>6+ years experience</small>
