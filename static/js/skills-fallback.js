@@ -4,6 +4,7 @@ class SkillsFallback {
         this.canvas = null;
         this.ctx = null;
         this.skills = [
+            { name: 'ML', x: 0, y: 0, color: '#f59e0b', description: 'Machine Learning expertise with TensorFlow and more' },
             { name: 'PHP', x: 0, y: 0, color: '#777BB4', description: 'Backend development with 10+ years experience' },
             { name: 'Laravel', x: 0, y: 0, color: '#FF2D20', description: 'Full-stack Laravel development since 2016' },
             { name: 'JavaScript', x: 0, y: 0, color: '#F7DF1E', description: 'Frontend and Node.js development' },
@@ -55,13 +56,20 @@ class SkillsFallback {
         const centerY = this.canvas.clientHeight / 2;
         const radius = Math.min(centerX, centerY) * 0.6;
 
-        this.skills.forEach((skill, index) => {
-            const angle = (index / this.skills.length) * Math.PI * 2;
-            skill.x = centerX + Math.cos(angle) * radius;
-            skill.y = centerY + Math.sin(angle) * radius;
-            skill.baseX = skill.x;
-            skill.baseY = skill.y;
-        });
+        // Central ML skill
+        this.skills[0].baseX = centerX;
+        this.skills[0].baseY = centerY;
+        this.skills[0].x = centerX;
+        this.skills[0].y = centerY;
+
+        // Orbiting skills
+        for (let i = 1; i < this.skills.length; i++) {
+            const angle = ((i - 1) / (this.skills.length - 1)) * Math.PI * 2;
+            this.skills[i].baseX = centerX + Math.cos(angle) * radius;
+            this.skills[i].baseY = centerY + Math.sin(angle) * radius;
+            this.skills[i].x = this.skills[i].baseX;
+            this.skills[i].y = this.skills[i].baseY;
+        }
     }
 
     setupEventListeners() {
@@ -152,11 +160,15 @@ class SkillsFallback {
         const ctx = this.ctx;
         ctx.clearRect(0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
 
+        // Set background to match section color
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
+
         // Update skill positions with gentle floating animation
         this.skills.forEach((skill, index) => {
             const time = this.animationTime + index * 0.5;
-            skill.x = skill.baseX + Math.sin(time * 0.8) * 8;
-            skill.y = skill.baseY + Math.cos(time * 0.6) * 6;
+            skill.x = skill.baseX + Math.sin(time * 0.8) * (skill.name === 'ML' ? 4 : 8);
+            skill.y = skill.baseY + Math.cos(time * 0.6) * (skill.name === 'ML' ? 3 : 6);
         });
 
         // Draw connections
@@ -180,7 +192,9 @@ class SkillsFallback {
         // Draw skills
         this.skills.forEach((skill, index) => {
             const isHovered = this.hoveredSkill === index;
-            const radius = isHovered ? 35 : 30;
+            const isCentral = skill.name === 'ML';
+            const baseRadius = isCentral ? 45 : 30;
+            const radius = isHovered ? baseRadius * 1.2 : baseRadius;
             
             // Skill circle with glow effect
             ctx.beginPath();
@@ -198,8 +212,9 @@ class SkillsFallback {
             ctx.shadowBlur = 0;
             
             // Skill text
-            ctx.fillStyle = skill.color === '#F7DF1E' ? '#000' : '#fff';
-            ctx.font = `bold ${isHovered ? '12px' : '11px'} Inter, sans-serif`;
+            ctx.fillStyle = (skill.color === '#F7DF1E' || skill.color === '#f59e0b') ? '#000' : '#fff';
+            const fontSize = isHovered ? (isCentral ? 16 : 12) : (isCentral ? 14 : 11);
+            ctx.font = `bold ${fontSize}px Inter, sans-serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(skill.name, skill.x, skill.y);
