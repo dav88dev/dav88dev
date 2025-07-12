@@ -1023,7 +1023,7 @@ section .container {
     position: relative;
     min-height: 80vh;
     width: 100%;
-    background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #1e1b4b 100%);
+    background: transparent;
     overflow: hidden;
     border-radius: 20px;
     margin: 2rem 0;
