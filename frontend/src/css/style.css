@@ -589,12 +589,11 @@ section .container {
 .experience .section-header {
     position: sticky;
     top: 0;
-    background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-primary) 70%, rgba(255, 255, 255, 0.9) 90%, rgba(255, 255, 255, 0.7) 100%);
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-secondary) 70%, rgba(255, 255, 255, 0.9) 90%, rgba(255, 255, 255, 0.7) 100%);
     z-index: 10;
-    padding: 1rem 0 2rem 0;
+    padding: 1rem 3rem 2rem 3rem;
     margin-bottom: 1rem;
     backdrop-filter: blur(10px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 /* Sticky footer at bottom */
