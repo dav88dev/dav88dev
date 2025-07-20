@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle 4 Test</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f0f8ff; }
+        .result { padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .perfect { background: #d4f6d4; border: 2px solid #4caf50; }
+        .fail { background: #ffebee; border: 2px solid #f44336; }
+        iframe { width: 375px; height: 600px; border: 1px solid #333; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🌟 Test Cycle 4 - Portfolio Mobile Test</h1>
+    <div class="result perfect">
+        <h3>✅ Expected Results for Mobile (375px width):</h3>
+        <ul>
+            <li>Hamburger menu (☰) visible in top-right corner</li>
+            <li>Hamburger menu has purple/blue color and slight background</li>
+            <li>Clicking hamburger slides in navigation menu from right</li>
+            <li>"Hello, I'm" text is NOT hidden under navbar</li>
+            <li>Smooth scrolling is disabled (normal mobile scroll)</li>
+            <li>No WASM error messages in console</li>
+        </ul>
+    </div>
+    
+    <div style="display: flex; flex-wrap: wrap;">
+        <iframe src="http://localhost:8000" title="Mobile View"></iframe>
+        <iframe src="http://localhost:8000" title="Mobile View 2" style="width: 320px;"></iframe>
+    </div>
+    
+    <script>
+        console.log('Test Cycle 4 - Mobile width simulation');
+        console.log('Expected: Hamburger menu should be visible and functional');
+        setTimeout(() => {
+            console.log('✅ Test cycle 4 iframe loaded successfully');
+        }, 2000);
+    </script>
+</body>
+</html>

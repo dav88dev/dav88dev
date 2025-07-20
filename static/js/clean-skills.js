@@ -1,6 +1,4 @@
-// Clean Skills Visualization - Simple and Elegant
-// Try to import WASM, fallback to JavaScript if it fails
-
+// Clean Skills Visualization - Working Version
 class CleanSkills {
     constructor() {
         this.renderer = null;
@@ -13,184 +11,134 @@ class CleanSkills {
         console.log('🎨 Initializing Clean Skills Visualization...');
         
         try {
-            // FORCE FALLBACK: WASM contains old React data - disable until rebuilt
-            throw new Error('Using JavaScript fallback - WASM contains outdated skills data');
+            // Try to load WASM first
+            console.log('Attempting to load WASM skills visualization...');
+            
+            // Import WASM module
+            const wasmModule = await import('/static/wasm/wasm_frontend.js');
+            await wasmModule.default();
+            
+            // Create WASM renderer instance
+            this.renderer = new wasmModule.CleanSkillsRenderer();
+            
+            if (this.renderer && this.renderer.init()) {
+                console.log('✅ WASM loaded successfully');
+                this.isInitialized = true;
+                this.setupEventListeners();
+                this.startAnimation();
+                return;
+            } else {
+                throw new Error('WASM renderer failed to initialize');
+            }
             
         } catch (error) {
-            console.error('❌ WASM failed, loading JavaScript fallback:', error);
+            console.log('ℹ️  WASM not available, using JavaScript fallback...');
             
-            // Load and initialize JavaScript fallback
-            const script = document.createElement('script');
-            script.src = '/static/js/skills-fallback.js';
-            script.onload = () => {
-                if (window.skillsFallback && window.skillsFallback.init()) {
-                    console.log('✅ JavaScript fallback loaded successfully');
-                    this.isInitialized = true;
-                } else {
-                    console.log('❌ Fallback failed, showing static fallback');
-                    this.showFallback();
-                }
-            };
-            script.onerror = () => {
-                console.log('❌ Could not load fallback, showing static skills');
-                this.showFallback();
-            };
-            document.head.appendChild(script);
+            // Load JavaScript fallback
+            this.loadJavaScriptFallback();
         }
+    }
+
+    loadJavaScriptFallback() {
+        console.log('📦 Loading JavaScript skills visualization...');
+        
+        // Create a simple fallback visualization
+        const canvas = document.getElementById('skills-canvas');
+        if (!canvas) {
+            console.error('Skills canvas not found');
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        // Skills data
+        const skills = [
+            { name: 'Rust', x: 100, y: 100, level: 95, color: '#CE422B' },
+            { name: 'JavaScript', x: 300, y: 150, level: 90, color: '#F7DF1E' },
+            { name: 'Python', x: 500, y: 120, level: 88, color: '#3776AB' },
+            { name: 'PHP', x: 200, y: 250, level: 92, color: '#777BB4' },
+            { name: 'Laravel', x: 400, y: 280, level: 90, color: '#FF2D20' },
+            { name: 'Vue.js', x: 150, y: 350, level: 85, color: '#4FC08D' },
+            { name: 'Docker', x: 350, y: 380, level: 88, color: '#2496ED' },
+            { name: 'AWS', x: 250, y: 180, level: 87, color: '#FF9900' }
+        ];
+
+        // Animation loop
+        let animationFrame = 0;
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw skills as animated circles
+            skills.forEach((skill, index) => {
+                const time = animationFrame * 0.01;
+                const radius = 20 + Math.sin(time + index) * 5;
+                const alpha = 0.7 + Math.sin(time * 2 + index) * 0.3;
+                
+                // Draw circle
+                ctx.beginPath();
+                ctx.arc(skill.x, skill.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = skill.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                ctx.fill();
+                
+                // Draw skill name
+                ctx.fillStyle = '#333';
+                ctx.font = '14px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(skill.name, skill.x, skill.y + radius + 20);
+                
+                // Draw level
+                ctx.font = '12px Inter, sans-serif';
+                ctx.fillStyle = '#666';
+                ctx.fillText(`${skill.level}%`, skill.x, skill.y + radius + 35);
+            });
+            
+            animationFrame++;
+            requestAnimationFrame(animate);
+        };
+        
+        animate();
+        console.log('✅ JavaScript skills visualization loaded');
+        this.isInitialized = true;
     }
 
     setupEventListeners() {
-        const canvas = document.getElementById('skills-canvas');
-        if (!canvas) return;
-
-        // Mouse move for hover effects
-        canvas.addEventListener('mousemove', (event) => {
-            if (!this.renderer || !this.isInitialized) return;
-            
-            const rect = canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            
-            this.renderer.handle_mouse_move(x, y);
-        });
-
-        // Mouse leave
-        canvas.addEventListener('mouseleave', () => {
-            if (!this.renderer || !this.isInitialized) return;
-            this.renderer.handle_mouse_leave();
-        });
-
-        // Window resize
-        window.addEventListener('resize', () => {
-            this.handleResize();
-        });
-    }
-
-    handleResize() {
-        if (!this.renderer || !this.isInitialized) return;
-        
+        // Add any event listeners here
         const canvas = document.getElementById('skills-canvas');
         if (canvas) {
-            const width = canvas.clientWidth;
-            const height = canvas.clientHeight;
-            this.renderer.resize(width, height);
+            canvas.addEventListener('click', (e) => {
+                console.log('Skills canvas clicked');
+            });
         }
     }
 
-    startAnimationLoop() {
-        const animate = (currentTime) => {
-            this.animationId = requestAnimationFrame(animate);
-
-            const deltaTime = (currentTime - this.lastTime) / 1000;
-            this.lastTime = currentTime;
-
-            this.update(deltaTime);
-            this.render();
-        };
-
-        animate(0);
+    startAnimation() {
+        if (this.isInitialized && this.renderer) {
+            // Start WASM animation
+            this.animate();
+        }
     }
 
-    update(deltaTime) {
+    animate() {
         if (this.renderer && this.isInitialized) {
-            this.renderer.update(deltaTime);
-        }
-    }
-
-    render() {
-        if (this.renderer && this.isInitialized) {
-            try {
-                this.renderer.render();
-            } catch (error) {
-                console.error('Render error:', error);
-            }
-        }
-    }
-
-    showFallback() {
-        const skillsContainer = document.querySelector('.skills-container');
-        if (skillsContainer) {
-            skillsContainer.innerHTML = `
-                <div style="
-                    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                    border-radius: 12px;
-                    padding: 40px;
-                    text-align: center;
-                ">
-                    <h3 style="color: #334155; margin-bottom: 20px;">🚀 Technical Expertise</h3>
-                    <div style="
-                        display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                        gap: 20px;
-                        margin-top: 30px;
-                    ">
-                        <div style="background: #777BB4; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>PHP</strong><br>
-                            <small>10+ years experience</small>
-                        </div>
-                        <div style="background: #FF2D20; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>Laravel</strong><br>
-                            <small>8+ years experience</small>
-                        </div>
-                        <div style="background: #F7DF1E; color: black; padding: 15px; border-radius: 8px;">
-                            <strong>JavaScript</strong><br>
-                            <small>9+ years experience</small>
-                        </div>
-                        <div style="background: #CE422B; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>Rust</strong><br>
-                            <small>2+ years experience</small>
-                        </div>
-                        <div style="background: #4FC08D; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>Vue.js</strong><br>
-                            <small>6+ years experience</small>
-                        </div>
-                        <div style="background: #3776AB; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>Python</strong><br>
-                            <small>8+ years experience</small>
-                        </div>
-                        <div style="background: #4479A1; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>MySQL</strong><br>
-                            <small>10+ years experience</small>
-                        </div>
-                        <div style="background: #2496ED; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>Docker</strong><br>
-                            <small>6+ years experience</small>
-                        </div>
-                        <div style="background: #FF9900; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>AWS</strong><br>
-                            <small>7+ years experience</small>
-                        </div>
-                    </div>
-                </div>
-            `;
+            this.renderer.render();
+            this.animationId = requestAnimationFrame(() => this.animate());
         }
     }
 
     destroy() {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
-            this.animationId = null;
         }
-
-        this.renderer = null;
         this.isInitialized = false;
-        console.log('🗑️ Clean Skills destroyed');
     }
 }
 
-// Auto-initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', async () => {
-    const skillsCanvas = document.getElementById('skills-canvas');
-    if (!skillsCanvas) {
-        console.log('Skills canvas not found, skipping Clean Skills');
-        return;
-    }
-
-    console.log('🚀 Starting Clean Skills...');
-    
-    // Initialize Clean Skills
-    window.cleanSkills = new CleanSkills();
-    await window.cleanSkills.init();
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    const skillsViz = new CleanSkills();
+    skillsViz.init();
 });
 
-export { CleanSkills };
+export default CleanSkills;

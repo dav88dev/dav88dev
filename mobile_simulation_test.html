@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Test</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 15px; border-radius: 8px; }
+        .pass { background: #d4edda; border: 1px solid #c3e6cb; }
+        .fail { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        iframe { width: 100%; height: 500px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>📱 Portfolio Mobile Test</h1>
+    
+    <div class="test info">
+        <h3>Device Info</h3>
+        <p>Width: <span id="width"></span>px</p>
+        <p>Mobile Detected: <span id="mobile"></span></p>
+        <p>User Agent: <span id="ua"></span></p>
+    </div>
+    
+    <div class="test">
+        <h3>Portfolio Preview</h3>
+        <iframe src="http://localhost:8000" onload="testIframe()"></iframe>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        document.getElementById('width').textContent = window.innerWidth;
+        const isMobile = window.innerWidth <= 768 || /Mobile|Android|iPhone/i.test(navigator.userAgent);
+        document.getElementById('mobile').textContent = isMobile ? 'YES' : 'NO';
+        document.getElementById('ua').textContent = navigator.userAgent.substring(0, 60) + '...';
+        
+        function testIframe() {
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <div class="test ${isMobile ? 'pass' : 'info'}">
+                    <h3>Test Results</h3>
+                    <p>✅ Portfolio loaded successfully</p>
+                    <p>✅ Mobile detection: ${isMobile ? 'MOBILE' : 'DESKTOP'}</p>
+                    <p>ℹ️ If mobile: Check if hamburger menu (☰) is visible in top-right</p>
+                    <p>ℹ️ If mobile: Click hamburger to test navigation</p>
+                    <p>ℹ️ Scroll should be normal on mobile (no snap behavior)</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

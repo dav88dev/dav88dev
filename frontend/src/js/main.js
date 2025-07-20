@@ -1,59 +1,15 @@
 // Import styles
 import '../css/style.css'
 
-// Immediately prevent any scroll on page load
-window.addEventListener('beforeunload', function() {
-    window.scrollTo(0, 0);
-});
-
 // Ensure page starts at top
 if (history.scrollRestoration) {
     history.scrollRestoration = 'manual';
 }
 
-// Force immediate scroll to top before any rendering
-window.scrollTo(0, 0);
-document.documentElement.scrollTop = 0;
-document.body.scrollTop = 0;
-
-// Disable scroll snap immediately
-document.documentElement.style.scrollSnapType = 'none';
-document.body.style.scrollSnapType = 'none';
-
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Aggressively force page to top multiple times
-    const forceToTop = () => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    };
-    
-    forceToTop();
-    
-    // Force to top again after a micro delay
-    requestAnimationFrame(forceToTop);
-    
-    // And once more after DOM is fully ready
-    setTimeout(forceToTop, 1);
-    
-    // Initialize GSAP (ScrollToPlugin will be available from CDN) - temporarily disable ScrollTrigger
-    // gsap.registerPlugin(ScrollTrigger); // Temporarily disabled for debugging
-    
-    // Initialize components with delay to ensure scroll position is set
-    setTimeout(() => {
-        initNavigation();
-        // initScrollAnimations(); // Temporarily disabled - uses ScrollTrigger
-        
-        // Re-enable scroll snap after everything is initialized - much longer delay
-        setTimeout(() => {
-            document.documentElement.style.scrollSnapType = 'y mandatory';
-            document.body.style.scrollSnapType = 'y mandatory';
-            
-            // Final force to top after scroll snap is re-enabled
-            forceToTop();
-        }, 2000); // Increased to 2 seconds
-    }, 50);
+    // Initialize components
+    initNavigation();
     initFormHandling();
     initSkillBars();
     initTiltEffect();
@@ -171,115 +127,6 @@ function initNavigation() {
     });
 }
 
-// Scroll animations
-function initScrollAnimations() {
-    // Fade in animations
-    gsap.utils.toArray('.section-header').forEach(header => {
-        gsap.from(header, {
-            scrollTrigger: {
-                trigger: header,
-                start: 'top 80%',
-                end: 'bottom 20%',
-                toggleActions: 'play none none reverse'
-            },
-            duration: 1,
-            y: 50,
-            opacity: 0,
-            ease: 'power2.out'
-        });
-    });
-    
-    // Timeline items animation - removed x transform to fix alignment
-    gsap.utils.toArray('.timeline-item').forEach((item, index) => {
-        gsap.from(item, {
-            scrollTrigger: {
-                trigger: item,
-                start: 'top 80%',
-                end: 'bottom 20%',
-                toggleActions: 'play none none reverse'
-            },
-            duration: 0.8,
-            ease: 'power2.out',
-            delay: index * 0.1
-        });
-    });
-    
-    // Project cards animation
-    gsap.utils.toArray('.project-card').forEach((card, index) => {
-        gsap.from(card, {
-            scrollTrigger: {
-                trigger: card,
-                start: 'top 80%',
-                end: 'bottom 20%',
-                toggleActions: 'play none none reverse'
-            },
-            duration: 0.8,
-            y: 100,
-            opacity: 0,
-            ease: 'power2.out',
-            delay: index * 0.1
-        });
-    });
-    
-    // Skills section now uses Three.js visualization - no GSAP animations needed
-    
-    // About content animation
-    gsap.from('.about-text', {
-        scrollTrigger: {
-            trigger: '.about-content',
-            start: 'top 80%',
-            end: 'bottom 20%',
-            toggleActions: 'play none none reverse'
-        },
-        duration: 1,
-        x: -50,
-        opacity: 0,
-        ease: 'power2.out'
-    });
-    
-    gsap.from('.about-visual', {
-        scrollTrigger: {
-            trigger: '.about-content',
-            start: 'top 80%',
-            end: 'bottom 20%',
-            toggleActions: 'play none none reverse'
-        },
-        duration: 1,
-        x: 50,
-        opacity: 0,
-        ease: 'power2.out'
-    });
-    
-    // Contact items animation
-    gsap.utils.toArray('.contact-item').forEach((item, index) => {
-        gsap.from(item, {
-            scrollTrigger: {
-                trigger: item,
-                start: 'top 80%',
-                end: 'bottom 20%',
-                toggleActions: 'play none none reverse'
-            },
-            duration: 0.8,
-            x: -50,
-            opacity: 0,
-            ease: 'power2.out',
-            delay: index * 0.1
-        });
-    });
-    
-    gsap.from('.contact-form', {
-        scrollTrigger: {
-            trigger: '.contact-form',
-            start: 'top 80%',
-            end: 'bottom 20%',
-            toggleActions: 'play none none reverse'
-        },
-        duration: 1,
-        scale: 0.9,
-        opacity: 0,
-        ease: 'power2.out'
-    });
-}
 
 // Form handling
 function initFormHandling() {
@@ -318,23 +165,19 @@ function initFormHandling() {
     }
 }
 
-// Skill bars animation
+// Skill bars animation - simplified without ScrollTrigger
 function initSkillBars() {
     const skillBars = document.querySelectorAll('.skill-bar');
     
-    skillBars.forEach(bar => {
-        gsap.from(bar, {
-            scrollTrigger: {
-                trigger: bar,
-                start: 'top 80%',
-                end: 'bottom 20%',
-                toggleActions: 'play none none reverse'
-            },
-            duration: 1.5,
-            width: 0,
-            ease: 'power2.out',
-            delay: 0.2
-        });
+    // Simple animation without scroll triggers
+    skillBars.forEach((bar, index) => {
+        setTimeout(() => {
+            gsap.from(bar, {
+                duration: 1.5,
+                width: 0,
+                ease: 'power2.out'
+            });
+        }, index * 200);
     });
 }
 
@@ -417,178 +260,10 @@ function initTiltEffect() {
     }
 }
 
-// Enhanced snap scrolling with navigation - disable on mobile
+// Simple navigation - normal website scrolling
 function initSmoothScroll() {
-    const navLinks = document.querySelectorAll('a[href^=\"#\"]');
-    const sections = document.querySelectorAll('section[id]');
-    
-    // Check if device is mobile
-    const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    if (isMobile) {
-        console.log('Mobile device detected, disabling enhanced scroll behavior');
-        // On mobile, just use simple scroll behavior
-        navLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href');
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                    targetElement.scrollIntoView({
-                        behavior: 'auto', // No smooth scrolling on mobile
-                        block: 'start'
-                    });
-                }
-            });
-        });
-        return; // Exit early for mobile
-    }
-    
-    // Navigate to specific section with snap behavior
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
-            
-            if (targetElement) {
-                // Use scrollIntoView for better snap behavior
-                targetElement.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-    
-    // Enhanced wheel scrolling for better snap control with Experience section handling
-    // Only apply on desktop
-    let isScrolling = false;
-    let scrollTimeout;
-    
-    window.addEventListener('wheel', function(e) {
-        if (isScrolling) return;
-        
-        clearTimeout(scrollTimeout);
-        
-        const currentSection = getCurrentSection();
-        
-        // Special handling for Experience section
-        if (currentSection && currentSection.id === 'experience') {
-            const experienceContainer = currentSection.querySelector('.container');
-            if (experienceContainer) {
-                const isAtTop = experienceContainer.scrollTop === 0;
-                const isAtBottom = experienceContainer.scrollTop + experienceContainer.clientHeight >= experienceContainer.scrollHeight - 10;
-                
-                // If scrolling down and not at bottom, scroll within experience section
-                if (e.deltaY > 0 && !isAtBottom) {
-                    return; // Let default scroll behavior handle it
-                }
-                
-                // If scrolling up and not at top, scroll within experience section
-                if (e.deltaY < 0 && !isAtTop) {
-                    return; // Let default scroll behavior handle it
-                }
-            }
-        }
-        
-        const direction = e.deltaY > 0 ? 1 : -1; // 1 for down, -1 for up
-        const nextSection = getNextSection(currentSection, direction);
-        
-        if (nextSection) {
-            e.preventDefault();
-            isScrolling = true;
-            
-            // Reset Experience section scroll position to top when entering
-            if (nextSection.id === 'experience') {
-                const experienceContainer = nextSection.querySelector('.container');
-                if (experienceContainer) {
-                    experienceContainer.scrollTop = 0;
-                }
-            }
-            
-            nextSection.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-            
-            // Reset scrolling flag after animation
-            setTimeout(() => {
-                isScrolling = false;
-            }, 1000);
-        }
-    }, { passive: false });
-    
-    // Get currently visible section
-    function getCurrentSection() {
-        const scrollPos = window.scrollY + window.innerHeight / 2;
-        let currentSection = sections[0];
-        
-        sections.forEach(section => {
-            if (section.offsetTop <= scrollPos) {
-                currentSection = section;
-            }
-        });
-        
-        return currentSection;
-    }
-    
-    // Get next section based on direction
-    function getNextSection(currentSection, direction) {
-        const currentIndex = Array.from(sections).indexOf(currentSection);
-        const nextIndex = currentIndex + direction;
-        
-        if (nextIndex >= 0 && nextIndex < sections.length) {
-            return sections[nextIndex];
-        }
-        
-        return null;
-    }
-    
-    // Keyboard navigation for sections - only on desktop
-    document.addEventListener('keydown', function(e) {
-        if (isScrolling) return;
-        
-        let direction = 0;
-        
-        switch(e.key) {
-            case 'ArrowDown':
-            case 'PageDown':
-                direction = 1;
-                break;
-            case 'ArrowUp':
-            case 'PageUp':
-                direction = -1;
-                break;
-            case 'Home':
-                sections[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
-                return;
-            case 'End':
-                sections[sections.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
-                return;
-            default:
-                return;
-        }
-        
-        if (direction !== 0) {
-            e.preventDefault();
-            const currentSection = getCurrentSection();
-            const nextSection = getNextSection(currentSection, direction);
-            
-            if (nextSection) {
-                isScrolling = true;
-                nextSection.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-                
-                setTimeout(() => {
-                    isScrolling = false;
-                }, 1000);
-            }
-        }
-    });
+    // Just enable normal anchor link behavior - no custom scroll logic
+    console.log('Using normal website scrolling behavior');
 }
 
 // Utility functions

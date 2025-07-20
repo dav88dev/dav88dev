@@ -1,11 +1,4 @@
 User-agent: *
 Allow: /
 
-# Allow search engines to crawl everything
-Disallow: 
-
-# Sitemaps
-Sitemap: https://dav88.dev/sitemap.xml
-
-# Crawl-delay for better server performance
-Crawl-delay: 1
+Sitemap: https://dav88.dev/static/sitemap.xml
