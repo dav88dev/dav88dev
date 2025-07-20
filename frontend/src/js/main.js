@@ -417,10 +417,32 @@ function initTiltEffect() {
     }
 }
 
-// Enhanced snap scrolling with navigation
+// Enhanced snap scrolling with navigation - disable on mobile
 function initSmoothScroll() {
     const navLinks = document.querySelectorAll('a[href^=\"#\"]');
     const sections = document.querySelectorAll('section[id]');
+    
+    // Check if device is mobile
+    const isMobile = window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+        console.log('Mobile device detected, disabling enhanced scroll behavior');
+        // On mobile, just use simple scroll behavior
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'auto', // No smooth scrolling on mobile
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        return; // Exit early for mobile
+    }
     
     // Navigate to specific section with snap behavior
     navLinks.forEach(link => {
@@ -441,6 +463,7 @@ function initSmoothScroll() {
     });
     
     // Enhanced wheel scrolling for better snap control with Experience section handling
+    // Only apply on desktop
     let isScrolling = false;
     let scrollTimeout;
     
@@ -523,7 +546,7 @@ function initSmoothScroll() {
         return null;
     }
     
-    // Keyboard navigation for sections
+    // Keyboard navigation for sections - only on desktop
     document.addEventListener('keydown', function(e) {
         if (isScrolling) return;
         

@@ -15,9 +15,9 @@ export default defineConfig({
     manifest: true,
     rollupOptions: {
       input: {
-        main: 'src/js/main.js',
-        threeScene: 'src/js/three-scene.js',
-        style: 'src/css/style.css'
+        main: './src/js/main.js',
+        threeScene: './src/js/three-scene.js',
+        style: './src/css/style.css'
       },
       output: {
         entryFileNames: 'js/[name]-[hash].js',
