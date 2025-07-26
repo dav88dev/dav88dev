@@ -90,6 +90,7 @@ impl SkillsCalculator {
             self.positions[i].y += float_offset;
         }
         
+        
         // Convert to JavaScript array format
         let result = Array::new();
         for pos in &self.positions {
@@ -156,6 +157,16 @@ impl SkillsCalculator {
     pub fn get_skills_count(&self) -> usize {
         self.skills.len()
     }
+
+    #[wasm_bindgen]
+    pub fn get_all_skills_data(&self) -> js_sys::Array {
+        let result = Array::new();
+        for skill in &self.skills {
+            let skill_js = serde_wasm_bindgen::to_value(skill).unwrap_or(JsValue::NULL);
+            result.push(&skill_js);
+        }
+        result
+    }
     
     #[wasm_bindgen]
     pub fn get_skill_data(&self, index: usize) -> JsValue {
@@ -219,6 +230,15 @@ impl WasmApp {
             calculator.get_hover_info(x, y, "")
         } else {
             JsValue::NULL
+        }
+    }
+    
+    #[wasm_bindgen]
+    pub fn get_all_skills_data(&self) -> js_sys::Array {
+        if let Some(calculator) = &self.skills_calculator {
+            calculator.get_all_skills_data()
+        } else {
+            Array::new()
         }
     }
     
