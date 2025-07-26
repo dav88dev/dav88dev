@@ -1,63 +1,19 @@
 // Import styles
 import '../css/style.css'
 
-// Immediately prevent any scroll on page load
-window.addEventListener('beforeunload', function() {
-    window.scrollTo(0, 0);
-});
-
-// Ensure page starts at top
-if (history.scrollRestoration) {
-    history.scrollRestoration = 'manual';
-}
-
-// Force immediate scroll to top before any rendering
-window.scrollTo(0, 0);
-document.documentElement.scrollTop = 0;
-document.body.scrollTop = 0;
-
-// Disable scroll snap immediately
-document.documentElement.style.scrollSnapType = 'none';
-document.body.style.scrollSnapType = 'none';
-
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Aggressively force page to top multiple times
-    const forceToTop = () => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-    };
+    console.log('🚀 Initializing website - scroll snap permanently disabled...');
     
-    forceToTop();
+    // Initialize GSAP without ScrollTrigger for now
+    // gsap.registerPlugin(ScrollTrigger); // Disabled - scroll snap removed
     
-    // Force to top again after a micro delay
-    requestAnimationFrame(forceToTop);
-    
-    // And once more after DOM is fully ready
-    setTimeout(forceToTop, 1);
-    
-    // Initialize GSAP (ScrollToPlugin will be available from CDN) - temporarily disable ScrollTrigger
-    // gsap.registerPlugin(ScrollTrigger); // Temporarily disabled for debugging
-    
-    // Initialize components with delay to ensure scroll position is set
-    setTimeout(() => {
-        initNavigation();
-        // initScrollAnimations(); // Temporarily disabled - uses ScrollTrigger
-        
-        // Re-enable scroll snap after everything is initialized - much longer delay
-        setTimeout(() => {
-            document.documentElement.style.scrollSnapType = 'y mandatory';
-            document.body.style.scrollSnapType = 'y mandatory';
-            
-            // Final force to top after scroll snap is re-enabled
-            forceToTop();
-        }, 2000); // Increased to 2 seconds
-    }, 50);
+    // Initialize components normally
+    initNavigation();
     initFormHandling();
     initSkillBars();
     initTiltEffect();
-    initSmoothScroll();
+    // initSmoothScroll(); // Disabled - contained scroll snap behavior
     initCursorEffects();
     initParticleSystem();
     initTypingEffect();
@@ -111,33 +67,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Navigation functionality
 function initNavigation() {
-    const navbar = document.querySelector('.navbar');
-    const hamburger = document.querySelector('.hamburger');
-    const navMenu = document.querySelector('.nav-menu');
-    const navLinks = document.querySelectorAll('.nav-link');
-    
-    // Navbar scroll effect
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 100) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    });
-    
-    // Mobile menu toggle
-    hamburger.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        hamburger.classList.toggle('active');
-    });
-    
-    // Close mobile menu when clicking nav links
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            navMenu.classList.remove('active');
-            hamburger.classList.remove('active');
+    // Desktop navigation scroll effect
+    const desktopNavbar = document.querySelector('.desktop-navbar');
+    if (desktopNavbar) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 100) {
+                desktopNavbar.classList.add('scrolled');
+            } else {
+                desktopNavbar.classList.remove('scrolled');
+            }
         });
-    });
+    }
+    
+    // COMPLETELY SEPARATE Mobile navigation
+    const mobileHamburger = document.getElementById('mobileHamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileLinks = document.querySelectorAll('.mobile-link');
+    
+    if (mobileHamburger && mobileMenu) {
+        // Mobile hamburger click
+        mobileHamburger.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            mobileHamburger.classList.toggle('active');
+            mobileMenu.classList.toggle('active');
+            
+            // Prevent body scroll when menu is open
+            if (mobileMenu.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        });
+        
+        // Close mobile menu when mobile link is clicked
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileHamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Close mobile menu when escape key is pressed
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileMenu.classList.contains('active')) {
+                mobileHamburger.classList.remove('active');
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
     
     // Active nav link highlighting and footer visibility
     const sections = document.querySelectorAll('section[id]');
@@ -855,10 +836,7 @@ function initParallaxEffect() {
 
 // Enhanced preloader functionality
 window.addEventListener('load', () => {
-    // Final aggressive scroll position reset after everything is loaded
-    window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    // Scroll position management removed - allow natural scrolling
     
     const loader = document.getElementById('loader');
     if (loader) {
