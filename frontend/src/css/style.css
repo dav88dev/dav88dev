@@ -387,7 +387,7 @@ body {
 
 /* Hero Section */
 .hero {
-    min-height: 100vh;
+    min-height: 103vh; /* Extra height to ensure full screen coverage across devices */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -649,9 +649,9 @@ body {
     width: 100%;
 }
 
-/* Sections - natural height, no viewport constraints */
+/* Sections - full viewport height for consistent scrolling experience */
 section {
-    min-height: auto;
+    min-height: 103vh; /* Ensures each section can fill full screen when scrolling */
     padding: 5rem 0;
     display: flex;
     align-items: center;
