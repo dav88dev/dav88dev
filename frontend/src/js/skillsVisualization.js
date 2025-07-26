@@ -336,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof THREE !== 'undefined') {
             initSkillsVisualization();
         } else {
-            console.warn('Three.js not loaded, skills visualization disabled');
+            // Three.js not loaded, skills visualization disabled
         }
     }, 1000);
 });

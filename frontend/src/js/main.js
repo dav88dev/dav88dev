@@ -3,7 +3,7 @@ import '../css/style.css'
 
 // Main JavaScript functionality
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Initializing website - scroll snap permanently disabled...');
+    // Website initialization - scroll snap permanently disabled
     
     // Initialize GSAP without ScrollTrigger for now
     // gsap.registerPlugin(ScrollTrigger); // Disabled - scroll snap removed
@@ -786,7 +786,7 @@ function initPerformanceMonitoring() {
         setInterval(() => {
             const memoryUsage = performance.memory.usedJSHeapSize / 1024 / 1024;
             if (memoryUsage > 50) { // 50MB threshold
-                console.warn('High memory usage detected:', memoryUsage.toFixed(2) + 'MB');
+                // High memory usage detected: reduce performance
             }
         }, 10000);
     }
@@ -797,10 +797,10 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(registration => {
-                console.log('SW registered: ', registration);
+                // Service worker registered successfully
             })
             .catch(registrationError => {
-                console.log('SW registration failed: ', registrationError);
+                // Service worker registration failed silently
             });
     });
 }
