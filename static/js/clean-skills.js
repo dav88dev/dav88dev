@@ -10,7 +10,7 @@ class CleanSkills {
     }
 
     async init() {
-        console.log('🎨 Initializing Clean Skills Visualization...');
+        // Initializing Clean Skills Visualization
         
         try {
             // Using JavaScript fallback for reliable skills visualization
@@ -18,22 +18,22 @@ class CleanSkills {
             throw new Error('Using JavaScript fallback for optimal performance');
             
         } catch (error) {
-            console.log('💫 Loading optimized JavaScript skills visualization:', error.message);
+            // Loading optimized JavaScript skills visualization fallback
             
             // Load and initialize JavaScript fallback
             const script = document.createElement('script');
             script.src = '/static/js/skills-fallback.js';
             script.onload = () => {
                 if (window.skillsFallback && window.skillsFallback.init()) {
-                    console.log('✅ JavaScript fallback loaded successfully');
+                    // JavaScript fallback loaded successfully
                     this.isInitialized = true;
                 } else {
-                    console.log('❌ Fallback failed, showing static fallback');
+                    // Fallback failed, showing static fallback
                     this.showFallback();
                 }
             };
             script.onerror = () => {
-                console.log('❌ Could not load fallback, showing static skills');
+                // Could not load fallback, showing static skills
                 this.showFallback();
             };
             document.head.appendChild(script);
@@ -175,7 +175,7 @@ class CleanSkills {
 
         this.renderer = null;
         this.isInitialized = false;
-        console.log('🗑️ Clean Skills destroyed');
+        // Clean Skills destroyed
     }
 }
 
@@ -183,11 +183,11 @@ class CleanSkills {
 document.addEventListener('DOMContentLoaded', async () => {
     const skillsCanvas = document.getElementById('skills-canvas');
     if (!skillsCanvas) {
-        console.log('Skills canvas not found, skipping Clean Skills');
+        // Skills canvas not found, skipping Clean Skills
         return;
     }
 
-    console.log('🚀 Starting Clean Skills...');
+    // Starting Clean Skills initialization
     
     // Initialize Clean Skills
     window.cleanSkills = new CleanSkills();
