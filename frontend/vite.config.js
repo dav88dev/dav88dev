@@ -14,6 +14,7 @@ export default defineConfig({
     emptyOutDir: false,
     manifest: true,
     rollupOptions: {
+      external: ['three'],
       input: {
         main: 'src/js/main.js',
         threeScene: 'src/js/three-scene.js',

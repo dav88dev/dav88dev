@@ -1,3 +1,6 @@
+// Three.js ES module imports for r150+ compatibility
+import * as THREE from 'three';
+
 class ThreeScene {
     constructor() {
         this.scene = null;
@@ -637,3 +640,6 @@ window.addEventListener('beforeunload', () => {
         threeScene.destroy();
     }
 });
+
+// Export for ES module compatibility
+export { ThreeScene };
