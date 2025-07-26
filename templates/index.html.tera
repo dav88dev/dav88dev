@@ -378,7 +378,7 @@
     <!-- Sticky footer at bottom -->
     <footer class="footer" role="contentinfo">
         <div class="footer-content">
-            <p>&copy; 2025 {{ cv_data.personal_info.name }}. All rights reserved. Elite Software Engineering Excellence.</p>
+            <p>&copy; 2025 {{ cv_data.personal_info.name }}. All rights reserved. Elite Software Engineering.</p>
             <div class="footer-social" role="navigation" aria-label="Social media links">
                 <a href="https://github.com/dav88dev" target="_blank" rel="noopener noreferrer" class="social-link" aria-label="Visit David's GitHub profile">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
