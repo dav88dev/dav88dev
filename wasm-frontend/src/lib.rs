@@ -8,9 +8,11 @@ use glam::Vec3;
 mod pure_rust_renderer;
 mod simple_skills_renderer;
 mod clean_skills_renderer;
+mod full_wasm_renderer;
 pub use pure_rust_renderer::PureRustRenderer;
 pub use simple_skills_renderer::SimpleSkillsRenderer;
 pub use clean_skills_renderer::CleanSkillsRenderer;
+pub use full_wasm_renderer::FullWasmRenderer;
 
 // Enable logging and panic handling
 #[wasm_bindgen(start)]
