@@ -34,6 +34,8 @@ features = [
   "CanvasRenderingContext2d",
   "CanvasGradient",
   "WebGlRenderingContext",
+  "DomRect",
+  "CssStyleDeclaration",
 ]
 
 # Optional: For direct 3D rendering (alternative to Three.js)

@@ -405,7 +405,7 @@
     <script src="{{ assets.js_main }}" type="module"></script>
     <script src="{{ assets.js_three_scene }}" type="module"></script>
     <!-- Clean WASM Skills Visualization (Simple & Elegant) -->
-    <script src="/static/js/clean-skills.js" type="module"></script>
+    <script src="/static/js/full-wasm-skills.js" type="module"></script>
     <!-- Legacy browser support -->
     <script nomodule src="{{ assets.js_polyfills_legacy }}"></script>
     <script nomodule src="{{ assets.js_main_legacy }}"></script>
