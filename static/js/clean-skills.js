@@ -118,20 +118,36 @@ class CleanSkills {
 
         // Initialize skills array if not exists
         if (!this.wasmSkills) {
-            this.wasmSkills = [
-                { name: 'ML', x: 0, y: 0, baseX: 0, baseY: 0, color: '#f59e0b', description: 'Machine Learning expertise with TensorFlow and more' },
-                { name: 'PHP', x: 0, y: 0, baseX: 0, baseY: 0, color: '#777BB4', description: 'Backend development with 10+ years experience' },
-                { name: 'Laravel', x: 0, y: 0, baseX: 0, baseY: 0, color: '#FF2D20', description: 'Full-stack Laravel development since 2016' },
-                { name: 'JavaScript', x: 0, y: 0, baseX: 0, baseY: 0, color: '#F7DF1E', description: 'Frontend and Node.js development' },
-                { name: 'Rust', x: 0, y: 0, baseX: 0, baseY: 0, color: '#CE422B', description: 'Systems programming and WebAssembly' },
-                { name: 'Vue.js', x: 0, y: 0, baseX: 0, baseY: 0, color: '#4FC08D', description: 'Modern reactive frontend frameworks' },
-                { name: 'Python', x: 0, y: 0, baseX: 0, baseY: 0, color: '#3776AB', description: 'Data science and backend automation' },
-                { name: 'MySQL', x: 0, y: 0, baseX: 0, baseY: 0, color: '#4479A1', description: 'Database design and optimization' },
-                { name: 'Docker', x: 0, y: 0, baseX: 0, baseY: 0, color: '#2496ED', description: 'Containerization and DevOps' },
-                { name: 'AWS', x: 0, y: 0, baseX: 0, baseY: 0, color: '#FF9900', description: 'Cloud infrastructure and services' },
-                { name: 'Kubernetes', x: 0, y: 0, baseX: 0, baseY: 0, color: '#326CE5', description: 'Container orchestration' },
-                { name: 'Redis', x: 0, y: 0, baseX: 0, baseY: 0, color: '#DC382D', description: 'Caching and session management' }
-            ];
+            // Get skills from WASM with modified names
+            if (this.wasmApp) {
+                const wasmSkillsArray = this.wasmApp.get_all_skills_data();
+                this.wasmSkills = [];
+                for (let i = 0; i < wasmSkillsArray.length; i++) {
+                    const skillData = wasmSkillsArray[i];
+                    this.wasmSkills.push({
+                        name: skillData.name,
+                        x: 0, y: 0, baseX: 0, baseY: 0,
+                        color: skillData.color,
+                        description: this.getSkillDescription(skillData.name)
+                    });
+                }
+            } else {
+                // Fallback if WASM not available
+                this.wasmSkills = [
+                    { name: 'ML', x: 0, y: 0, baseX: 0, baseY: 0, color: '#f59e0b', description: 'Machine Learning expertise with TensorFlow and more' },
+                    { name: 'PHP', x: 0, y: 0, baseX: 0, baseY: 0, color: '#777BB4', description: 'Backend development with 10+ years experience' },
+                    { name: 'Laravel', x: 0, y: 0, baseX: 0, baseY: 0, color: '#FF2D20', description: 'Full-stack Laravel development since 2016' },
+                    { name: 'JavaScript', x: 0, y: 0, baseX: 0, baseY: 0, color: '#F7DF1E', description: 'Frontend and Node.js development' },
+                    { name: 'Rust', x: 0, y: 0, baseX: 0, baseY: 0, color: '#CE422B', description: 'Systems programming and WebAssembly' },
+                    { name: 'Vue.js', x: 0, y: 0, baseX: 0, baseY: 0, color: '#4FC08D', description: 'Modern reactive frontend frameworks' },
+                    { name: 'Python', x: 0, y: 0, baseX: 0, baseY: 0, color: '#3776AB', description: 'Data science and backend automation' },
+                    { name: 'MySQL', x: 0, y: 0, baseX: 0, baseY: 0, color: '#4479A1', description: 'Database design and optimization' },
+                    { name: 'Docker', x: 0, y: 0, baseX: 0, baseY: 0, color: '#2496ED', description: 'Containerization and DevOps' },
+                    { name: 'AWS', x: 0, y: 0, baseX: 0, baseY: 0, color: '#FF9900', description: 'Cloud infrastructure and services' },
+                    { name: 'Kubernetes', x: 0, y: 0, baseX: 0, baseY: 0, color: '#326CE5', description: 'Container orchestration' },
+                    { name: 'Redis', x: 0, y: 0, baseX: 0, baseY: 0, color: '#DC382D', description: 'Caching and session management' }
+                ];
+            }
 
             this.wasmConnections = [
                 ['PHP', 'Laravel'], ['Laravel', 'MySQL'], ['JavaScript', 'Vue.js'], 
@@ -216,6 +232,24 @@ class CleanSkills {
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText(skill.name, skill.x, skill.y);
         });
+    }
+
+    getSkillDescription(skillName) {
+        const descriptions = {
+            'ML': 'Machine Learning expertise with TensorFlow and more',
+            'PHP': 'Backend development with 10+ years experience',
+            'Laravel': 'Full-stack Laravel development since 2016',
+            'JavaScript': 'Frontend and Node.js development',
+            'Rust': 'Systems programming and WebAssembly',
+            'Vue.js': 'Modern reactive frontend frameworks',
+            'Python': 'Data science and backend automation',
+            'MySQL': 'Database design and optimization',
+            'Docker': 'Containerization and DevOps',
+            'AWS': 'Cloud infrastructure and services',
+            'Kubernetes': 'Container orchestration',
+            'Redis': 'Caching and session management'
+        };
+        return descriptions[skillName] || 'Technology expertise';
     }
 
     setupWasmEventListeners() {
