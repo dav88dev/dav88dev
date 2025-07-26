@@ -1,5 +1,6 @@
 // Three.js Skills 3D Visualization
-// Three.js is loaded via CDN in the HTML template
+// Three.js ES module imports for r150+ compatibility
+import * as THREE from 'three';
 
 class SkillsVisualization {
     constructor() {
@@ -339,3 +340,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 1000);
 });
+
+// Export for ES module compatibility
+export { SkillsVisualization };
