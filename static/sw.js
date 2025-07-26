@@ -5,7 +5,7 @@ const urlsToCache = [
   '/static/js/main.js',
   '/static/js/three-scene.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-  'https://unpkg.com/three@0.158.0/build/three.min.js',
+  'https://unpkg.com/three@0.158.0/build/three.module.js',
   'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js'
 ];
 
