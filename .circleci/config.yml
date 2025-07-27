@@ -295,7 +295,7 @@ jobs:
             docker load -i portfolio.tar.gz
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:2zvc1x0c8PdxK/ycJfOlTDJrwy8bdFT5qRZIk86GoqI"
+            - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
       - run:
           name: Deploy to production
           command: |
@@ -306,11 +306,11 @@ jobs:
             docker save portfolio:${CIRCLE_SHA1} | gzip > portfolio.tar.gz
             
             # Transfer image to server (CircleCI handles SSH key automatically)
-            scp -o StrictHostKeyChecking=no portfolio.tar.gz ubuntu@129.153.229.28:/tmp/
+            scp -o StrictHostKeyChecking=no portfolio.tar.gz ubuntu@129.80.170.232:/tmp/
             
             # Deploy on production server
             export DEPLOY_TAG=${CIRCLE_SHA1}
-            ssh -o StrictHostKeyChecking=no ubuntu@129.153.229.28 "DEPLOY_TAG=$DEPLOY_TAG bash -s" \<< 'DEPLOY_SCRIPT'
+            ssh -o StrictHostKeyChecking=no ubuntu@129.80.170.232 "DEPLOY_TAG=$DEPLOY_TAG bash -s" \<< 'DEPLOY_SCRIPT'
               # Load new image
               cd /tmp
               docker load < portfolio.tar.gz
