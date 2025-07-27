@@ -234,7 +234,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - docker/check
       - run:
           name: Build Docker image
           command: |
