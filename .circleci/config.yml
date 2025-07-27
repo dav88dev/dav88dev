@@ -328,14 +328,16 @@ jobs:
               docker stop portfolio || true
               docker rm portfolio || true
               
-              # Start new container
+              # Start new container with auto-restart
               docker run -d \
                 --name portfolio \
-                --restart unless-stopped \
+                --restart always \
                 -p 80:8000 \
                 -e RUST_LOG=info \
                 -e HOST=0.0.0.0 \
                 -e PORT=8000 \
+                --memory="512m" \
+                --cpus="0.5" \
                 portfolio:$DEPLOY_TAG
               
               # Health check
