@@ -1,10 +1,6 @@
-use axum::{
-    extract::Extension,
-    response::Json,
-    http::StatusCode,
-};
+use crate::models::{ApiResponse, CVData};
+use axum::{extract::Extension, http::StatusCode, response::Json};
 use std::sync::Arc;
-use crate::models::{CVData, ApiResponse};
 
 pub async fn get_cv_data(
     Extension(cv_data): Extension<Arc<CVData>>,

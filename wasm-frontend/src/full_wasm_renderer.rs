@@ -1,7 +1,7 @@
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Element, HtmlElement};
-use serde::{Deserialize, Serialize};
+use web_sys::{CanvasRenderingContext2d, Element, HtmlCanvasElement, HtmlElement};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
@@ -189,16 +189,46 @@ impl FullWasmRenderer {
 
         // Initialize connections
         let connections = vec![
-            Connection { from: "PHP".to_string(), to: "Laravel".to_string() },
-            Connection { from: "Laravel".to_string(), to: "MySQL".to_string() },
-            Connection { from: "JavaScript".to_string(), to: "Vue.js".to_string() },
-            Connection { from: "Python".to_string(), to: "AWS".to_string() },
-            Connection { from: "Docker".to_string(), to: "Kubernetes".to_string() },
-            Connection { from: "MySQL".to_string(), to: "Redis".to_string() },
-            Connection { from: "AWS".to_string(), to: "Docker".to_string() },
-            Connection { from: "Rust".to_string(), to: "JavaScript".to_string() },
-            Connection { from: "PHP".to_string(), to: "JavaScript".to_string() },
-            Connection { from: "Python".to_string(), to: "Docker".to_string() },
+            Connection {
+                from: "PHP".to_string(),
+                to: "Laravel".to_string(),
+            },
+            Connection {
+                from: "Laravel".to_string(),
+                to: "MySQL".to_string(),
+            },
+            Connection {
+                from: "JavaScript".to_string(),
+                to: "Vue.js".to_string(),
+            },
+            Connection {
+                from: "Python".to_string(),
+                to: "AWS".to_string(),
+            },
+            Connection {
+                from: "Docker".to_string(),
+                to: "Kubernetes".to_string(),
+            },
+            Connection {
+                from: "MySQL".to_string(),
+                to: "Redis".to_string(),
+            },
+            Connection {
+                from: "AWS".to_string(),
+                to: "Docker".to_string(),
+            },
+            Connection {
+                from: "Rust".to_string(),
+                to: "JavaScript".to_string(),
+            },
+            Connection {
+                from: "PHP".to_string(),
+                to: "JavaScript".to_string(),
+            },
+            Connection {
+                from: "Python".to_string(),
+                to: "Docker".to_string(),
+            },
         ];
 
         let rect = canvas.get_bounding_client_rect();
@@ -227,21 +257,25 @@ impl FullWasmRenderer {
     fn setup_canvas_size(&mut self) -> Result<(), JsValue> {
         let rect = self.canvas.get_bounding_client_rect();
         let device_pixel_ratio = web_sys::window().unwrap().device_pixel_ratio();
-        
+
         let width = rect.width() * device_pixel_ratio;
         let height = rect.height() * device_pixel_ratio;
-        
+
         self.canvas.set_width(width as u32);
         self.canvas.set_height(height as u32);
-        
+
         self.ctx.scale(device_pixel_ratio, device_pixel_ratio)?;
-        
-        self.canvas.style().set_property("width", &format!("{}px", rect.width()))?;
-        self.canvas.style().set_property("height", &format!("{}px", rect.height()))?;
-        
+
+        self.canvas
+            .style()
+            .set_property("width", &format!("{}px", rect.width()))?;
+        self.canvas
+            .style()
+            .set_property("height", &format!("{}px", rect.height()))?;
+
         self.canvas_width = rect.width() as f32;
         self.canvas_height = rect.height() as f32;
-        
+
         Ok(())
     }
 
@@ -256,7 +290,8 @@ impl FullWasmRenderer {
 
         // Orbiting skills
         for i in 1..self.skills.len() {
-            let angle = ((i - 1) as f32 / (self.skills.len() - 1) as f32) * std::f32::consts::PI * 2.0;
+            let angle =
+                ((i - 1) as f32 / (self.skills.len() - 1) as f32) * std::f32::consts::PI * 2.0;
             self.skills[i].base_x = center_x + angle.cos() * radius;
             self.skills[i].base_y = center_y + angle.sin() * radius;
         }
@@ -265,23 +300,33 @@ impl FullWasmRenderer {
     #[wasm_bindgen]
     pub fn render(&mut self, delta_time: f32) -> Result<(), JsValue> {
         self.animation_time += delta_time;
-        
+
         // Update skill positions with floating animation
         for (index, skill) in self.skills.iter_mut().enumerate() {
             let time = self.animation_time + index as f32 * 0.5;
             let float_amount = if skill.name == "ML" { 4.0 } else { 8.0 };
             let float_speed = if skill.name == "ML" { 3.0 } else { 6.0 };
-            
+
             skill.x = skill.base_x + (time * 0.8).sin() * float_amount;
             skill.y = skill.base_y + (time * 0.6).cos() * float_speed;
         }
 
         // Clear canvas
-        self.ctx.clear_rect(0.0, 0.0, self.canvas_width as f64, self.canvas_height as f64);
-        
+        self.ctx.clear_rect(
+            0.0,
+            0.0,
+            self.canvas_width as f64,
+            self.canvas_height as f64,
+        );
+
         // Set background
         self.ctx.set_fill_style(&JsValue::from_str("#f8fafc"));
-        self.ctx.fill_rect(0.0, 0.0, self.canvas_width as f64, self.canvas_height as f64);
+        self.ctx.fill_rect(
+            0.0,
+            0.0,
+            self.canvas_width as f64,
+            self.canvas_height as f64,
+        );
 
         // Draw connections
         self.draw_connections()?;
@@ -299,7 +344,8 @@ impl FullWasmRenderer {
 
             if let (Some(from), Some(to)) = (from_skill, to_skill) {
                 let is_highlighted = if let Some(hovered_idx) = self.hovered_skill_index {
-                    self.skills[hovered_idx].name == from.name || self.skills[hovered_idx].name == to.name
+                    self.skills[hovered_idx].name == from.name
+                        || self.skills[hovered_idx].name == to.name
                 } else {
                     false
                 };
@@ -307,15 +353,16 @@ impl FullWasmRenderer {
                 self.ctx.begin_path();
                 self.ctx.move_to(from.x as f64, from.y as f64);
                 self.ctx.line_to(to.x as f64, to.y as f64);
-                
+
                 if is_highlighted {
                     self.ctx.set_stroke_style(&JsValue::from_str("#6366f1"));
                     self.ctx.set_line_width(3.0);
                 } else {
-                    self.ctx.set_stroke_style(&JsValue::from_str("rgba(99, 102, 241, 0.2)"));
+                    self.ctx
+                        .set_stroke_style(&JsValue::from_str("rgba(99, 102, 241, 0.2)"));
                     self.ctx.set_line_width(1.0);
                 }
-                
+
                 self.ctx.stroke();
             }
         }
@@ -327,7 +374,11 @@ impl FullWasmRenderer {
             let is_hovered = self.hovered_skill_index == Some(index);
             let is_central = skill.name == "ML";
             let base_radius = if is_central { 45.0 } else { 30.0 };
-            let radius = if is_hovered { base_radius * 1.2 } else { base_radius };
+            let radius = if is_hovered {
+                base_radius * 1.2
+            } else {
+                base_radius
+            };
 
             // Skill circle with glow effect
             self.ctx.begin_path();
@@ -357,17 +408,27 @@ impl FullWasmRenderer {
                 "#fff"
             };
             self.ctx.set_fill_style(&JsValue::from_str(text_color));
-            
+
             let font_size = if is_hovered {
-                if is_central { 16 } else { 12 }
+                if is_central {
+                    16
+                } else {
+                    12
+                }
             } else {
-                if is_central { 14 } else { 11 }
+                if is_central {
+                    14
+                } else {
+                    11
+                }
             };
-            
-            self.ctx.set_font(&format!("bold {}px Inter, sans-serif", font_size));
+
+            self.ctx
+                .set_font(&format!("bold {}px Inter, sans-serif", font_size));
             self.ctx.set_text_align("center");
             self.ctx.set_text_baseline("middle");
-            self.ctx.fill_text(&skill.name, skill.x as f64, skill.y as f64)?;
+            self.ctx
+                .fill_text(&skill.name, skill.x as f64, skill.y as f64)?;
         }
         Ok(())
     }

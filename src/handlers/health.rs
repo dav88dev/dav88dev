@@ -1,9 +1,6 @@
-use axum::{
-    response::Json,
-    http::StatusCode,
-};
-use serde_json::json;
+use axum::{http::StatusCode, response::Json};
 use chrono::Utc;
+use serde_json::json;
 
 pub async fn health_check() -> Result<Json<serde_json::Value>, StatusCode> {
     Ok(Json(json!({

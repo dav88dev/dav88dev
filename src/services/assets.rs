@@ -1,7 +1,7 @@
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
-use serde::{Deserialize, Serialize};
-use anyhow::Result;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssetInfo {
@@ -38,10 +38,13 @@ impl Default for AssetPaths {
 
 pub fn load_asset_paths(static_dir: &str) -> Result<AssetPaths> {
     let manifest_path = Path::new(static_dir).join(".vite/manifest.json");
-    
+
     // If manifest doesn't exist, return default paths for development
     if !manifest_path.exists() {
-        tracing::warn!("Vite manifest not found at {:?}, using default asset paths", manifest_path);
+        tracing::warn!(
+            "Vite manifest not found at {:?}, using default asset paths",
+            manifest_path
+        );
         return Ok(AssetPaths::default());
     }
 
@@ -53,7 +56,7 @@ pub fn load_asset_paths(static_dir: &str) -> Result<AssetPaths> {
     // Map Vite manifest entries to our asset paths
     for (key, asset) in manifest {
         let file_path = format!("/static/{}", asset.file);
-        
+
         match key.as_str() {
             "js/main.js" => asset_paths.js_main = file_path,
             "js/three-scene.js" => asset_paths.js_three_scene = file_path,

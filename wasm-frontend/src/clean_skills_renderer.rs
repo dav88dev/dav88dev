@@ -1,9 +1,9 @@
 // Clean, Simple Skills Renderer - Elegant and Readable
-use wasm_bindgen::prelude::*;
-use web_sys::{HtmlCanvasElement, CanvasRenderingContext2d, console};
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
+use wasm_bindgen::prelude::*;
+use web_sys::{console, CanvasRenderingContext2d, HtmlCanvasElement};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
@@ -169,24 +169,24 @@ impl CleanSkillsRenderer {
         let skills_count = self.skills.len();
         let cols = 4; // 4 columns
         let rows = (skills_count + cols - 1) / cols;
-        
+
         let margin = 80.0;
         let available_width = self.canvas_width - (margin * 2.0);
         let available_height = self.canvas_height - (margin * 2.0);
-        
+
         let cell_width = available_width / cols as f32;
         let cell_height = available_height / rows as f32;
-        
+
         self.skill_positions.clear();
         self.skill_sizes.clear();
-        
+
         for (i, _skill) in self.skills.iter().enumerate() {
             let row = i / cols;
             let col = i % cols;
-            
+
             let x = margin + (col as f32 * cell_width) + (cell_width / 2.0);
             let y = margin + (row as f32 * cell_height) + (cell_height / 2.0);
-            
+
             self.skill_positions.push(Vec2::new(x, y));
             self.skill_sizes.push(40.0); // Base size
         }
@@ -197,9 +197,9 @@ impl CleanSkillsRenderer {
         if !self.is_initialized {
             return;
         }
-        
+
         self.animation_time += delta_time * 0.5; // Slower animation
-        
+
         // Update skill sizes with gentle breathing animation
         for (i, base_size) in self.skill_sizes.iter_mut().enumerate() {
             let breathing = (self.animation_time * 2.0 + i as f32 * 0.5).sin() * 3.0;
@@ -217,7 +217,12 @@ impl CleanSkillsRenderer {
 
         // Clear canvas with clean light background
         context.set_fill_style(&JsValue::from_str("#f8fafc"));
-        context.fill_rect(0.0, 0.0, self.canvas_width as f64, self.canvas_height as f64);
+        context.fill_rect(
+            0.0,
+            0.0,
+            self.canvas_width as f64,
+            self.canvas_height as f64,
+        );
 
         // Draw connection lines first (so they appear behind skills)
         if let Some(hovered_index) = self.hovered_skill {
@@ -225,11 +230,16 @@ impl CleanSkillsRenderer {
         }
 
         // Draw skills
-        for (i, (skill, pos)) in self.skills.iter().zip(self.skill_positions.iter()).enumerate() {
+        for (i, (skill, pos)) in self
+            .skills
+            .iter()
+            .zip(self.skill_positions.iter())
+            .enumerate()
+        {
             let size = self.skill_sizes[i];
             let is_hovered = self.hovered_skill == Some(i);
             let is_connected = self.is_skill_connected(i);
-            
+
             self.draw_skill(context, skill, pos, size, is_hovered, is_connected)?;
         }
 
@@ -241,108 +251,178 @@ impl CleanSkillsRenderer {
         Ok(())
     }
 
-    fn draw_skill(&self, context: &CanvasRenderingContext2d, skill: &Skill, pos: &Vec2, size: f32, is_hovered: bool, is_connected: bool) -> Result<(), JsValue> {
-        let radius = if is_hovered { size * 1.3 } else if is_connected { size * 1.1 } else { size };
-        
+    fn draw_skill(
+        &self,
+        context: &CanvasRenderingContext2d,
+        skill: &Skill,
+        pos: &Vec2,
+        size: f32,
+        is_hovered: bool,
+        is_connected: bool,
+    ) -> Result<(), JsValue> {
+        let radius = if is_hovered {
+            size * 1.3
+        } else if is_connected {
+            size * 1.1
+        } else {
+            size
+        };
+
         // Draw shadow
         context.set_fill_style(&JsValue::from_str("rgba(0, 0, 0, 0.1)"));
         context.begin_path();
-        context.arc((pos.x + 3.0) as f64, (pos.y + 3.0) as f64, radius as f64, 0.0, PI as f64 * 2.0)?;
+        context.arc(
+            (pos.x + 3.0) as f64,
+            (pos.y + 3.0) as f64,
+            radius as f64,
+            0.0,
+            PI as f64 * 2.0,
+        )?;
         context.fill();
-        
+
         // Draw main circle with skill color
         context.set_fill_style(&JsValue::from_str(&skill.color));
         context.begin_path();
-        context.arc(pos.x as f64, pos.y as f64, radius as f64, 0.0, PI as f64 * 2.0)?;
+        context.arc(
+            pos.x as f64,
+            pos.y as f64,
+            radius as f64,
+            0.0,
+            PI as f64 * 2.0,
+        )?;
         context.fill();
-        
+
         // Draw white border
         context.set_stroke_style(&JsValue::from_str("white"));
         context.set_line_width(if is_hovered { 4.0 } else { 2.0 });
         context.begin_path();
-        context.arc(pos.x as f64, pos.y as f64, radius as f64, 0.0, PI as f64 * 2.0)?;
+        context.arc(
+            pos.x as f64,
+            pos.y as f64,
+            radius as f64,
+            0.0,
+            PI as f64 * 2.0,
+        )?;
         context.stroke();
-        
+
         // Draw skill name
         context.set_fill_style(&JsValue::from_str("white"));
-        context.set_font(&format!("bold {}px Arial", if is_hovered { 14 } else { 12 }));
+        context.set_font(&format!(
+            "bold {}px Arial",
+            if is_hovered { 14 } else { 12 }
+        ));
         context.set_text_align("center");
         context.set_text_baseline("middle");
         context.fill_text(&skill.name, pos.x as f64, pos.y as f64)?;
-        
+
         Ok(())
     }
 
-    fn draw_connections(&self, context: &CanvasRenderingContext2d, skill_index: usize) -> Result<(), JsValue> {
+    fn draw_connections(
+        &self,
+        context: &CanvasRenderingContext2d,
+        skill_index: usize,
+    ) -> Result<(), JsValue> {
         let hovered_skill = &self.skills[skill_index];
         let hovered_pos = &self.skill_positions[skill_index];
-        
+
         context.set_stroke_style(&JsValue::from_str(&hovered_skill.color));
         context.set_line_width(3.0);
-        
+
         for connection_name in &hovered_skill.connections {
-            if let Some(connected_index) = self.skills.iter().position(|s| &s.name == connection_name) {
+            if let Some(connected_index) =
+                self.skills.iter().position(|s| &s.name == connection_name)
+            {
                 let connected_pos = &self.skill_positions[connected_index];
-                
+
                 // Draw animated line
                 context.begin_path();
                 context.move_to(hovered_pos.x as f64, hovered_pos.y as f64);
                 context.line_to(connected_pos.x as f64, connected_pos.y as f64);
                 context.stroke();
-                
+
                 // Draw arrowhead
-                let angle = (connected_pos.y - hovered_pos.y).atan2(connected_pos.x - hovered_pos.x);
+                let angle =
+                    (connected_pos.y - hovered_pos.y).atan2(connected_pos.x - hovered_pos.x);
                 let arrow_size = 10.0;
                 let arrow_x = connected_pos.x - angle.cos() * 50.0;
                 let arrow_y = connected_pos.y - angle.sin() * 50.0;
-                
+
                 context.begin_path();
                 context.move_to(arrow_x as f64, arrow_y as f64);
-                context.line_to((arrow_x - arrow_size * (angle - 0.5).cos()) as f64, (arrow_y - arrow_size * (angle - 0.5).sin()) as f64);
-                context.line_to((arrow_x - arrow_size * (angle + 0.5).cos()) as f64, (arrow_y - arrow_size * (angle + 0.5).sin()) as f64);
+                context.line_to(
+                    (arrow_x - arrow_size * (angle - 0.5).cos()) as f64,
+                    (arrow_y - arrow_size * (angle - 0.5).sin()) as f64,
+                );
+                context.line_to(
+                    (arrow_x - arrow_size * (angle + 0.5).cos()) as f64,
+                    (arrow_y - arrow_size * (angle + 0.5).sin()) as f64,
+                );
                 context.close_path();
                 context.fill();
             }
         }
-        
+
         Ok(())
     }
 
-    fn draw_description(&self, context: &CanvasRenderingContext2d, skill_index: usize) -> Result<(), JsValue> {
+    fn draw_description(
+        &self,
+        context: &CanvasRenderingContext2d,
+        skill_index: usize,
+    ) -> Result<(), JsValue> {
         let skill = &self.skills[skill_index];
-        
+
         // Description box
         let box_width = 300.0;
         let box_height = 80.0;
         let box_x = 20.0;
         let box_y = self.canvas_height - box_height - 20.0;
-        
+
         // Draw box background
         context.set_fill_style(&JsValue::from_str("rgba(255, 255, 255, 0.95)"));
         context.set_stroke_style(&JsValue::from_str(&skill.color));
         context.set_line_width(2.0);
-        context.fill_rect(box_x as f64, box_y as f64, box_width as f64, box_height as f64);
-        context.stroke_rect(box_x as f64, box_y as f64, box_width as f64, box_height as f64);
-        
+        context.fill_rect(
+            box_x as f64,
+            box_y as f64,
+            box_width as f64,
+            box_height as f64,
+        );
+        context.stroke_rect(
+            box_x as f64,
+            box_y as f64,
+            box_width as f64,
+            box_height as f64,
+        );
+
         // Draw skill name
         context.set_fill_style(&JsValue::from_str(&skill.color));
         context.set_font("bold 16px Arial");
         context.set_text_align("left");
         context.fill_text(&skill.name, (box_x + 10.0) as f64, (box_y + 20.0) as f64)?;
-        
+
         // Draw experience
         context.set_fill_style(&JsValue::from_str("#666"));
         context.set_font("12px Arial");
-        context.fill_text(&format!("{} years experience", skill.years_experience), (box_x + 10.0) as f64, (box_y + 40.0) as f64)?;
-        
+        context.fill_text(
+            &format!("{} years experience", skill.years_experience),
+            (box_x + 10.0) as f64,
+            (box_y + 40.0) as f64,
+        )?;
+
         // Draw description (truncated)
         let truncated_desc = if skill.description.len() > 60 {
             format!("{}...", &skill.description[..57])
         } else {
             skill.description.clone()
         };
-        context.fill_text(&truncated_desc, (box_x + 10.0) as f64, (box_y + 60.0) as f64)?;
-        
+        context.fill_text(
+            &truncated_desc,
+            (box_x + 10.0) as f64,
+            (box_y + 60.0) as f64,
+        )?;
+
         Ok(())
     }
 
@@ -350,7 +430,7 @@ impl CleanSkillsRenderer {
         if let Some(hovered_index) = self.hovered_skill {
             let hovered_skill = &self.skills[hovered_index];
             let current_skill = &self.skills[skill_index];
-            
+
             // Check if current skill is in hovered skill's connections
             hovered_skill.connections.contains(&current_skill.name) ||
             // Or if hovered skill is in current skill's connections
@@ -363,7 +443,7 @@ impl CleanSkillsRenderer {
     #[wasm_bindgen]
     pub fn handle_mouse_move(&mut self, x: f32, y: f32) {
         self.hovered_skill = None;
-        
+
         for (i, pos) in self.skill_positions.iter().enumerate() {
             let distance = Vec2::new(x - pos.x, y - pos.y).length();
             if distance <= self.skill_sizes[i] + 10.0 {
