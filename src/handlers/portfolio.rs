@@ -1,13 +1,13 @@
-use axum::{
-    extract::Extension,
-    response::{Html, Response, Json},
-    http::StatusCode,
-};
-use std::sync::Arc;
-use tera::{Tera, Context};
-use serde_json::json;
 use crate::models::CVData;
 use crate::services::AssetPaths;
+use axum::{
+    extract::Extension,
+    http::StatusCode,
+    response::{Html, Json, Response},
+};
+use serde_json::json;
+use std::sync::Arc;
+use tera::{Context, Tera};
 
 pub async fn index(
     Extension(templates): Extension<Arc<Tera>>,

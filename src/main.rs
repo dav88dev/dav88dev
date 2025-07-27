@@ -6,23 +6,19 @@ use axum::{
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::{
-    compression::CompressionLayer,
-    cors::CorsLayer,
-    services::ServeDir,
-    trace::TraceLayer,
+    compression::CompressionLayer, cors::CorsLayer, services::ServeDir, trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 // Import our modules
 use personal_website::{
     config::AppConfig,
-    models::CVData,
     handlers::{
-        index, robots_txt, sitemap_xml, manifest_json,
-        get_cv_data, get_cv_json,
-        health_check, readiness_check,
+        get_cv_data, get_cv_json, health_check, index, manifest_json, readiness_check, robots_txt,
+        sitemap_xml,
     },
-    services::{template::create_template_engine, load_asset_paths},
+    models::CVData,
+    services::{load_asset_paths, template::create_template_engine},
 };
 
 #[tokio::main(flavor = "current_thread")]
@@ -76,8 +72,8 @@ async fn create_app(
     config: &AppConfig,
 ) -> anyhow::Result<Router> {
     // Static file service
-    let serve_dir = get_service(ServeDir::new(&config.static_dir))
-        .handle_error(|error| async move {
+    let serve_dir =
+        get_service(ServeDir::new(&config.static_dir)).handle_error(|error| async move {
             tracing::error!("Static file error: {}", error);
             (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
@@ -101,24 +97,20 @@ async fn create_app(
         .route("/robots.txt", get(robots_txt))
         .route("/sitemap.xml", get(sitemap_xml))
         .route("/manifest.json", get(manifest_json))
-        
         // API routes
-        .nest("/api", 
+        .nest(
+            "/api",
             Router::new()
                 .route("/cv", get(get_cv_data))
-                .route("/cv.json", get(get_cv_json))
-                // Future blog routes
-                // .route("/blog", get(get_blog_posts))
-                // .route("/blog", post(create_blog_post))
+                .route("/cv.json", get(get_cv_json)), // Future blog routes
+                                                      // .route("/blog", get(get_blog_posts))
+                                                      // .route("/blog", post(create_blog_post))
         )
-        
         // Health check routes
         .route("/health", get(health_check))
         .route("/ready", get(readiness_check))
-        
         // Static files
         .nest_service("/static", serve_dir)
-        
         // Apply middleware
         .layer(middleware);
 

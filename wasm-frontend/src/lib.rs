@@ -1,18 +1,18 @@
-use wasm_bindgen::prelude::*;
-use web_sys::{console, window, Element};
+use glam::Vec3;
 use js_sys::{Array, Object};
 use serde::{Deserialize, Serialize};
-use glam::Vec3;
+use wasm_bindgen::prelude::*;
+use web_sys::{console, window, Element};
 
 // Modules
-mod pure_rust_renderer;
-mod simple_skills_renderer;
 mod clean_skills_renderer;
 mod full_wasm_renderer;
-pub use pure_rust_renderer::PureRustRenderer;
-pub use simple_skills_renderer::SimpleSkillsRenderer;
+mod pure_rust_renderer;
+mod simple_skills_renderer;
 pub use clean_skills_renderer::CleanSkillsRenderer;
 pub use full_wasm_renderer::FullWasmRenderer;
+pub use pure_rust_renderer::PureRustRenderer;
+pub use simple_skills_renderer::SimpleSkillsRenderer;
 
 // Enable logging and panic handling
 #[wasm_bindgen(start)]
@@ -54,11 +54,11 @@ impl SkillsCalculator {
     pub fn new(skills_data: &str) -> Result<SkillsCalculator, JsValue> {
         let skills: Vec<Skill> = serde_json::from_str(skills_data)
             .map_err(|e| JsValue::from_str(&format!("Failed to parse skills: {}", e)))?;
-        
+
         let skill_count = skills.len();
         let positions = vec![Vec3::ZERO; skill_count];
         let target_positions = vec![Vec3::ZERO; skill_count];
-        
+
         Ok(SkillsCalculator {
             skills,
             positions,
@@ -67,30 +67,29 @@ impl SkillsCalculator {
             time: 0.0,
         })
     }
-    
+
     #[wasm_bindgen]
     pub fn set_animation_mode(&mut self, mode: &str) {
         self.animation_mode = mode.to_string();
         self.update_target_positions();
     }
-    
+
     #[wasm_bindgen]
     pub fn update(&mut self, delta_time: f32) -> js_sys::Array {
         self.time += delta_time;
-        
+
         // Update target positions based on animation mode
         self.update_target_positions();
-        
+
         // Smooth interpolation to target positions
         for i in 0..self.positions.len() {
             self.positions[i] = self.positions[i].lerp(self.target_positions[i], 0.02);
-            
+
             // Add floating animation
             let float_offset = (self.time * 2.0 + i as f32).sin() * 0.2;
             self.positions[i].y += float_offset;
         }
-        
-        
+
         // Convert to JavaScript array format
         let result = Array::new();
         for pos in &self.positions {
@@ -100,13 +99,13 @@ impl SkillsCalculator {
             pos_array.push(&JsValue::from_f64(pos.z as f64));
             result.push(&pos_array);
         }
-        
+
         result
     }
-    
+
     fn update_target_positions(&mut self) {
         let skill_count = self.skills.len() as f32;
-        
+
         for (i, target_pos) in self.target_positions.iter_mut().enumerate() {
             match self.animation_mode.as_str() {
                 "orbit" => {
@@ -134,25 +133,31 @@ impl SkillsCalculator {
             }
         }
     }
-    
+
     #[wasm_bindgen]
     pub fn get_hover_info(&self, _mouse_x: f32, _mouse_y: f32, _camera_matrix: &str) -> JsValue {
         // Simplified raycasting - in a real implementation, you'd want proper
         // 3D raycasting with the camera matrix
-        
+
         // For now, return the first skill for demonstration
         if !self.skills.is_empty() {
             let skill = &self.skills[0];
             let info = Object::new();
             js_sys::Reflect::set(&info, &"name".into(), &skill.name.clone().into()).unwrap();
-            js_sys::Reflect::set(&info, &"level".into(), &JsValue::from_f64(skill.level as f64)).unwrap();
-            js_sys::Reflect::set(&info, &"category".into(), &skill.category.clone().into()).unwrap();
+            js_sys::Reflect::set(
+                &info,
+                &"level".into(),
+                &JsValue::from_f64(skill.level as f64),
+            )
+            .unwrap();
+            js_sys::Reflect::set(&info, &"category".into(), &skill.category.clone().into())
+                .unwrap();
             info.into()
         } else {
             JsValue::NULL
         }
     }
-    
+
     #[wasm_bindgen]
     pub fn get_skills_count(&self) -> usize {
         self.skills.len()
@@ -167,7 +172,7 @@ impl SkillsCalculator {
         }
         result
     }
-    
+
     #[wasm_bindgen]
     pub fn get_skill_data(&self, index: usize) -> JsValue {
         if let Some(skill) = self.skills.get(index) {
@@ -194,20 +199,20 @@ impl WasmApp {
             is_initialized: false,
         }
     }
-    
+
     #[wasm_bindgen]
     pub fn init(&mut self, cv_data: &str) -> Result<(), JsValue> {
         console::log_1(&"Initializing WASM App...".into());
-        
+
         // Parse CV data and create skills calculator
         let skills_calculator = SkillsCalculator::new(cv_data)?;
         self.skills_calculator = Some(skills_calculator);
         self.is_initialized = true;
-        
+
         console::log_1(&"WASM App initialized successfully!".into());
         Ok(())
     }
-    
+
     #[wasm_bindgen]
     pub fn update_skills(&mut self, delta_time: f32) -> js_sys::Array {
         if let Some(calculator) = &mut self.skills_calculator {
@@ -216,14 +221,14 @@ impl WasmApp {
             Array::new()
         }
     }
-    
+
     #[wasm_bindgen]
     pub fn set_skills_animation_mode(&mut self, mode: &str) {
         if let Some(calculator) = &mut self.skills_calculator {
             calculator.set_animation_mode(mode);
         }
     }
-    
+
     #[wasm_bindgen]
     pub fn handle_mouse_hover(&self, x: f32, y: f32) -> JsValue {
         if let Some(calculator) = &self.skills_calculator {
@@ -232,7 +237,7 @@ impl WasmApp {
             JsValue::NULL
         }
     }
-    
+
     #[wasm_bindgen]
     pub fn get_all_skills_data(&self) -> js_sys::Array {
         if let Some(calculator) = &self.skills_calculator {
@@ -241,7 +246,7 @@ impl WasmApp {
             Array::new()
         }
     }
-    
+
     #[wasm_bindgen]
     pub fn is_ready(&self) -> bool {
         self.is_initialized
@@ -267,7 +272,7 @@ extern "C" {
     // Bind to Three.js functions if needed
     #[wasm_bindgen(js_namespace = THREE)]
     type Vector3;
-    
+
     #[wasm_bindgen(js_namespace = THREE)]
     type Scene;
 }

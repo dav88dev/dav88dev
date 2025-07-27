@@ -1,7 +1,7 @@
-pub mod template;
-pub mod database;
 pub mod assets;
+pub mod database;
+pub mod template;
 
-pub use template::*;
-pub use database::*;
 pub use assets::*;
+pub use database::*;
+pub use template::*;

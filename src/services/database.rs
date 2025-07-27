@@ -1,10 +1,10 @@
 // Database service module - prepared for SurrealDB integration
-// 
+//
 // This module will handle database operations when we add SurrealDB later.
 // For now, it contains the structure and interfaces for future implementation.
 
-use anyhow::Result;
 use crate::models::{BlogPost, CreateBlogPost};
+use anyhow::Result;
 
 #[allow(async_fn_in_trait)]
 pub trait BlogRepository {
@@ -18,7 +18,7 @@ pub trait BlogRepository {
 }
 
 // Future SurrealDB implementation
-// 
+//
 // When ready to add database:
 // 1. Add surrealdb dependency to Cargo.toml
 // 2. Implement SurrealDbRepository struct
@@ -70,7 +70,11 @@ impl BlogRepository for InMemoryBlogRepository {
         anyhow::bail!("Not implemented - database required")
     }
 
-    async fn update_post(&self, _id: uuid::Uuid, _post: CreateBlogPost) -> Result<Option<BlogPost>> {
+    async fn update_post(
+        &self,
+        _id: uuid::Uuid,
+        _post: CreateBlogPost,
+    ) -> Result<Option<BlogPost>> {
         Ok(None)
     }
 

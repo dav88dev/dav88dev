@@ -1,9 +1,9 @@
 // Simple, 100% Reliable WASM Skills Renderer - No Three.js Dependencies
-use wasm_bindgen::prelude::*;
-use web_sys::{HtmlCanvasElement, CanvasRenderingContext2d, console, window};
 use glam::Vec2;
 use serde::{Deserialize, Serialize};
 use std::f32::consts::PI;
+use wasm_bindgen::prelude::*;
+use web_sys::{console, window, CanvasRenderingContext2d, HtmlCanvasElement};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
@@ -112,7 +112,7 @@ impl SimpleSkillsRenderer {
         }
 
         self.animation_time += delta_time;
-        
+
         // Update target positions based on animation mode
         self.update_target_positions();
 
@@ -120,11 +120,11 @@ impl SimpleSkillsRenderer {
         for i in 0..self.skill_positions.len() {
             let current = self.skill_positions[i];
             let target = self.target_positions[i];
-            
+
             // Lerp with smooth easing
             let lerp_speed = 0.05;
             self.skill_positions[i] = current.lerp(target, lerp_speed);
-            
+
             // Add floating animation
             let float_offset = (self.animation_time * 2.0 + i as f32 * 0.5).sin() * 10.0;
             self.skill_positions[i].y += float_offset;
@@ -147,14 +147,17 @@ impl SimpleSkillsRenderer {
                     let row = i / cols;
                     let col = i % cols;
                     let spacing = radius * 0.8;
-                    
-                    target_pos.x = self.center_x - (cols as f32 * spacing / 2.0) + (col as f32 * spacing);
-                    target_pos.y = self.center_y - (row as f32 * spacing / 2.0) + (row as f32 * spacing);
+
+                    target_pos.x =
+                        self.center_x - (cols as f32 * spacing / 2.0) + (col as f32 * spacing);
+                    target_pos.y =
+                        self.center_y - (row as f32 * spacing / 2.0) + (row as f32 * spacing);
                 }
                 "wave" => {
                     let x_spacing = self.canvas_width / skill_count;
                     target_pos.x = i as f32 * x_spacing + x_spacing / 2.0;
-                    target_pos.y = self.center_y + (i as f32 * 0.8 + self.animation_time).sin() * radius * 0.5;
+                    target_pos.y =
+                        self.center_y + (i as f32 * 0.8 + self.animation_time).sin() * radius * 0.5;
                 }
                 "spiral" => {
                     let spiral_angle = i as f32 * 0.5 + self.animation_time * 0.1;
@@ -182,13 +185,23 @@ impl SimpleSkillsRenderer {
 
         // Clear canvas with dark background
         context.set_fill_style(&JsValue::from_str("rgba(0, 10, 30, 0.95)"));
-        context.fill_rect(0.0, 0.0, self.canvas_width as f64, self.canvas_height as f64);
+        context.fill_rect(
+            0.0,
+            0.0,
+            self.canvas_width as f64,
+            self.canvas_height as f64,
+        );
 
         // Draw constellation lines
         self.draw_constellation_lines(context)?;
 
         // Draw skills
-        for (i, (skill, pos)) in self.skills.iter().zip(self.skill_positions.iter()).enumerate() {
+        for (i, (skill, pos)) in self
+            .skills
+            .iter()
+            .zip(self.skill_positions.iter())
+            .enumerate()
+        {
             self.draw_skill(context, skill, pos, i)?;
         }
 
@@ -210,8 +223,11 @@ impl SimpleSkillsRenderer {
 
                 if distance < 150.0 {
                     let alpha = (1.0 - distance / 150.0) * 0.3;
-                    context.set_stroke_style(&JsValue::from_str(&format!("rgba(99, 102, 241, {})", alpha)));
-                    
+                    context.set_stroke_style(&JsValue::from_str(&format!(
+                        "rgba(99, 102, 241, {})",
+                        alpha
+                    )));
+
                     context.begin_path();
                     context.move_to(pos1.x as f64, pos1.y as f64);
                     context.line_to(pos2.x as f64, pos2.y as f64);
@@ -223,7 +239,13 @@ impl SimpleSkillsRenderer {
         Ok(())
     }
 
-    fn draw_skill(&self, context: &CanvasRenderingContext2d, skill: &Skill, pos: &Vec2, index: usize) -> Result<(), JsValue> {
+    fn draw_skill(
+        &self,
+        context: &CanvasRenderingContext2d,
+        skill: &Skill,
+        pos: &Vec2,
+        index: usize,
+    ) -> Result<(), JsValue> {
         let radius = 8.0 + (skill.level as f32 / 100.0) * 25.0;
         let pulse = (self.animation_time * 3.0 + index as f32 * 0.5).sin() * 0.1 + 1.0;
         let animated_radius = radius * pulse;
@@ -231,13 +253,25 @@ impl SimpleSkillsRenderer {
         // Draw outer glow (simplified)
         context.set_fill_style(&JsValue::from_str("rgba(99, 102, 241, 0.2)"));
         context.begin_path();
-        context.arc(pos.x as f64, pos.y as f64, animated_radius as f64 * 2.0, 0.0, PI as f64 * 2.0)?;
+        context.arc(
+            pos.x as f64,
+            pos.y as f64,
+            animated_radius as f64 * 2.0,
+            0.0,
+            PI as f64 * 2.0,
+        )?;
         context.fill();
 
         // Draw main circle
         context.set_fill_style(&JsValue::from_str(&skill.color));
         context.begin_path();
-        context.arc(pos.x as f64, pos.y as f64, animated_radius as f64, 0.0, PI as f64 * 2.0)?;
+        context.arc(
+            pos.x as f64,
+            pos.y as f64,
+            animated_radius as f64,
+            0.0,
+            PI as f64 * 2.0,
+        )?;
         context.fill();
 
         // Draw inner highlight
@@ -248,7 +282,7 @@ impl SimpleSkillsRenderer {
             (pos.y - animated_radius * 0.3) as f64,
             (animated_radius * 0.4) as f64,
             0.0,
-            PI as f64 * 2.0
+            PI as f64 * 2.0,
         )?;
         context.fill();
 
@@ -259,7 +293,7 @@ impl SimpleSkillsRenderer {
         context.fill_text(
             &skill.name,
             pos.x as f64,
-            (pos.y + animated_radius + 20.0) as f64
+            (pos.y + animated_radius + 20.0) as f64,
         )?;
 
         // Draw level indicator
@@ -268,7 +302,7 @@ impl SimpleSkillsRenderer {
         context.fill_text(
             &format!("{}%", skill.level),
             pos.x as f64,
-            (pos.y + animated_radius + 35.0) as f64
+            (pos.y + animated_radius + 35.0) as f64,
         )?;
 
         Ok(())
@@ -278,8 +312,10 @@ impl SimpleSkillsRenderer {
         context.set_fill_style(&JsValue::from_str("rgba(255, 255, 255, 0.6)"));
 
         for i in 0..20 {
-            let x = (self.animation_time * 0.5 + i as f32 * 0.1).sin() * self.canvas_width * 0.4 + self.center_x;
-            let y = (self.animation_time * 0.3 + i as f32 * 0.2).cos() * self.canvas_height * 0.4 + self.center_y;
+            let x = (self.animation_time * 0.5 + i as f32 * 0.1).sin() * self.canvas_width * 0.4
+                + self.center_x;
+            let y = (self.animation_time * 0.3 + i as f32 * 0.2).cos() * self.canvas_height * 0.4
+                + self.center_y;
             let size = (self.animation_time * 2.0 + i as f32).sin().abs() * 2.0 + 1.0;
 
             context.begin_path();
@@ -295,7 +331,7 @@ impl SimpleSkillsRenderer {
         for (skill, pos) in self.skills.iter().zip(self.skill_positions.iter()) {
             let radius = 8.0 + (skill.level as f32 / 100.0) * 25.0;
             let distance = Vec2::new(x - pos.x, y - pos.y).length();
-            
+
             if distance <= radius * 1.5 {
                 return Some(skill.name.clone());
             }
@@ -308,8 +344,14 @@ impl SimpleSkillsRenderer {
         if let Some(skill) = self.skills.iter().find(|s| s.name == skill_name) {
             let info = js_sys::Object::new();
             js_sys::Reflect::set(&info, &"name".into(), &skill.name.clone().into()).unwrap();
-            js_sys::Reflect::set(&info, &"level".into(), &JsValue::from_f64(skill.level as f64)).unwrap();
-            js_sys::Reflect::set(&info, &"category".into(), &skill.category.clone().into()).unwrap();
+            js_sys::Reflect::set(
+                &info,
+                &"level".into(),
+                &JsValue::from_f64(skill.level as f64),
+            )
+            .unwrap();
+            js_sys::Reflect::set(&info, &"category".into(), &skill.category.clone().into())
+                .unwrap();
             js_sys::Reflect::set(&info, &"color".into(), &skill.color.clone().into()).unwrap();
             info.into()
         } else {
@@ -324,10 +366,10 @@ impl SimpleSkillsRenderer {
             self.canvas_height = height as f32;
             self.center_x = self.canvas_width / 2.0;
             self.center_y = self.canvas_height / 2.0;
-            
+
             canvas.set_width(width);
             canvas.set_height(height);
-            
+
             self.update_target_positions();
         }
     }
