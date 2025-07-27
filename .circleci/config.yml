@@ -251,8 +251,8 @@ jobs:
             
             [Service]
             Type=exec
-            User=www-data
-            Group=www-data
+            User=ubuntu
+            Group=ubuntu
             WorkingDirectory=/opt/portfolio
             ExecStart=/opt/portfolio/personal_website
             Restart=always
@@ -288,7 +288,10 @@ jobs:
             # Create directory and copy files
             sudo mkdir -p /opt/portfolio
             sudo cp -r * /opt/portfolio/
-            sudo chown -R www-data:www-data /opt/portfolio
+            sudo chown -R ubuntu:ubuntu /opt/portfolio
+            
+            # Allow ubuntu user to bind to port 80
+            sudo setcap CAP_NET_BIND_SERVICE=+eip /opt/portfolio/personal_website
             
             # Install and start service
             sudo cp portfolio.service /etc/systemd/system/
@@ -298,7 +301,7 @@ jobs:
             
             # Health check
             sleep 5
-            curl -f http://localhost:80/health || exit 1
+            curl -f http://localhost/health || exit 1
             
             echo "✅ Deployment completed successfully!"
             EOF
@@ -351,8 +354,6 @@ jobs:
               sudo apt update
               sudo apt install -y curl
               
-              # Create www-data user if it doesn't exist
-              sudo useradd -r -s /bin/false www-data || true
               
               # Extract deployment package
               rm -rf portfolio-deploy
@@ -362,11 +363,6 @@ jobs:
               
               # Run deployment script
               ./deploy.sh
-              
-              # Final health check - direct on port 80
-              echo "🔍 Health check..."
-              sleep 10
-              curl -f http://localhost/health || exit 1
               
               # Cleanup
               cd /tmp
