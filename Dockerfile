@@ -41,15 +41,12 @@ WORKDIR /app
 
 # Copy artifacts from build stages
 COPY --from=backend --chown=web:web /build/target/x86_64-unknown-linux-musl/release/personal_website ./
-COPY --from=frontend --chown=web:web /static ./static
 COPY --chown=web:web templates/ ./templates
-# Copy static assets that aren't built
-COPY --chown=web:web static/images/ ./static/images/
-COPY --chown=web:web static/manifest.json ./static/manifest.json
-COPY --chown=web:web static/sw.js ./static/sw.js
-COPY --chown=web:web static/js/full-wasm-skills.js ./static/js/full-wasm-skills.js
-# Copy pre-built WASM files from build.sh output
-COPY --chown=web:web static/wasm/ ./static/wasm/
+
+# Copy all static files (includes everything)
+COPY --chown=web:web static/ ./static/
+# Overlay frontend build outputs
+COPY --from=frontend --chown=web:web /static ./static
 
 USER web
 EXPOSE 8000
