@@ -9,7 +9,7 @@ orbs:
 executors:
   rust-executor:
     docker:
-      - image: cimg/rust:1.75
+      - image: cimg/rust:1.83
     resource_class: medium
     environment:
       CARGO_TERM_COLOR: always
@@ -443,7 +443,7 @@ workflows:
 parameters:
   rust-version:
     type: string
-    default: "1.75"
+    default: "1.83"
   node-version:
     type: string
     default: "18.19"
