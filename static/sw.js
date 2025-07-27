@@ -1,12 +1,9 @@
 const CACHE_NAME = 'david-aghayan-v1';
 const urlsToCache = [
   '/',
-  '/static/css/style.css',
-  '/static/js/main.js',
-  '/static/js/three-scene.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-  'https://unpkg.com/three@0.158.0/build/three.module.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js'
+  '/static/fonts/inter.css',
+  '/static/fonts/inter-variable.woff2',
+  '/static/fonts/inter-variable-latin-ext.woff2'
 ];
 
 self.addEventListener('install', function(event) {
