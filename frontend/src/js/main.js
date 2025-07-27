@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize components normally
     initNavigation();
-    initFormHandling();
+    // initFormHandling(); // Disabled - contact form commented out
     initSkillBars();
     initTiltEffect();
     // initSmoothScroll(); // Disabled - contained scroll snap behavior
@@ -263,7 +263,8 @@ function initScrollAnimations() {
     });
 }
 
-// Form handling
+// Form handling - DISABLED
+/*
 function initFormHandling() {
     const contactForm = document.getElementById('contactForm');
     
@@ -299,6 +300,7 @@ function initFormHandling() {
         });
     }
 }
+*/
 
 // Skill bars animation
 function initSkillBars() {
@@ -755,7 +757,7 @@ document.addEventListener('DOMContentLoaded', adaptPerformance);
 
 // Error handling
 window.addEventListener('error', (e) => {
-    console.error('JavaScript error:', e.error);
+    // Silent error handling for production
 });
 
 // Advanced performance monitoring

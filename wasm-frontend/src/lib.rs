@@ -18,8 +18,6 @@ pub use full_wasm_renderer::FullWasmRenderer;
 #[wasm_bindgen(start)]
 pub fn main() {
     console_error_panic_hook::set_once();
-    
-    console::log_1(&"WASM Frontend initialized!".into());
 }
 
 // Data structures matching our current CV data
