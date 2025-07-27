@@ -9,13 +9,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 2: WASM builder
-FROM rust:1.83-alpine AS wasm
-RUN apk add --no-cache curl && \
-    curl -sSf https://rustwasm.github.io/wasm-pack/installer/init.sh | sh
-WORKDIR /wasm
-COPY wasm-frontend/ ./
-RUN wasm-pack build --target web --out-dir /wasm/pkg
+# Stage 2: Skip WASM building - use pre-built from build.sh
 
 # Stage 3: Rust builder with cargo-chef for optimal caching
 FROM lukemathwalker/cargo-chef:latest-rust-1.83-alpine AS chef
@@ -48,8 +42,8 @@ WORKDIR /app
 # Copy artifacts from build stages
 COPY --from=backend --chown=web:web /build/target/x86_64-unknown-linux-musl/release/personal_website ./
 COPY --from=frontend --chown=web:web /static ./static
-COPY --from=wasm --chown=web:web /wasm/pkg ./static/wasm
 COPY --chown=web:web templates/ ./templates
+COPY --chown=web:web static/wasm ./static/wasm
 
 USER web
 EXPOSE 8000
