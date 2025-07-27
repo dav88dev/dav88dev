@@ -188,7 +188,7 @@ jobs:
       - run:
           name: Build release binary
           command: |
-            RUSTFLAGS="-C target-cpu=native -C link-self-contained=yes" cargo build --release --target x86_64-unknown-linux-musl
+            RUSTFLAGS="-C target-cpu=x86-64 -C link-self-contained=yes" cargo build --release --target x86_64-unknown-linux-musl
       - run:
           name: Verify binary
           command: |
