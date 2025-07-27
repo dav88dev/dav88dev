@@ -2,7 +2,6 @@ version: 2.1
 
 # Orbs for simplified common tasks
 orbs:
-  docker: circleci/docker@2.4.0
   node: circleci/node@5.1.0
 
 # Executors - Define execution environments
@@ -224,124 +223,164 @@ jobs:
             # Test Vite assets
             curl -sf http://localhost:8000/static/.vite/manifest.json -o /dev/null && echo "✓ Vite manifest accessible"
 
-  # Build and scan Docker image
-  build-docker:
-    docker:
-      - image: cimg/base:stable
+  # Package for bare metal deployment
+  package-deployment:
+    executor: deploy-executor
     steps:
-      - setup_remote_docker:
-          version: 20.10.24
       - checkout
       - attach_workspace:
           at: .
       - run:
-          name: Build Docker image
+          name: Create deployment package
           command: |
-            docker build -t portfolio:${CIRCLE_SHA1} .
-            docker tag portfolio:${CIRCLE_SHA1} portfolio:latest
-      - run:
-          name: Test Docker image
-          command: |
-            # Start container with network=host for CircleCI
-            docker run -d --name test-container --network=host portfolio:${CIRCLE_SHA1}
+            mkdir -p deploy-package
             
-            # Wait for startup
-            sleep 10
+            # Copy binary
+            cp target/x86_64-unknown-linux-musl/release/personal_website deploy-package/
+            chmod +x deploy-package/personal_website
             
-            # Show container logs
-            docker logs test-container
+            # Copy templates and static files
+            cp -r templates deploy-package/
+            cp -r static deploy-package/
             
-            # Test health endpoint
-            curl -f http://localhost:8000/health && echo "✓ Container is healthy"
+            # Create systemd service file
+            cat > deploy-package/portfolio.service << 'EOF'
+            [Unit]
+            Description=Personal Portfolio Website
+            After=network.target
             
-            # Cleanup
-            docker stop test-container || true
-            docker rm test-container || true
-      - run:
-          name: Security scan with Trivy
-          command: |
-            # Install Trivy
-            sudo apt-get update
-            sudo apt-get install wget apt-transport-https gnupg lsb-release
-            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-            echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-            sudo apt-get update
-            sudo apt-get install trivy
+            [Service]
+            Type=exec
+            User=www-data
+            Group=www-data
+            WorkingDirectory=/opt/portfolio
+            ExecStart=/opt/portfolio/personal_website
+            Restart=always
+            RestartSec=5
+            Environment=RUST_LOG=info
+            Environment=HOST=0.0.0.0
+            Environment=PORT=8000
             
-            # Scan image
-            trivy image --exit-code 1 --severity HIGH,CRITICAL portfolio:${CIRCLE_SHA1}
-      - run:
-          name: Save Docker image
-          command: |
-            docker save -o portfolio.tar portfolio:${CIRCLE_SHA1}
-            gzip portfolio.tar
+            # Security settings
+            NoNewPrivileges=true
+            PrivateTmp=true
+            ProtectSystem=strict
+            ProtectHome=true
+            ReadWritePaths=/opt/portfolio
+            
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+            
+            # Create deployment script
+            cat > deploy-package/deploy.sh << 'EOF'
+            #!/bin/bash
+            set -e
+            
+            echo "🚀 Starting bare metal deployment..."
+            
+            # Stop existing service
+            sudo systemctl stop portfolio || true
+            
+            # Backup current deployment
+            sudo mv /opt/portfolio /opt/portfolio.backup.$(date +%s) || true
+            
+            # Create directory and copy files
+            sudo mkdir -p /opt/portfolio
+            sudo cp -r * /opt/portfolio/
+            sudo chown -R www-data:www-data /opt/portfolio
+            
+            # Install and start service
+            sudo cp portfolio.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+            sudo systemctl enable portfolio
+            sudo systemctl start portfolio
+            
+            # Health check
+            sleep 5
+            curl -f http://localhost:8000/health || exit 1
+            
+            echo "✅ Deployment completed successfully!"
+            EOF
+            chmod +x deploy-package/deploy.sh
+            
+            # Create archive
+            tar -czf portfolio-deploy.tar.gz -C deploy-package .
       - persist_to_workspace:
           root: .
           paths:
-            - portfolio.tar.gz
+            - portfolio-deploy.tar.gz
 
-  # Deploy to production
+  # Deploy to production (bare metal)
   deploy-production:
     executor: deploy-executor
     steps:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: 20.10.24
-      - run:
-          name: Load Docker image
-          command: |
-            docker load -i portfolio.tar.gz
       - add_ssh_keys:
           fingerprints:
             - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
       - run:
-          name: Deploy to production
+          name: Deploy to production server
           command: |
-            echo "🚀 Deploying to production server..."
-            echo "Docker image: portfolio:${CIRCLE_SHA1}"
+            echo "🚀 Deploying bare metal Rust application..."
+            echo "Deployment package: portfolio-deploy.tar.gz"
             
-            # Save Docker image
-            docker save portfolio:${CIRCLE_SHA1} | gzip > portfolio.tar.gz
+            # Transfer deployment package to server
+            scp -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@129.80.170.232:/tmp/
             
-            # Transfer image to server (CircleCI handles SSH key automatically)
-            scp -o StrictHostKeyChecking=no portfolio.tar.gz ubuntu@129.80.170.232:/tmp/
-            
-            # Deploy on production server
-            export DEPLOY_TAG=${CIRCLE_SHA1}
-            ssh -o StrictHostKeyChecking=no ubuntu@129.80.170.232 "DEPLOY_TAG=$DEPLOY_TAG bash -s" \<< 'DEPLOY_SCRIPT'
-              # Load new image
+            # Execute bare metal deployment
+            ssh -o StrictHostKeyChecking=no ubuntu@129.80.170.232 << 'DEPLOY_SCRIPT'
               cd /tmp
-              docker load < portfolio.tar.gz
               
-              # Stop existing container if running
-              docker stop portfolio || true
-              docker rm portfolio || true
+              # Extract deployment package
+              rm -rf portfolio-deploy
+              mkdir portfolio-deploy
+              tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy
+              cd portfolio-deploy
               
-              # Start new container with auto-restart
-              docker run -d \
-                --name portfolio \
-                --restart always \
-                -p 80:8000 \
-                -e RUST_LOG=info \
-                -e HOST=0.0.0.0 \
-                -e PORT=8000 \
-                --memory="512m" \
-                --cpus="0.5" \
-                portfolio:$DEPLOY_TAG
+              # Run deployment script
+              ./deploy.sh
               
-              # Health check
-              sleep 10
+              # Setup nginx proxy (if not already configured)
+              if ! sudo nginx -t 2>/dev/null; then
+                echo "Setting up nginx proxy..."
+                sudo tee /etc/nginx/sites-available/portfolio << 'NGINX_CONF'
+            server {
+                listen 80;
+                server_name _;
+                
+                location / {
+                    proxy_pass http://127.0.0.1:8000;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                location /health {
+                    proxy_pass http://127.0.0.1:8000/health;
+                    access_log off;
+                }
+            }
+            NGINX_CONF
+                
+                sudo ln -sf /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/
+                sudo nginx -t && sudo systemctl reload nginx
+              fi
+              
+              # Final health check through nginx
+              sleep 5
               curl -f http://localhost/health || exit 1
               
               # Cleanup
-              rm portfolio.tar.gz
-              docker image prune -f
+              cd /tmp
+              rm -rf portfolio-deploy portfolio-deploy.tar.gz
             DEPLOY_SCRIPT
             
-            echo "✅ Production deployment completed successfully!"
-            echo "🌐 Application available at: http://$PRODUCTION_HOST"
+            echo "✅ Bare metal deployment completed successfully!"
+            echo "🌐 Application available at: http://129.80.170.232"
 
 # Workflows - Define job orchestration
 workflows:
@@ -388,8 +427,8 @@ workflows:
             - code-quality
             - test
       
-      # Docker build and security scan
-      - build-docker:
+      # Package for bare metal deployment
+      - package-deployment:
           requires:
             - integration-test
           filters:
@@ -402,7 +441,7 @@ workflows:
       # Production deployment (only on main/master)
       - deploy-production:
           requires:
-            - build-docker
+            - package-deployment
           filters:
             branches:
               only: 
