@@ -295,7 +295,7 @@ jobs:
             docker load -i portfolio.tar.gz
       - add_ssh_keys:
           fingerprints:
-            - "${SSH_FINGERPRINT}"
+            - "SHA256:2zvc1x0c8PdxK/ycJfOlTDJrwy8bdFT5qRZIk86GoqI"
       - run:
           name: Deploy to production
           command: |
