@@ -64,32 +64,32 @@
     }
     </script>
     
-    <link rel="stylesheet" href="{{ assets.css_main }}">
+    <!-- Critical CSS inlined for faster rendering -->
+    <style>
+        :root{--primary-color:#6366f1;--secondary-color:#8b5cf6;--accent-color:#06b6d4;--text-primary:#1f2937;--text-secondary:#6b7280;--bg-primary:#fff;--bg-secondary:#f9fafb;--border-color:#e5e7eb;--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);--easing-smooth:cubic-bezier(.4,0,.2,1)}*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:var(--text-primary);background:var(--bg-primary);overflow-x:hidden}.loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#111827;display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1;transition:opacity .5s ease}.loader.hidden{opacity:0;pointer-events:none}.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:0 2rem}.hero-content{text-align:center;max-width:800px}.hero-name{font-size:4rem;font-weight:700;background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:1rem}.hero-subtitle{font-size:1.5rem;color:var(--text-secondary);margin-bottom:1.5rem}.btn{display:inline-block;padding:.75rem 2rem;font-weight:600;text-decoration:none;border-radius:50px;transition:all .3s ease}.btn-primary{background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));color:#fff;box-shadow:var(--shadow-md)}.container{max-width:1200px;margin:0 auto;padding:0 2rem}
+    </style>
+    <link rel="preload" href="{{ assets.css_main }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ assets.css_main }}"></noscript>
     <link rel="manifest" href="/static/manifest.json">
     
     <!-- Favicon and app icons -->
     <link rel="icon" type="image/x-icon" href="/static/images/favicons/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/favicons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicons/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/favicons/apple-touch-icon.webp">
+    <link rel="icon" type="image/webp" sizes="32x32" href="/static/images/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/webp" sizes="16x16" href="/static/images/favicons/favicon-16x16.png">
     <link rel="manifest" href="/static/images/favicons/site.webmanifest">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="preconnect" href="https://unpkg.com">
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <!-- Three.js ES Modules (r150+ compatible) -->
+    <link rel="stylesheet" href="/static/fonts/inter.css">
+    <!-- Local JavaScript libraries for better performance -->
     <script type="importmap">
     {
         "imports": {
-            "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
-            "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+            "three": "/static/js/vendor/three.module.js"
         }
     }
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollToPlugin.min.js"></script>
+    <link rel="preload" href="/static/js/vendor/gsap.min.js" as="script">
+    <link rel="preload" href="/static/js/vendor/ScrollTrigger.min.js" as="script">
+    <link rel="preload" href="/static/js/vendor/ScrollToPlugin.min.js" as="script">
 </head>
 <body>
     <a href="#about" class="skip-link">Skip to main content</a>\n    \n    <div id="loader" class="loader">
@@ -107,7 +107,10 @@
     <nav class="desktop-navbar">
         <div class="desktop-nav-container">
             <a href="#hero" class="desktop-nav-logo">
-                <img src="/static/images/logo.png" alt="David Aghayan Logo" class="desktop-nav-logo-img">
+                <picture>
+                    <source srcset="/static/images/logo.webp" type="image/webp">
+                    <img src="/static/images/logo.png" alt="David Aghayan Logo" class="desktop-nav-logo-img">
+                </picture>
                 <span class="desktop-nav-logo-text">{{ cv_data.personal_info.name }}</span>
             </a>
             <ul class="desktop-nav-menu">
@@ -126,7 +129,10 @@
     <div class="mobile-navigation">
         <div class="mobile-nav-header">
             <a href="#hero" class="mobile-logo">
-                <img src="/static/images/logo.png" alt="David Aghayan Logo" class="mobile-logo-img">
+                <picture>
+                    <source srcset="/static/images/logo.webp" type="image/webp">
+                    <img src="/static/images/logo.png" alt="David Aghayan Logo" class="mobile-logo-img">
+                </picture>
                 <span class="mobile-logo-text">{{ cv_data.personal_info.name }}</span>
             </a>
             <button class="mobile-hamburger" id="mobileHamburger">
@@ -405,14 +411,16 @@
         </div>
     </footer>
 
+    <!-- Load GSAP libraries first -->
+    <script src="/static/js/vendor/gsap.min.js"></script>
+    <script src="/static/js/vendor/ScrollTrigger.min.js"></script>
+    <script src="/static/js/vendor/ScrollToPlugin.min.js"></script>
+    
+    <!-- Main application scripts -->
     <script src="{{ assets.js_main }}" type="module"></script>
-    <script src="{{ assets.js_three_scene }}" type="module"></script>
-    <!-- Clean WASM Skills Visualization (Simple & Elegant) -->
-    <script src="/static/js/full-wasm-skills.js" type="module"></script>
-    <!-- Legacy browser support -->
-    <script nomodule src="{{ assets.js_polyfills_legacy }}"></script>
-    <script nomodule src="{{ assets.js_main_legacy }}"></script>
-    <script nomodule src="{{ assets.js_three_scene_legacy }}"></script>
+    <script src="{{ assets.js_three_scene }}" type="module" defer></script>
+    <!-- Skills visualization - load after main content -->
+    <script src="/static/js/full-wasm-skills.js" type="module" defer></script>
     <script>
         // Register service worker for PWA functionality
         if ('serviceWorker' in navigator) {

@@ -1,6 +1,6 @@
 use axum::{
     extract::Extension,
-    routing::{get, get_service},
+    routing::get,
     Router,
 };
 use std::sync::Arc;
@@ -8,7 +8,6 @@ use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
     cors::CorsLayer,
-    services::ServeDir,
     trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -23,7 +22,7 @@ use personal_website::{
     config::AppConfig,
     handlers::{
         get_cv_data, get_cv_json, health_check, index, manifest_json, readiness_check, robots_txt,
-        sitemap_xml,
+        sitemap_xml, serve_static_file,
     },
     models::CVData,
     services::{load_asset_paths, template::create_template_engine},
@@ -127,15 +126,8 @@ async fn create_app(
     asset_paths: Arc<personal_website::services::AssetPaths>,
     config: &AppConfig,
 ) -> anyhow::Result<Router> {
-    // Static file service
-    let serve_dir =
-        get_service(ServeDir::new(&config.static_dir)).handle_error(|error| async move {
-            tracing::error!("Static file error: {}", error);
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Unhandled internal error: {error}"),
-            )
-        });
+    // Set static directory for our custom handler
+    std::env::set_var("STATIC_DIR", &config.static_dir);
 
     // Middleware stack optimized for multi-threaded performance with Brotli + Gzip
     let compression = CompressionLayer::new()
@@ -170,8 +162,8 @@ async fn create_app(
         // Health check routes
         .route("/health", get(health_check))
         .route("/ready", get(readiness_check))
-        // Static files
-        .nest_service("/static", serve_dir)
+        // Static files with optimized cache headers
+        .route("/static/*path", get(serve_static_file))
         // Apply middleware
         .layer(middleware);
 
