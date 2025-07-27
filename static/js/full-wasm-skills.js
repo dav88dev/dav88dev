@@ -11,8 +11,6 @@ class FullWasmSkills {
     }
 
     async init() {
-        console.log('Initializing Full WASM Skills Visualization');
-        
         try {
             // Load WASM module
             const wasmModule = await import('/static/wasm/wasm_frontend.js');
@@ -28,10 +26,8 @@ class FullWasmSkills {
             this.startAnimation();
             
             this.isInitialized = true;
-            console.log('Full WASM skills visualization initialized successfully');
             
         } catch (error) {
-            console.error('Failed to initialize Full WASM skills:', error);
             this.showErrorFallback();
         }
     }
@@ -83,7 +79,7 @@ class FullWasmSkills {
                 try {
                     this.renderer.render(deltaTime);
                 } catch (error) {
-                    console.error('Render error:', error);
+                    // Silent error handling
                 }
             }
         };
@@ -157,7 +153,6 @@ class FullWasmSkills {
 
         this.renderer = null;
         this.isInitialized = false;
-        console.log('Full WASM Skills destroyed');
     }
 }
 
@@ -165,11 +160,8 @@ class FullWasmSkills {
 document.addEventListener('DOMContentLoaded', async () => {
     const skillsCanvas = document.getElementById('skills-canvas');
     if (!skillsCanvas) {
-        console.log('Skills canvas not found, skipping Full WASM Skills');
         return;
     }
-
-    console.log('Starting Full WASM Skills initialization');
     
     // Initialize Full WASM Skills
     window.fullWasmSkills = new FullWasmSkills();
