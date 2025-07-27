@@ -334,6 +334,20 @@ jobs:
             ssh -o StrictHostKeyChecking=no ubuntu@129.80.170.232 << 'DEPLOY_SCRIPT'
               cd /tmp
               
+              # CLEANUP: Stop and remove existing Docker containers
+              echo "🧹 Cleaning up Docker containers..."
+              sudo docker stop portfolio || true
+              sudo docker rm portfolio || true
+              sudo docker system prune -f || true
+              
+              # Install dependencies
+              echo "📦 Installing system dependencies..."
+              sudo apt update
+              sudo apt install -y nginx curl
+              
+              # Create www-data user if it doesn't exist
+              sudo useradd -r -s /bin/false www-data || true
+              
               # Extract deployment package
               rm -rf portfolio-deploy
               mkdir portfolio-deploy
@@ -343,12 +357,11 @@ jobs:
               # Run deployment script
               ./deploy.sh
               
-              # Setup nginx proxy (if not already configured)
-              if ! sudo nginx -t 2>/dev/null; then
-                echo "Setting up nginx proxy..."
-                sudo tee /etc/nginx/sites-available/portfolio << 'NGINX_CONF'
+              # Setup nginx proxy (force reconfigure)
+              echo "🌐 Configuring nginx proxy..."
+              sudo tee /etc/nginx/sites-available/portfolio << 'NGINX_CONF'
             server {
-                listen 80;
+                listen 80 default_server;
                 server_name _;
                 
                 location / {
@@ -365,10 +378,11 @@ jobs:
                 }
             }
             NGINX_CONF
-                
-                sudo ln -sf /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/
-                sudo nginx -t && sudo systemctl reload nginx
-              fi
+              
+              # Remove default nginx config and enable ours
+              sudo rm -f /etc/nginx/sites-enabled/default
+              sudo ln -sf /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/
+              sudo nginx -t && sudo systemctl restart nginx
               
               # Final health check through nginx
               sleep 5
