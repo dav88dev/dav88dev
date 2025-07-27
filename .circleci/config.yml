@@ -112,7 +112,7 @@ jobs:
       - run:
           name: Run integration tests
           command: |
-            cargo test --test '*' --verbose
+            cargo test --all --verbose
       - store_test_results:
           path: target/test-results
 
