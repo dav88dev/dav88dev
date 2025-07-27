@@ -251,8 +251,8 @@ jobs:
             
             [Service]
             Type=exec
-            User=ubuntu
-            Group=ubuntu
+            User=root
+            Group=root
             WorkingDirectory=/opt/portfolio
             ExecStart=/opt/portfolio/personal_website
             Restart=always
@@ -288,10 +288,7 @@ jobs:
             # Create directory and copy files
             sudo mkdir -p /opt/portfolio
             sudo cp -r * /opt/portfolio/
-            sudo chown -R ubuntu:ubuntu /opt/portfolio
-            
-            # Allow ubuntu user to bind to port 80
-            sudo setcap CAP_NET_BIND_SERVICE=+eip /opt/portfolio/personal_website
+            sudo chown -R root:root /opt/portfolio
             
             # Install and start service
             sudo cp portfolio.service /etc/systemd/system/
