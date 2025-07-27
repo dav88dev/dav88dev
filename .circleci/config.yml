@@ -245,14 +245,23 @@ jobs:
             # Start container
             docker run -d --name test-container -p 8000:8000 portfolio:${CIRCLE_SHA1}
             
-            # Wait for startup
-            sleep 10
+            # Show container logs for debugging
+            sleep 5
+            docker logs test-container
             
-            # Test health endpoint
-            docker exec test-container wget --spider --quiet http://localhost:8000/health
+            # Wait for startup with retries
+            echo "Waiting for container to be ready..."
+            for i in {1..30}; do
+              if curl -sf http://localhost:8000/health -o /dev/null; then
+                echo "✓ Container is healthy"
+                break
+              fi
+              echo "Attempt $i/30: Container not ready yet..."
+              sleep 2
+            done
             
-            # Test from host
-            curl -f http://localhost:8000/health
+            # Final health check
+            curl -f http://localhost:8000/health || (echo "Container logs:" && docker logs test-container && exit 1)
             
             # Cleanup
             docker stop test-container

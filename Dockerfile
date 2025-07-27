@@ -26,9 +26,18 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src/ src/
 
+# Copy all necessary files before build
+COPY templates/ templates/
+COPY wasm-frontend/ wasm-frontend/
+
+# Build WASM first
+RUN cd wasm-frontend && \
+    rustup target add wasm32-unknown-unknown && \
+    cargo install wasm-pack && \
+    wasm-pack build --target web --out-dir ../static/wasm
+
 # Copy frontend build artifacts
 COPY --from=frontend-builder /app/static ./static
-COPY templates/ templates/
 
 # Build the Rust application in release mode
 RUN cargo build --release --target x86_64-unknown-linux-musl
