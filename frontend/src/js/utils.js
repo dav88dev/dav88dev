@@ -87,7 +87,7 @@ export function adaptPerformance() {
 export function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
+            navigator.serviceWorker.register('/static/sw.js')
                 .then(registration => {
                     // Service worker registered successfully
                 })
