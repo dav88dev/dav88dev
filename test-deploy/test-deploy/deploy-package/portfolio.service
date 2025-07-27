@@ -1,0 +1,30 @@
+[Unit]
+Description=Personal Portfolio Website
+After=network.target
+
+[Service]
+Type=exec
+User=root
+Group=root
+WorkingDirectory=/opt/portfolio
+ExecStart=/opt/portfolio/personal_website
+Restart=always
+RestartSec=5
+Environment=RUST_LOG=info
+Environment=HOST=0.0.0.0
+Environment=PORT=80
+Environment=MIMALLOC_PAGE_RESET=1
+
+# Performance tuning
+LimitNOFILE=65535
+OOMScoreAdjust=-1000
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/portfolio
+
+[Install]
+WantedBy=multi-user.target

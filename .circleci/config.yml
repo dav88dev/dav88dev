@@ -182,7 +182,7 @@ jobs:
       - run:
           name: Build release binary
           command: |
-            cargo build --release --target x86_64-unknown-linux-musl
+            RUSTFLAGS="-C target-cpu=native -C link-self-contained=yes" cargo build --release --target x86_64-unknown-linux-musl
       - run:
           name: Verify binary
           command: |
@@ -272,6 +272,11 @@ jobs:
             Environment=RUST_LOG=info
             Environment=HOST=0.0.0.0
             Environment=PORT=80
+            Environment=MIMALLOC_PAGE_RESET=1
+            
+            # Performance tuning
+            LimitNOFILE=65535
+            OOMScoreAdjust=-1000
             
             # Security settings
             NoNewPrivileges=true
