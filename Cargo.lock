@@ -929,6 +929,7 @@ dependencies = [
  "futures",
  "http",
  "hyper",
+ "hyper-util",
  "mimalloc",
  "num_cpus",
  "serde",

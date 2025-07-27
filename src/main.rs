@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("🎯 API endpoint: http://{}/api/cv", config.bind_address());
     tracing::info!("🔧 h2c (clear-text HTTP/2) enabled for Cloudflare compatibility");
 
-    // Start the server with h2c support and graceful shutdown
+    // Start the server with h2c (HTTP/2 clear-text) support and graceful shutdown
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
