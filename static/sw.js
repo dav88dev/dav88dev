@@ -1,9 +1,13 @@
-const CACHE_NAME = 'david-aghayan-v1';
+const CACHE_NAME = 'david-aghayan-v2';
 const urlsToCache = [
   '/',
   '/static/fonts/inter.css',
-  '/static/fonts/inter-variable.woff2',
-  '/static/fonts/inter-variable-latin-ext.woff2'
+  '/static/fonts/inter-variable.woff2', 
+  '/static/fonts/inter-variable-latin-ext.woff2',
+  '/static/js/vendor/gsap.min.js',
+  '/static/js/vendor/ScrollTrigger.min.js',
+  '/static/js/vendor/ScrollToPlugin.min.js',
+  '/static/js/vendor/three.module.js'
 ];
 
 self.addEventListener('install', function(event) {
