@@ -53,12 +53,12 @@ EXPOSE 8000
 ENV RUST_LOG=info \
     HOST=0.0.0.0 \
     PORT=8000 \
-    TOKIO_WORKER_THREADS=2 \
-    TOKIO_BLOCKING_THREADS=2
+    TOKIO_WORKER_THREADS=1 \
+    TOKIO_BLOCKING_THREADS=1
 
 # Health check with retries for async startup
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD wget -qO- http://localhost:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD wget -nv -t1 -O- http://127.0.0.1:8000/health || exit 1
 
 # Use exec form for proper signal handling with Tokio
 ENTRYPOINT ["./personal_website"]
