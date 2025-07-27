@@ -259,7 +259,7 @@ jobs:
             RestartSec=5
             Environment=RUST_LOG=info
             Environment=HOST=0.0.0.0
-            Environment=PORT=8000
+            Environment=PORT=80
             
             # Security settings
             NoNewPrivileges=true
@@ -298,7 +298,7 @@ jobs:
             
             # Health check
             sleep 5
-            curl -f http://localhost:8000/health || exit 1
+            curl -f http://localhost:80/health || exit 1
             
             echo "✅ Deployment completed successfully!"
             EOF
@@ -342,8 +342,14 @@ jobs:
               
               # Install dependencies
               echo "📦 Installing system dependencies..."
+              # Remove Docker repo to prevent conflicts
+              sudo rm -f /etc/apt/sources.list.d/docker.list
+              sudo rm -f /usr/share/keyrings/docker-archive-keyring.gpg
+              # Wait for any running apt processes
+              sudo killall apt apt-get dpkg 2>/dev/null || true
+              sleep 5
               sudo apt update
-              sudo apt install -y nginx curl
+              sudo apt install -y curl
               
               # Create www-data user if it doesn't exist
               sudo useradd -r -s /bin/false www-data || true
@@ -357,35 +363,9 @@ jobs:
               # Run deployment script
               ./deploy.sh
               
-              # Setup nginx proxy (force reconfigure)
-              echo "🌐 Configuring nginx proxy..."
-              sudo tee /etc/nginx/sites-available/portfolio \<< 'NGINX_CONF'
-            server {
-                listen 80 default_server;
-                server_name _;
-                
-                location / {
-                    proxy_pass http://127.0.0.1:8000;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                    proxy_set_header X-Forwarded-Proto $scheme;
-                }
-                
-                location /health {
-                    proxy_pass http://127.0.0.1:8000/health;
-                    access_log off;
-                }
-            }
-            NGINX_CONF
-              
-              # Remove default nginx config and enable ours
-              sudo rm -f /etc/nginx/sites-enabled/default
-              sudo ln -sf /etc/nginx/sites-available/portfolio /etc/nginx/sites-enabled/
-              sudo nginx -t && sudo systemctl restart nginx
-              
-              # Final health check through nginx
-              sleep 5
+              # Final health check - direct on port 80
+              echo "🔍 Health check..."
+              sleep 10
               curl -f http://localhost/health || exit 1
               
               # Cleanup
