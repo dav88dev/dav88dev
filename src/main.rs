@@ -6,9 +6,17 @@ use axum::{
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::{
-    compression::CompressionLayer, cors::CorsLayer, services::ServeDir, trace::TraceLayer,
+    compression::CompressionLayer,
+    cors::CorsLayer,
+    services::ServeDir,
+    trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+// Use mimalloc as the global allocator for better performance (when available)
+#[cfg(feature = "mimalloc")]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 // Import our modules
 use personal_website::{
@@ -21,7 +29,7 @@ use personal_website::{
     services::{load_asset_paths, template::create_template_engine},
 };
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main(flavor = "multi_thread")] // Uses num_cpus::get() by default
 async fn main() -> anyhow::Result<()> {
     // Initialize tracing for observability
     tracing_subscriber::registry()
@@ -56,8 +64,9 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("🚀 Server running on http://{}", config.bind_address());
     tracing::info!("📊 Health check: http://{}/health", config.bind_address());
     tracing::info!("🎯 API endpoint: http://{}/api/cv", config.bind_address());
+    tracing::info!("🔧 h2c (clear-text HTTP/2) enabled for Cloudflare compatibility");
 
-    // Start the server with graceful shutdown
+    // Start the server with h2c support and graceful shutdown
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
@@ -81,10 +90,15 @@ async fn create_app(
             )
         });
 
-    // Middleware stack optimized for single-threaded performance
+    // Middleware stack optimized for multi-threaded performance with Brotli + Gzip
+    let compression = CompressionLayer::new()
+        .br(true)  // Enable Brotli compression
+        .gzip(true) // Enable Gzip compression
+        .no_deflate(); // Disable deflate to focus on better algorithms
+        
     let middleware = ServiceBuilder::new()
         .layer(TraceLayer::new_for_http())
-        .layer(CompressionLayer::new())
+        .layer(compression)
         .layer(CorsLayer::permissive()) // Configure as needed
         .layer(Extension(templates))
         .layer(Extension(cv_data))
