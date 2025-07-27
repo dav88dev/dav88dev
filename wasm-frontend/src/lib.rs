@@ -190,14 +190,20 @@ pub struct WasmApp {
     is_initialized: bool,
 }
 
+impl Default for WasmApp {
+    fn default() -> Self {
+        Self {
+            skills_calculator: None,
+            is_initialized: false,
+        }
+    }
+}
+
 #[wasm_bindgen]
 impl WasmApp {
     #[wasm_bindgen(constructor)]
     pub fn new() -> WasmApp {
-        WasmApp {
-            skills_calculator: None,
-            is_initialized: false,
-        }
+        Self::default()
     }
 
     #[wasm_bindgen]

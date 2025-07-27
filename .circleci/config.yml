@@ -138,7 +138,9 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - static
+            - static/css
+            - static/js
+            - static/.vite
 
   # Build WASM
   build-wasm:
