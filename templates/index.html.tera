@@ -109,7 +109,7 @@
             <a href="#hero" class="desktop-nav-logo">
                 <picture>
                     <source srcset="/static/images/logo.webp" type="image/webp">
-                    <img src="/static/images/logo.png" alt="David Aghayan Logo" class="desktop-nav-logo-img">
+                    <img src="/static/images/logo.png" alt="David Aghayan Logo" class="desktop-nav-logo-img" width="40" height="40">
                 </picture>
                 <span class="desktop-nav-logo-text">{{ cv_data.personal_info.name }}</span>
             </a>
@@ -131,11 +131,11 @@
             <a href="#hero" class="mobile-logo">
                 <picture>
                     <source srcset="/static/images/logo.webp" type="image/webp">
-                    <img src="/static/images/logo.png" alt="David Aghayan Logo" class="mobile-logo-img">
+                    <img src="/static/images/logo.png" alt="David Aghayan Logo" class="mobile-logo-img" width="40" height="40">
                 </picture>
                 <span class="mobile-logo-text">{{ cv_data.personal_info.name }}</span>
             </a>
-            <button class="mobile-hamburger" id="mobileHamburger">
+            <button class="mobile-hamburger" id="mobileHamburger" aria-label="Toggle mobile navigation menu" aria-expanded="false">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -179,7 +179,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">About Me</h2>
-                    <p class="section-subtitle">Elite Engineer Building Tomorrow's Technology</p>
+                    <h3 class="section-subtitle">Elite Engineer Building Tomorrow's Technology</h3>
                 </div>
                 <div class="about-content">
                     <div class="about-text">
@@ -198,7 +198,7 @@
                     <div class="about-visual">
                         <div class="floating-card" data-tilt role="img" aria-label="Professional highlight card">
                             <div class="card-content">
-                                <h3>Elite Technology Leader</h3>
+                                <h4>Elite Technology Leader</h4>
                                 <p>Architecting AI-powered solutions that transform businesses and impact millions of users worldwide</p>
                             </div>
                         </div>
@@ -211,7 +211,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Professional Experience</h2>
-                    <p class="section-subtitle">10+ Years of Technical Excellence & Leadership</p>
+                    <h3 class="section-subtitle">10+ Years of Technical Excellence & Leadership</h3>
                 </div>
                 <div class="timeline" role="list">
                     {% for exp in cv_data.experience %}
@@ -219,7 +219,7 @@
                         <div class="timeline-dot" role="img" aria-label="Timeline marker"></div>
                         <div class="timeline-content">
                             <div class="timeline-header">
-                                <h3>{{ exp.title }}</h3>
+                                <h4>{{ exp.title }}</h4>
                                 <span class="timeline-company">{{ exp.company }}</span>
                                 <span class="timeline-duration">{{ exp.duration }}</span>
                             </div>
@@ -239,7 +239,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Education & Certifications</h2>
-                    <p class="section-subtitle">Advanced Degrees in Technology & Innovation</p>
+                    <h3 class="section-subtitle">Advanced Degrees in Technology & Innovation</h3>
                 </div>
                 <div class="education-grid" role="list">
                     {% for edu in cv_data.education %}
@@ -250,8 +250,8 @@
                             </svg>
                         </div>
                         <div class="education-content">
-                            <h3>{{ edu.degree }}</h3>
-                            <h4>{{ edu.institution }}</h4>
+                            <h4>{{ edu.degree }}</h4>
+                            <h5>{{ edu.institution }}</h5>
                             <span class="education-year">{{ edu.year }}</span>
                             {% if edu.gpa %}
                             <p class="education-details">{{ edu.gpa }}</p>
@@ -267,7 +267,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Technical Expertise</h2>
-                    <p class="section-subtitle">Hover over skills to explore connections and experience</p>
+                    <h3 class="section-subtitle">Hover over skills to explore connections and experience</h3>
                 </div>
                 <div class="skills-container">
                     <canvas id="skills-canvas" style="width: 100%; height: 500px; border-radius: 12px; background: #f8fafc;"></canvas>
@@ -279,7 +279,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Featured Projects</h2>
-                    <p class="section-subtitle">Innovative Solutions That Drive Real Impact</p>
+                    <h3 class="section-subtitle">Innovative Solutions That Drive Real Impact</h3>
                 </div>
                 <div class="projects-grid" role="list">
                     {% for project in cv_data.projects %}
@@ -306,7 +306,7 @@
                             </div>
                         </div>
                         <div class="project-content">
-                            <h3>{{ project.name }}</h3>
+                            <h4>{{ project.name }}</h4>
                             <p>{{ project.description }}</p>
                             <div class="project-tech">
                                 {% for tech in project.technologies %}
@@ -324,7 +324,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">Let's Build Something Amazing</h2>
-                    <p class="section-subtitle">Ready to transform your ideas into scalable solutions</p>
+                    <h3 class="section-subtitle">Ready to transform your ideas into scalable solutions</h3>
                 </div>
                 <div class="contact-content">
                     <div class="contact-info">
@@ -413,8 +413,8 @@
 
     <!-- Load GSAP libraries first -->
     <script src="/static/js/vendor/gsap.min.js"></script>
-    <script src="/static/js/vendor/ScrollTrigger.min.js"></script>
-    <script src="/static/js/vendor/ScrollToPlugin.min.js"></script>
+    <script src="/static/js/vendor/ScrollTrigger.min.js" defer></script>
+    <script src="/static/js/vendor/ScrollToPlugin.min.js" defer></script>
     
     <!-- Main application scripts -->
     <script src="{{ assets.js_main }}" type="module"></script>

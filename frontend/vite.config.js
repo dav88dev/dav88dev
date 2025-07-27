@@ -31,6 +31,24 @@ export default defineConfig({
             return 'images/[name]-[hash][extname]'
           }
           return 'assets/[name]-[hash][extname]'
+        },
+        manualChunks: (id) => {
+          // Separate vendor libraries for better caching
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+          // Group animation utilities together
+          if (id.includes('animations.js')) {
+            return 'animations';
+          }
+          // Keep core functionality together
+          if (id.includes('navigation.js') || id.includes('utils.js')) {
+            return 'core';
+          }
+          // Heavy effects in separate chunk
+          if (id.includes('effects.js')) {
+            return 'effects';
+          }
         }
       }
     },
@@ -39,14 +57,39 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug']
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+        dead_code: true,
+        unused: true,
+        arrows: true,
+        arguments: true,
+        booleans: true,
+        collapse_vars: true,
+        comparisons: true,
+        computed_props: true,
+        conditionals: true,
+        evaluate: true,
+        if_return: true,
+        join_vars: true,
+        loops: true,
+        properties: true,
+        reduce_funcs: true,
+        reduce_vars: true,
+        sequences: true,
+        typeofs: true
       },
       mangle: {
-        safari10: true
+        safari10: true,
+        properties: {
+          regex: /^_/
+        }
+      },
+      format: {
+        comments: false
       }
     },
     sourcemap: false,
-    target: 'es2015'
+    target: 'es2020', // More modern target for better optimization
+    reportCompressedSize: false // Disable for faster builds
   },
   server: {
     port: 3000,
