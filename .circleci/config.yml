@@ -326,7 +326,8 @@ jobs:
             scp -i ~/.ssh/deploy_key portfolio.tar.gz $PRODUCTION_USER@$PRODUCTION_HOST:/tmp/
             
             # Deploy on production server
-            ssh -i ~/.ssh/deploy_key $PRODUCTION_USER@$PRODUCTION_HOST << EOF
+            export DEPLOY_TAG=${CIRCLE_SHA1}
+            ssh -i ~/.ssh/deploy_key $PRODUCTION_USER@$PRODUCTION_HOST "DEPLOY_TAG=$DEPLOY_TAG bash -s" \<< 'DEPLOY_SCRIPT'
               # Load new image
               cd /tmp
               docker load < portfolio.tar.gz
@@ -343,7 +344,7 @@ jobs:
                 -e RUST_LOG=info \
                 -e HOST=0.0.0.0 \
                 -e PORT=8000 \
-                portfolio:${CIRCLE_SHA1}
+                portfolio:$DEPLOY_TAG
               
               # Health check
               sleep 10
@@ -352,7 +353,7 @@ jobs:
               # Cleanup
               rm portfolio.tar.gz
               docker image prune -f
-            EOF
+            DEPLOY_SCRIPT
             
             echo "✅ Production deployment completed successfully!"
             echo "🌐 Application available at: http://$PRODUCTION_HOST"
