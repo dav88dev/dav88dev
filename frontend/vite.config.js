@@ -9,6 +9,7 @@ export default defineConfig({
   ],
   root: 'src',
   publicDir: '../public',
+  base: '/static/', // Set base path for all assets
   build: {
     outDir: '../../static',
     emptyOutDir: false,

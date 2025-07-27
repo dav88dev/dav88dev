@@ -42,3 +42,29 @@ md5 = "0.7"
 [features]
 default = ["mimalloc"]
 mimalloc = ["dep:mimalloc"]
+
+# Production optimization profiles
+[profile.release]
+# Enable maximum optimization for production
+opt-level = 3
+# Enable Link Time Optimization for better performance
+lto = "fat"
+# Reduce binary size by not including debug symbols
+debug = false
+# Panic strategy for better performance (abort vs unwind)
+panic = "abort"
+# Remove all debug assertions and overflow checks
+debug-assertions = false
+overflow-checks = false
+# Enable all CPU-specific optimizations
+codegen-units = 1
+# Strip symbols from binary to reduce size
+strip = "symbols"
+
+# Even more aggressive optimization for production deployment
+[profile.production]
+inherits = "release"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"

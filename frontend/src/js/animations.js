@@ -94,6 +94,8 @@ export function initScrollAnimations() {
         });
     });
     
+    // Contact form animation - commented out since form is commented out in HTML
+    /*
     gsap.from('.contact-form', {
         scrollTrigger: {
             trigger: '.contact-form',
@@ -106,6 +108,7 @@ export function initScrollAnimations() {
         opacity: 0,
         ease: 'power2.out'
     });
+    */
 }
 
 // Skill bars animation
@@ -238,19 +241,19 @@ export function initTypingEffect() {
         let typeSpeed = isDeleting ? 50 : 100;
         
         if (!isDeleting && currentText === fullText) {
-            typeSpeed = 2000;
+            typeSpeed = 1500; // Reduced from 2000ms to improve performance
             isDeleting = true;
         } else if (isDeleting && currentText === '') {
             isDeleting = false;
             currentIndex = (currentIndex + 1) % titles.length;
-            typeSpeed = 500;
+            typeSpeed = 300; // Reduced from 500ms to improve performance
         }
         
         setTimeout(type, typeSpeed);
     }
     
-    // Start typing effect after initial animation
-    setTimeout(type, 3000);
+    // Start typing effect after initial animation (reduced delay)
+    setTimeout(type, 2000);
 }
 
 // Magnetic buttons

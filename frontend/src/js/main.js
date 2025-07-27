@@ -122,9 +122,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.removeEventListener('mousemove', loadAnimationsOnInteraction);
     };
     
-    // Schedule lazy loading
-    setTimeout(loadAnimations, 1000); // Load after 1 second
-    setTimeout(loadEffects, 2000); // Load effects after 2 seconds
+    // Schedule lazy loading with optimized timing
+    setTimeout(loadAnimations, 800); // Load after 800ms
+    setTimeout(loadEffects, 1200); // Load effects after 1.2 seconds
     
     // Also load on user interaction
     window.addEventListener('scroll', loadAnimationsOnInteraction, { passive: true, once: true });
