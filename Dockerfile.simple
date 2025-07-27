@@ -1,0 +1,16 @@
+# Simple fast Dockerfile for testing
+FROM rust:1.83-alpine AS builder
+RUN apk add --no-cache musl-dev
+WORKDIR /app
+COPY . .
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates
+WORKDIR /app
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/personal_website ./
+COPY templates/ ./templates/
+COPY static/ ./static/
+ENV RUST_LOG=info HOST=0.0.0.0 PORT=8000
+EXPOSE 8000
+CMD ["./personal_website"]

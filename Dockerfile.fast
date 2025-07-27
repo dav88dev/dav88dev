@@ -1,0 +1,41 @@
+# Fast Dockerfile - assumes WASM is pre-built
+FROM rust:1.83-alpine AS builder
+
+RUN apk add --no-cache musl-dev openssl-dev pkgconfig
+
+WORKDIR /app
+COPY Cargo.toml Cargo.lock ./
+COPY src/ src/
+
+# Build Rust only
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+# Runtime
+FROM alpine:3.18
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+# Copy everything needed
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/personal_website /app/portfolio
+COPY templates/ templates/
+COPY static/ static/
+
+# Create non-root user
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup && \
+    chown -R appuser:appgroup /app
+
+USER appuser
+
+EXPOSE 8000
+
+ENV RUST_LOG=info
+ENV HOST=0.0.0.0
+ENV PORT=8000
+
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD wget --spider --quiet http://localhost:8000/health || exit 1
+
+CMD ["./portfolio"]
