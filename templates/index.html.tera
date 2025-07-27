@@ -345,6 +345,8 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Contact form temporarily disabled -->
+                    <!--
                     <div class="contact-form">
                         <form id="contactForm" role="form" aria-label="Contact form">
                             <div class="form-group">
@@ -370,6 +372,7 @@
                             <button type="submit" class="btn btn-primary btn-full" aria-label="Send contact message">Send Message</button>
                         </form>
                     </div>
+                    -->
                 </div>
             </div>
         </section>

@@ -1,0 +1,434 @@
+version: 2.1
+
+# Orbs for simplified common tasks
+orbs:
+  docker: circleci/docker@2.4.0
+  node: circleci/node@5.1.0
+
+# Executors - Define execution environments
+executors:
+  rust-executor:
+    docker:
+      - image: cimg/rust:1.75
+    resource_class: medium
+    environment:
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: 1
+
+  node-executor:
+    docker:
+      - image: cimg/node:18.19
+    resource_class: small
+
+  deploy-executor:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+
+# Jobs - Define individual tasks
+jobs:
+  # Install and cache Rust dependencies
+  setup-rust:
+    executor: rust-executor
+    steps:
+      - checkout
+      - run:
+          name: Install wasm-pack
+          command: |
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
+      - run:
+          name: Install musl target for static linking
+          command: rustup target add x86_64-unknown-linux-musl
+      - run:
+          name: Cache Rust dependencies
+          command: |
+            cargo fetch
+            cd wasm-frontend && cargo fetch
+      - save_cache:
+          key: rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
+          paths:
+            - ~/.cargo/registry
+            - ~/.cargo/git
+            - target
+            - wasm-frontend/target
+
+  # Install and cache Node.js dependencies
+  setup-frontend:
+    executor: node-executor
+    steps:
+      - checkout
+      - node/install-packages:
+          app-dir: frontend
+          cache-version: v2
+      - save_cache:
+          key: frontend-deps-v2-{{ checksum "frontend/package-lock.json" }}
+          paths:
+            - frontend/node_modules
+
+  # Code quality and security checks
+  code-quality:
+    executor: rust-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
+            - rust-deps-v2-
+      - run:
+          name: Install clippy and rustfmt
+          command: |
+            rustup component add clippy rustfmt
+      - run:
+          name: Check code formatting
+          command: |
+            cargo fmt --all -- --check
+            cd wasm-frontend && cargo fmt --all -- --check
+      - run:
+          name: Run clippy (linting)
+          command: |
+            cargo clippy --all-targets --all-features -- -D warnings
+            cd wasm-frontend && cargo clippy --all-targets --all-features -- -D warnings
+      - run:
+          name: Security audit
+          command: |
+            cargo install cargo-audit --quiet
+            cargo audit
+            cd wasm-frontend && cargo audit
+
+  # Run tests
+  test:
+    executor: rust-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
+            - rust-deps-v2-
+      - run:
+          name: Run unit tests
+          command: |
+            cargo test --verbose
+      - run:
+          name: Run integration tests
+          command: |
+            cargo test --test '*' --verbose
+      - store_test_results:
+          path: target/test-results
+
+  # Build frontend assets
+  build-frontend:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - frontend-deps-v2-{{ checksum "frontend/package-lock.json" }}
+            - frontend-deps-v2-
+      - run:
+          name: Build frontend assets
+          command: |
+            cd frontend
+            npm run build
+      - run:
+          name: Verify build artifacts
+          command: |
+            ls -la static/
+            test -f static/.vite/manifest.json || (echo "Vite manifest not found!" && exit 1)
+      - persist_to_workspace:
+          root: .
+          paths:
+            - static
+
+  # Build WASM
+  build-wasm:
+    executor: rust-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
+            - rust-deps-v2-
+      - run:
+          name: Install wasm-pack
+          command: |
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
+      - run:
+          name: Build WASM package
+          command: |
+            cd wasm-frontend
+            wasm-pack build --target web --out-dir ../static/wasm
+      - run:
+          name: Verify WASM artifacts
+          command: |
+            ls -la static/wasm/
+            test -f static/wasm/wasm_frontend.js || (echo "WASM JS bindings not found!" && exit 1)
+            test -f static/wasm/wasm_frontend_bg.wasm || (echo "WASM binary not found!" && exit 1)
+      - persist_to_workspace:
+          root: .
+          paths:
+            - static/wasm
+
+  # Build Rust application
+  build-rust:
+    executor: rust-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          keys:
+            - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
+            - rust-deps-v2-
+      - run:
+          name: Install musl target
+          command: rustup target add x86_64-unknown-linux-musl
+      - run:
+          name: Build release binary
+          command: |
+            cargo build --release --target x86_64-unknown-linux-musl
+      - run:
+          name: Verify binary
+          command: |
+            file target/x86_64-unknown-linux-musl/release/personal_website
+            ldd target/x86_64-unknown-linux-musl/release/personal_website || echo "Statically linked binary (expected)"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target/x86_64-unknown-linux-musl/release/personal_website
+
+  # Integration tests with built artifacts
+  integration-test:
+    executor: rust-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start application in background
+          command: |
+            chmod +x target/x86_64-unknown-linux-musl/release/personal_website
+            RUST_LOG=info ./target/x86_64-unknown-linux-musl/release/personal_website &
+            sleep 5
+          background: true
+      - run:
+          name: Wait for server to start
+          command: |
+            timeout 30 bash -c 'until curl -f http://localhost:8000/health; do sleep 1; done'
+      - run:
+          name: Test endpoints
+          command: |
+            # Test health endpoint
+            curl -f http://localhost:8000/health
+            
+            # Test main page
+            curl -f http://localhost:8000/ | grep -q "David Aghayan"
+            
+            # Test WASM assets
+            curl -f http://localhost:8000/static/wasm/wasm_frontend.js
+            curl -f http://localhost:8000/static/wasm/wasm_frontend_bg.wasm
+            
+            # Test Vite assets
+            curl -f http://localhost:8000/static/.vite/manifest.json
+
+  # Build and scan Docker image
+  build-docker:
+    executor: docker/docker
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - docker/check
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t portfolio:${CIRCLE_SHA1} .
+            docker tag portfolio:${CIRCLE_SHA1} portfolio:latest
+      - run:
+          name: Test Docker image
+          command: |
+            # Start container
+            docker run -d --name test-container -p 8000:8000 portfolio:${CIRCLE_SHA1}
+            
+            # Wait for startup
+            sleep 10
+            
+            # Test health endpoint
+            docker exec test-container wget --spider --quiet http://localhost:8000/health
+            
+            # Test from host
+            curl -f http://localhost:8000/health
+            
+            # Cleanup
+            docker stop test-container
+            docker rm test-container
+      - run:
+          name: Security scan with Trivy
+          command: |
+            # Install Trivy
+            sudo apt-get update
+            sudo apt-get install wget apt-transport-https gnupg lsb-release
+            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+            echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+            sudo apt-get update
+            sudo apt-get install trivy
+            
+            # Scan image
+            trivy image --exit-code 1 --severity HIGH,CRITICAL portfolio:${CIRCLE_SHA1}
+      - docker/save-image:
+          image: portfolio
+          tag: ${CIRCLE_SHA1}
+
+  # Deploy to production
+  deploy-production:
+    executor: deploy-executor
+    steps:
+      - checkout
+      - docker/load-image:
+          image: portfolio
+          tag: ${CIRCLE_SHA1}
+      - run:
+          name: Deploy to production
+          command: |
+            echo "🚀 Deploying to production server..."
+            echo "Docker image: portfolio:${CIRCLE_SHA1}"
+            
+            # Install deploy dependencies
+            sudo apt-get update && sudo apt-get install -y openssh-client
+            
+            # Add server to known hosts
+            mkdir -p ~/.ssh
+            echo "$PRODUCTION_HOST_KEY" >> ~/.ssh/known_hosts
+            
+            # Create SSH key
+            echo "$PRODUCTION_SSH_KEY" | base64 -d > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+            
+            # Save Docker image
+            docker save portfolio:${CIRCLE_SHA1} | gzip > portfolio.tar.gz
+            
+            # Transfer image to server
+            scp -i ~/.ssh/deploy_key portfolio.tar.gz $PRODUCTION_USER@$PRODUCTION_HOST:/tmp/
+            
+            # Deploy on production server
+            ssh -i ~/.ssh/deploy_key $PRODUCTION_USER@$PRODUCTION_HOST << 'EOF'
+              # Load new image
+              cd /tmp
+              docker load < portfolio.tar.gz
+              
+              # Stop existing container if running
+              docker stop portfolio || true
+              docker rm portfolio || true
+              
+              # Start new container
+              docker run -d \
+                --name portfolio \
+                --restart unless-stopped \
+                -p 80:8000 \
+                -e RUST_LOG=info \
+                -e HOST=0.0.0.0 \
+                -e PORT=8000 \
+                portfolio:${CIRCLE_SHA1}
+              
+              # Health check
+              sleep 10
+              curl -f http://localhost/health || exit 1
+              
+              # Cleanup
+              rm portfolio.tar.gz
+              docker image prune -f
+            EOF
+            
+            echo "✅ Production deployment completed successfully!"
+            echo "🌐 Application available at: http://$PRODUCTION_HOST"
+
+# Workflows - Define job orchestration
+workflows:
+  version: 2
+  
+  # Main workflow for all commits
+  build-test-deploy:
+    jobs:
+      # Setup phase (parallel)
+      - setup-rust:
+          filters:
+            branches:
+              ignore: /^dependabot\/.*/
+      - setup-frontend:
+          filters:
+            branches:
+              ignore: /^dependabot\/.*/
+      
+      # Quality checks (parallel, after setup)
+      - code-quality:
+          requires:
+            - setup-rust
+      - test:
+          requires:
+            - setup-rust
+      
+      # Build phase (parallel, after setup)
+      - build-frontend:
+          requires:
+            - setup-frontend
+      - build-wasm:
+          requires:
+            - setup-rust
+      - build-rust:
+          requires:
+            - setup-rust
+            - build-frontend
+            - build-wasm
+      
+      # Integration testing
+      - integration-test:
+          requires:
+            - build-rust
+            - code-quality
+            - test
+      
+      # Docker build and security scan
+      - build-docker:
+          requires:
+            - integration-test
+          filters:
+            branches:
+              only: 
+                - main
+                - master
+                - develop
+      
+      # Production deployment (only on main/master)
+      - deploy-production:
+          requires:
+            - build-docker
+          filters:
+            branches:
+              only: 
+                - main
+                - master
+          context: production-deploy  # CircleCI context for production secrets
+
+  # Security and dependency updates
+  security-check:
+    triggers:
+      - schedule:
+          cron: "0 2 * * 1"  # Weekly on Monday at 2 AM
+          filters:
+            branches:
+              only: main
+    jobs:
+      - setup-rust
+      - code-quality:
+          requires:
+            - setup-rust
+
+# Configuration for build optimization
+parameters:
+  rust-version:
+    type: string
+    default: "1.75"
+  node-version:
+    type: string
+    default: "18.19"
