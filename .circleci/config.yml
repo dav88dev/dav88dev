@@ -244,7 +244,7 @@ jobs:
             cp -r static deploy-package/
             
             # Create systemd service file
-            cat > deploy-package/portfolio.service << 'EOF'
+            cat > deploy-package/portfolio.service \<< 'EOF'
             [Unit]
             Description=Personal Portfolio Website
             After=network.target
@@ -273,7 +273,7 @@ jobs:
             EOF
             
             # Create deployment script
-            cat > deploy-package/deploy.sh << 'EOF'
+            cat > deploy-package/deploy.sh \<< 'EOF'
             #!/bin/bash
             set -e
             
@@ -331,7 +331,7 @@ jobs:
             scp -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@129.80.170.232:/tmp/
             
             # Execute bare metal deployment
-            ssh -o StrictHostKeyChecking=no ubuntu@129.80.170.232 << 'DEPLOY_SCRIPT'
+            ssh -o StrictHostKeyChecking=no ubuntu@129.80.170.232 \<< 'DEPLOY_SCRIPT'
               cd /tmp
               
               # CLEANUP: Stop and remove existing Docker containers
@@ -359,7 +359,7 @@ jobs:
               
               # Setup nginx proxy (force reconfigure)
               echo "🌐 Configuring nginx proxy..."
-              sudo tee /etc/nginx/sites-available/portfolio << 'NGINX_CONF'
+              sudo tee /etc/nginx/sites-available/portfolio \<< 'NGINX_CONF'
             server {
                 listen 80 default_server;
                 server_name _;
