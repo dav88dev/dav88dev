@@ -129,6 +129,11 @@ jobs:
             - static/css
             - static/js
             - static/.vite
+            - static/images
+            - static/manifest.json
+            - static/robots.txt
+            - static/sitemap.xml
+            - static/sw.js
 
   # Build WASM
   build-wasm:
@@ -243,6 +248,13 @@ jobs:
             cp -r templates deploy-package/
             cp -r static deploy-package/
             
+            # Verify critical assets exist
+            echo "🔍 Verifying assets..."
+            test -f deploy-package/static/images/logo.png || (echo "❌ logo.png missing!" && exit 1)
+            test -f deploy-package/static/js/full-wasm-skills.js || (echo "❌ full-wasm-skills.js missing!" && exit 1)
+            test -f deploy-package/static/wasm/wasm_frontend.js || (echo "❌ WASM files missing!" && exit 1)
+            echo "✅ All critical assets verified"
+            
             # Create systemd service file
             cat > deploy-package/portfolio.service \<< 'EOF'
             [Unit]
@@ -334,20 +346,8 @@ jobs:
             ssh -o StrictHostKeyChecking=no ubuntu@129.80.170.232 \<< 'DEPLOY_SCRIPT'
               cd /tmp
               
-              # CLEANUP: Stop and remove existing Docker containers
-              echo "🧹 Cleaning up Docker containers..."
-              sudo docker stop portfolio || true
-              sudo docker rm portfolio || true
-              sudo docker system prune -f || true
-              
               # Install dependencies
               echo "📦 Installing system dependencies..."
-              # Remove Docker repo to prevent conflicts
-              sudo rm -f /etc/apt/sources.list.d/docker.list
-              sudo rm -f /usr/share/keyrings/docker-archive-keyring.gpg
-              # Wait for any running apt processes
-              sudo killall apt apt-get dpkg 2>/dev/null || true
-              sleep 5
               sudo apt update
               sudo apt install -y curl
               
