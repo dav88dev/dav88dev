@@ -11,7 +11,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Rust builder stage
-FROM rust:1.75-alpine AS backend-builder
+FROM rust:1.83-alpine AS backend-builder
 
 # Install build dependencies
 RUN apk add --no-cache \
