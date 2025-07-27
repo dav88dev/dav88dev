@@ -30,17 +30,23 @@ use personal_website::{
 
 #[tokio::main(flavor = "multi_thread")] // Uses num_cpus::get() by default
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing for observability
+    // Load configuration first
+    let config = AppConfig::from_env();
+    
+    // Initialize logging with production-ready defaults
+    let log_level = if config.is_development() {
+        "personal_website=debug,tower_http=debug"
+    } else {
+        "personal_website=info,tower_http=warn"
+    };
+    
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "personal_website=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| log_level.into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
-
-    // Load configuration
-    let config = AppConfig::from_env();
     tracing::info!("Starting server with config: {:?}", config);
 
     // Initialize template engine
