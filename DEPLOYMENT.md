@@ -9,12 +9,16 @@ This project uses CircleCI for automated CI/CD deployment to production.
 Set these environment variables in your CircleCI project settings:
 
 #### Production Server Access
-```bash
-PRODUCTION_HOST=your-server-ip-or-domain
-PRODUCTION_USER=your-ssh-username
-PRODUCTION_SSH_KEY=base64-encoded-private-ssh-key
-PRODUCTION_HOST_KEY=your-server-ssh-host-key
-```
+
+When using CircleCI's Additional SSH Keys:
+1. Add your private SSH key in Project Settings > SSH Keys > Additional SSH Keys
+2. Set hostname: `129.153.229.28`
+3. Copy the fingerprint and set it as environment variable:
+   ```bash
+   SSH_FINGERPRINT=your-key-fingerprint
+   ```
+
+The deployment will automatically use `ubuntu@129.153.229.28`.
 
 ### 🔑 SSH Key Setup
 
