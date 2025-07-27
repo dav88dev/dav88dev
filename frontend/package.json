@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "vite build && npm run minify-three",
+    "preview": "vite preview",
+    "minify-three": "[ -f ../static/js/vendor/three.module.js ] && terser ../static/js/vendor/three.module.js --compress --mangle --module --source-map -o ../static/js/vendor/three.module.min.js && rm -f ../static/js/vendor/three.module.js || echo 'three.module.js not found, skipping minification'"
   },
   "devDependencies": {
     "@vitejs/plugin-legacy": "^5.0.0",
