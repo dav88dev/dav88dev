@@ -419,7 +419,7 @@ class CleanSkills {
             try {
                 this.renderer.render();
             } catch (error) {
-                console.error('Render error:', error);
+                // Silent error handling
             }
         }
     }
