@@ -37,8 +37,11 @@ jobs:
             curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
       - run:
-          name: Install musl target for static linking
-          command: rustup target add x86_64-unknown-linux-musl
+          name: Install musl target and tools for static linking
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y musl-tools musl-dev
+            rustup target add x86_64-unknown-linux-musl
       - run:
           name: Cache Rust dependencies
           command: |
@@ -177,8 +180,11 @@ jobs:
             - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
             - rust-deps-v2-
       - run:
-          name: Install musl target
-          command: rustup target add x86_64-unknown-linux-musl
+          name: Install musl target and tools
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y musl-tools musl-dev
+            rustup target add x86_64-unknown-linux-musl
       - run:
           name: Build release binary
           command: |
