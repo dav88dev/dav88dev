@@ -67,9 +67,56 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("🔧 h2c (clear-text HTTP/2) enabled for Cloudflare compatibility");
 
     // Start the server with h2c (HTTP/2 clear-text) support and graceful shutdown
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    use hyper_util::rt::{TokioExecutor, TokioIo};
+    use hyper_util::server::conn::auto::Builder;
+    use hyper_util::service::TowerToHyperService;
+    use tower::Service;
+    
+    let make_service = app.into_make_service();
+    let executor = TokioExecutor::new();
+    let builder = Builder::new(executor); // Pure HTTP/2 builder for maximum performance
+    
+    loop {
+        tokio::select! {
+            conn_result = listener.accept() => {
+                match conn_result {
+                    Ok((stream, _addr)) => {
+                        let mut make_service_clone = make_service.clone();
+                        let builder_clone = builder.clone();
+                        tokio::spawn(async move {
+                            let peer_addr = stream.peer_addr().unwrap();
+                            let io = TokioIo::new(stream);
+                            
+                            // Create a service for this connection
+                            let service = match make_service_clone.call(peer_addr).await {
+                                Ok(service) => service,
+                                Err(e) => {
+                                    tracing::error!("Make service error: {:?}", e);
+                                    return;
+                                }
+                            };
+                            
+                            let hyper_service = TowerToHyperService::new(service);
+                            
+                            if let Err(err) = builder_clone
+                                .serve_connection(io, hyper_service)
+                                .await 
+                            {
+                                tracing::error!("Connection error: {}", err);
+                            }
+                        });
+                    }
+                    Err(e) => {
+                        tracing::error!("Accept error: {}", e);
+                    }
+                }
+            }
+            _ = shutdown_signal() => {
+                tracing::info!("Shutdown signal received, stopping server");
+                break;
+            }
+        }
+    }
 
     Ok(())
 }
