@@ -1,86 +1,69 @@
-# Multi-stage build for optimal image size and security
-FROM node:18-alpine AS frontend-builder
+# Modern multi-stage Dockerfile for Rust web application
+# Using Docker best practices for 2025
 
-# Install frontend dependencies and build assets
-WORKDIR /app/frontend
+# Stage 1: Frontend builder
+FROM node:22-alpine AS frontend
+WORKDIR /frontend
 COPY frontend/package*.json ./
 RUN npm ci
-
-# Copy frontend source and build
 COPY frontend/ ./
 RUN npm run build
 
-# Rust builder stage
-FROM rust:1.83-alpine AS backend-builder
+# Stage 2: WASM builder
+FROM rust:1.83-alpine AS wasm
+RUN apk add --no-cache curl && \
+    curl -sSf https://rustwasm.github.io/wasm-pack/installer/init.sh | sh
+WORKDIR /wasm
+COPY wasm-frontend/ ./
+RUN wasm-pack build --target web --out-dir /wasm/pkg
 
-# Install build dependencies
-RUN apk add --no-cache \
-    musl-dev \
-    openssl-dev \
-    pkgconfig
+# Stage 3: Rust builder with cargo-chef for optimal caching
+FROM lukemathwalker/cargo-chef:latest-rust-1.83-alpine AS chef
+WORKDIR /build
 
-# Create app directory
-WORKDIR /app
-
-# Copy Cargo files for dependency caching
+FROM chef AS planner
 COPY Cargo.toml Cargo.lock ./
 COPY src/ src/
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Copy all necessary files before build
-COPY templates/ templates/
-COPY wasm-frontend/ wasm-frontend/
+FROM chef AS backend
+RUN apk add --no-cache musl-dev
+COPY --from=planner /build/recipe.json recipe.json
+# Build dependencies - this is cached
+RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
 
-# Build WASM first
-RUN cd wasm-frontend && \
-    rustup target add wasm32-unknown-unknown && \
-    cargo install wasm-pack && \
-    wasm-pack build --target web --out-dir ../static/wasm
+# Build application
+COPY Cargo.toml Cargo.lock ./
+COPY src/ src/
+RUN cargo build --release --target x86_64-unknown-linux-musl && \
+    strip target/x86_64-unknown-linux-musl/release/personal_website
 
-# Copy frontend build artifacts
-COPY --from=frontend-builder /app/static ./static
+# Stage 4: Final runtime
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates tzdata && \
+    adduser -D -u 1000 web
 
-# Build the Rust application in release mode
-RUN cargo build --release --target x86_64-unknown-linux-musl
-
-# Runtime stage - minimal Alpine image
-FROM alpine:3.18
-
-# Install runtime dependencies
-RUN apk add --no-cache \
-    ca-certificates \
-    tzdata
-
-# Create non-root user for security
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
-
-# Set working directory
 WORKDIR /app
 
-# Copy binary from builder
-COPY --from=backend-builder /app/target/x86_64-unknown-linux-musl/release/personal_website /app/portfolio
-COPY --from=backend-builder /app/templates ./templates
-COPY --from=backend-builder /app/static ./static
+# Copy artifacts from build stages
+COPY --from=backend --chown=web:web /build/target/x86_64-unknown-linux-musl/release/personal_website ./
+COPY --from=frontend --chown=web:web /static ./static
+COPY --from=wasm --chown=web:web /wasm/pkg ./static/wasm
+COPY --chown=web:web templates/ ./templates
 
-# Change ownership to non-root user
-RUN chown -R appuser:appgroup /app
-
-# Switch to non-root user
-USER appuser
-
-# Expose port
+USER web
 EXPOSE 8000
 
-# Set environment variables
-ENV RUST_LOG=info
-ENV HOST=0.0.0.0
-ENV PORT=8000
-ENV STATIC_DIR=./static
-ENV TEMPLATE_DIR=./templates
+# Optimized for Axum/Tokio async runtime
+ENV RUST_LOG=info \
+    HOST=0.0.0.0 \
+    PORT=8000 \
+    TOKIO_WORKER_THREADS=2 \
+    TOKIO_BLOCKING_THREADS=2
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
+# Health check with retries for async startup
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget -qO- http://localhost:8000/health || exit 1
 
-# Run the application
-CMD ["./portfolio"]
+# Use exec form for proper signal handling with Tokio
+ENTRYPOINT ["./personal_website"]

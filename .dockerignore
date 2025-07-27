@@ -1,37 +1,78 @@
-# Git and documentation
+# Git
 .git/
 .gitignore
+.gitattributes
+
+# Documentation
 *.md
 docs/
+LICENSE
 
 # Rust build artifacts
 target/
+**/*.rs.bk
+*.pdb
 
-# Frontend build artifacts and dependencies
+# Frontend artifacts
 frontend/node_modules/
 frontend/dist/
+frontend/.cache/
+frontend/coverage/
+static/css/*.css
+static/js/*.js
+static/.vite/
+static/wasm/
 
 # WASM build artifacts
 wasm-frontend/target/
+wasm-frontend/pkg/
 
 # Development files
 .env
-.env.local
+.env.*
 *.log
+*.pid
+*.seed
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# CI/CD
+.circleci/
+.github/
+.gitlab-ci.yml
+
+# Test files
+tests/
+benches/
+examples/
+coverage/
+*.profraw
+*.profdata
 
 # Temporary files
 *.tmp
+*.temp
 .cache/
+tmp/
 
-# Test and development outputs
-report_*.json
+# Scripts (keep build.sh)
+scripts/
+!build.sh
+
+# Misc
+*.bak
+*.backup
+*.old
+issue.png
+*.screenshot.png
+debug-*.png
