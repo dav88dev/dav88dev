@@ -36,6 +36,8 @@ futures = "0.3"
 # For future database work
 uuid = { version = "1.6", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
+# For ETags in static file serving
+md5 = "0.7"
 
 [features]
 default = ["mimalloc"]
