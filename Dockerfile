@@ -43,7 +43,8 @@ WORKDIR /app
 COPY --from=backend --chown=web:web /build/target/x86_64-unknown-linux-musl/release/personal_website ./
 COPY --from=frontend --chown=web:web /static ./static
 COPY --chown=web:web templates/ ./templates
-COPY --chown=web:web static/wasm ./static/wasm
+# Copy pre-built WASM files from build.sh output
+COPY --chown=web:web static/wasm/ ./static/wasm/
 
 USER web
 EXPOSE 8000

@@ -21,7 +21,6 @@ frontend/coverage/
 static/css/*.css
 static/js/*.js
 static/.vite/
-static/wasm/
 
 # WASM build artifacts
 wasm-frontend/target/
