@@ -234,8 +234,11 @@ jobs:
 
   # Build and scan Docker image
   build-docker:
-    executor: docker/docker
+    docker:
+      - image: cimg/base:stable
     steps:
+      - setup_remote_docker:
+          version: 20.10.24
       - checkout
       - attach_workspace:
           at: .
@@ -276,18 +279,29 @@ jobs:
             
             # Scan image
             trivy image --exit-code 1 --severity HIGH,CRITICAL portfolio:${CIRCLE_SHA1}
-      - docker/save-image:
-          image: portfolio
-          tag: ${CIRCLE_SHA1}
+      - run:
+          name: Save Docker image
+          command: |
+            docker save -o portfolio.tar portfolio:${CIRCLE_SHA1}
+            gzip portfolio.tar
+      - persist_to_workspace:
+          root: .
+          paths:
+            - portfolio.tar.gz
 
   # Deploy to production
   deploy-production:
     executor: deploy-executor
     steps:
       - checkout
-      - docker/load-image:
-          image: portfolio
-          tag: ${CIRCLE_SHA1}
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.24
+      - run:
+          name: Load Docker image
+          command: |
+            docker load -i portfolio.tar.gz
       - run:
           name: Deploy to production
           command: |
@@ -312,7 +326,7 @@ jobs:
             scp -i ~/.ssh/deploy_key portfolio.tar.gz $PRODUCTION_USER@$PRODUCTION_HOST:/tmp/
             
             # Deploy on production server
-            ssh -i ~/.ssh/deploy_key $PRODUCTION_USER@$PRODUCTION_HOST << 'EOF'
+            ssh -i ~/.ssh/deploy_key $PRODUCTION_USER@$PRODUCTION_HOST << EOF
               # Load new image
               cd /tmp
               docker load < portfolio.tar.gz
