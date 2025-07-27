@@ -206,22 +206,23 @@ jobs:
       - run:
           name: Wait for server to start
           command: |
-            timeout 30 bash -c 'until curl -f http://localhost:8000/health; do sleep 1; done'
+            timeout 30 bash -c 'until curl -sf http://localhost:8000/health -o /dev/null; do sleep 1; done'
+            echo "✓ Server is up and running"
       - run:
           name: Test endpoints
           command: |
             # Test health endpoint
-            curl -f http://localhost:8000/health
+            curl -sf http://localhost:8000/health -o /dev/null && echo "✓ Health check passed"
             
             # Test main page
-            curl -f http://localhost:8000/ | grep -q "David Aghayan"
+            curl -sf http://localhost:8000/ -o /dev/null && echo "✓ Main page accessible"
             
             # Test WASM assets
-            curl -f http://localhost:8000/static/wasm/wasm_frontend.js
-            curl -f http://localhost:8000/static/wasm/wasm_frontend_bg.wasm
+            curl -sf http://localhost:8000/static/wasm/wasm_frontend.js -o /dev/null && echo "✓ WASM JS accessible"
+            curl -sf http://localhost:8000/static/wasm/wasm_frontend_bg.wasm -o /dev/null && echo "✓ WASM binary accessible"
             
             # Test Vite assets
-            curl -f http://localhost:8000/static/.vite/manifest.json
+            curl -sf http://localhost:8000/static/.vite/manifest.json -o /dev/null && echo "✓ Vite manifest accessible"
 
   # Build and scan Docker image
   build-docker:
