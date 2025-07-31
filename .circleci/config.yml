@@ -1,602 +1,319 @@
 version: 2.1
 
-# Orbs for simplified common tasks
-orbs:
-  node: circleci/node@5.1.0
-
-# Executors - Define execution environments
+# Optimized CircleCI pipeline for Dockerized Rust Portfolio
 executors:
-  rust-executor:
+  docker-executor:
     docker:
-      - image: cimg/rust:1.83
+      - image: cimg/base:current
     resource_class: medium
     environment:
-      CARGO_TERM_COLOR: always
-      RUST_BACKTRACE: 1
+      DOCKER_BUILDKIT: 1
 
-  go-executor:
-    docker:
-      - image: cimg/go:1.24-node
-    resource_class: medium
-    working_directory: ~/project
-    environment:
-      GO_VERSION: "1.24"
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
-
-  node-executor:
-    docker:
-      - image: cimg/node:18.19
-    resource_class: small
-
-  deploy-executor:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-
-# Jobs - Define individual tasks
 jobs:
-  # Install and cache Rust dependencies for WASM
-  setup-rust:
-    executor: rust-executor
+  # Build and test the Docker image
+  build-and-test:
+    executor: docker-executor
     steps:
       - checkout
+      - setup_remote_docker:
+          version: 24.0.9
+          docker_layer_caching: true
+      
       - run:
-          name: Install wasm-pack
+          name: Build Docker image
           command: |
-            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
+            echo "🐳 Building portfolio Docker image..."
+            docker build -t portfolio-app:${CIRCLE_SHA1} .
+            docker tag portfolio-app:${CIRCLE_SHA1} portfolio-app:latest
+            
+            # Show image info
+            docker images portfolio-app
+            echo "✅ Docker image built successfully"
+      
       - run:
-          name: Cache Rust dependencies
+          name: Test Docker image
           command: |
-            cd wasm-frontend && cargo fetch
-      - save_cache:
-          key: rust-wasm-deps-v2-{{ checksum "wasm-frontend/Cargo.lock" }}
-          paths:
-            - ~/.cargo/registry
-            - ~/.cargo/git
-            - wasm-frontend/target
-
-  # Install and cache Node.js dependencies
-  setup-frontend:
-    executor: node-executor
-    steps:
-      - checkout
-      - node/install-packages:
-          app-dir: frontend
-          cache-version: v2
-      - save_cache:
-          key: frontend-deps-v2-{{ checksum "frontend/package-lock.json" }}
-          paths:
-            - frontend/node_modules
-
-  # Setup Go dependencies
-  setup-go:
-    executor: go-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v2-{{ checksum "go.sum" }}
-            - go-mod-v2-
-      - run:
-          name: Install Go dependencies
-          command: go mod download
-      - save_cache:
-          key: go-mod-v2-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
-
-  # Run Go tests
-  test-go:
-    executor: go-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v2-{{ checksum "go.sum" }}
-            - go-mod-v2-
-      - run:
-          name: Run Go tests
-          command: go test -v ./...
-
-  # Code quality checks for Rust WASM
-  code-quality-rust:
-    executor: rust-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - rust-wasm-deps-v2-{{ checksum "wasm-frontend/Cargo.lock" }}
-            - rust-wasm-deps-v2-
-      - run:
-          name: Install clippy and rustfmt
-          command: |
-            rustup component add clippy rustfmt
-      - run:
-          name: Check WASM compilation
-          command: |
-            cd wasm-frontend && cargo check
-
-  # Build WASM frontend
-  build-wasm:
-    executor: rust-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - rust-wasm-deps-v2-{{ checksum "wasm-frontend/Cargo.lock" }}
-            - rust-wasm-deps-v2-
-      - run:
-          name: Install wasm-pack
-          command: |
-            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-      - run:
-          name: Build WASM package
-          command: |
-            cd wasm-frontend
-            wasm-pack build --target web --out-dir ../static/wasm
-      - run:
-          name: Verify WASM artifacts
-          command: |
-            ls -la static/wasm/
-            test -f static/wasm/wasm_frontend.js || (echo "WASM JS bindings not found!" && exit 1)
-            test -f static/wasm/wasm_frontend_bg.wasm || (echo "WASM binary not found!" && exit 1)
-      - persist_to_workspace:
-          root: .
-          paths:
-            - static/wasm
-
-  # Build frontend assets
-  build-frontend:
-    executor: node-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - frontend-deps-v2-{{ checksum "frontend/package-lock.json" }}
-            - frontend-deps-v2-
-      - run:
-          name: Build frontend assets
-          command: |
-            cd frontend
-            npm run build
-      - run:
-          name: Verify build artifacts
-          command: |
-            ls -la static/
-            # Verify critical frontend assets exist
-            test -d static/css || echo "CSS directory created"
-            test -d static/js || echo "JS directory created"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - static/css
-            - static/js
-            - static/images
-            - static/*.json
-            - static/*.txt
-            - static/*.xml
-            - static/*.ico
-
-  # Build Go backend
-  build-go:
-    executor: go-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - restore_cache:
-          keys:
-            - go-mod-v2-{{ checksum "go.sum" }}
-            - go-mod-v2-
-      - run:
-          name: Install Go dependencies
-          command: go mod download
-      - run:
-          name: Build Go binary for Linux
-          command: |
-            GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o portfolio-server .
-      - run:
-          name: Verify binary
-          command: |
-            file portfolio-server
-            ls -la portfolio-server
-      - persist_to_workspace:
-          root: .
-          paths:
-            - portfolio-server
-
-  # Integration tests with all built artifacts
-  integration-test:
-    executor: go-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Start application in background
-          command: |
-            chmod +x portfolio-server
-            SERVER_PORT=8080 ./portfolio-server &
-            sleep 5
-          background: true
-      - run:
-          name: Wait for server to start
-          command: |
-            timeout 30 bash -c 'until curl -sf http://localhost:8080/health -o /dev/null; do sleep 1; done'
-            echo "✓ Server is up and running"
-      - run:
-          name: Test endpoints
-          command: |
+            echo "🧪 Testing Docker image..."
+            
+            # Start container in background
+            docker run -d --name test-portfolio -p 8000:8000 portfolio-app:latest
+            
+            # Wait for container to be ready
+            echo "⏳ Waiting for container to be ready..."
+            i=1
+            while [ $i -le 30 ]; do
+              if docker exec test-portfolio wget --no-verbose --tries=1 --spider http://localhost:8000/health 2>/dev/null; then
+                echo "✅ Container is healthy!"
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "❌ Container failed to become healthy"
+                docker logs test-portfolio
+                exit 1
+              fi
+              sleep 2
+              i=$((i + 1))
+            done
+            
             # Test health endpoint
-            curl -sf http://localhost:8080/health -o /dev/null && echo "✓ Health check passed"
+            docker exec test-portfolio wget -q -O- http://localhost:8000/health
+            echo "✅ Health check passed"
             
-            # Test API endpoints
-            curl -sf http://localhost:8080/api/cv -o /dev/null && echo "✓ CV API accessible"
-            
-            # Test WASM assets (if they exist)
-            if [ -f static/wasm/wasm_frontend.js ]; then
-              curl -sf http://localhost:8080/static/wasm/wasm_frontend.js -o /dev/null && echo "✓ WASM JS accessible"
-              curl -sf http://localhost:8080/static/wasm/wasm_frontend_bg.wasm -o /dev/null && echo "✓ WASM binary accessible"
+            # Test homepage (should return content)
+            HOMEPAGE_SIZE=$(docker exec test-portfolio wget -q -O- http://localhost:8000 | wc -c)
+            if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
+              echo "✅ Homepage test passed (${HOMEPAGE_SIZE} bytes)"
+            else
+              echo "❌ Homepage test failed (${HOMEPAGE_SIZE} bytes)"
+              exit 1
             fi
-
-  # Package everything for deployment
-  package-deployment:
-    executor: deploy-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
+            
+            # Show container stats
+            echo "📊 Container stats:"
+            docker stats --no-stream test-portfolio
+            
+            # Cleanup
+            docker stop test-portfolio
+            docker rm test-portfolio
+      
       - run:
-          name: Create comprehensive deployment package
+          name: Save Docker image for deployment
           command: |
-            mkdir -p deploy-package
-            
-            # Copy Go binary
-            cp portfolio-server deploy-package/
-            chmod +x deploy-package/portfolio-server
-            
-            # Copy all static assets (including WASM if built)
-            cp -r static deploy-package/ || mkdir -p deploy-package/static
-            cp -r templates deploy-package/ || mkdir -p deploy-package/templates
-            
-            # Verify critical assets exist
-            echo "🔍 Verifying deployment assets..."
-            ls -la deploy-package/
-            test -f deploy-package/portfolio-server || (echo "❌ Go binary missing!" && exit 1)
-            test -d deploy-package/static || (echo "❌ Static directory missing!" && exit 1)
-            
-            # Check for WASM assets
-            if [ -f deploy-package/static/wasm/wasm_frontend.js ]; then
-              echo "✅ WASM assets included"
-            else
-              echo "⚠️  No WASM assets found - continuing without them"
-            fi
-            
-            # Create production environment setup script
-            cat > deploy-package/setup-env.sh << 'EOF'
-            #!/bin/bash
-            set -e
-            echo "🔧 Setting up production environment..."
-            
-            # Create portfolio user if it doesn't exist
-            sudo useradd -r -s /bin/false portfolio || true
-            
-            # Create directories
-            sudo mkdir -p /var/www/portfolio
-            sudo mkdir -p /etc/portfolio
-            
-            # Set up environment file from base64 (if provided)
-            if [ -f /tmp/production.env.b64 ]; then
-              sudo base64 -d /tmp/production.env.b64 > /tmp/production.env
-              sudo mv /tmp/production.env /etc/portfolio/production.env
-              sudo chown root:portfolio /etc/portfolio/production.env
-              sudo chmod 640 /etc/portfolio/production.env
-              echo "✅ Production environment configured"
-            else
-              echo "⚠️  No environment file provided"
-            fi
-            
-            echo "✅ Environment setup completed"
-            EOF
-            chmod +x deploy-package/setup-env.sh
-            
-            # Create systemd service file
-            cat > deploy-package/portfolio.service << 'EOF'
-            [Unit]
-            Description=Go Portfolio Website with WASM Frontend
-            After=network.target
-            
-            [Service]
-            Type=exec
-            User=portfolio
-            Group=portfolio
-            WorkingDirectory=/var/www/portfolio
-            ExecStart=/var/www/portfolio/portfolio-server
-            Restart=always
-            RestartSec=5
-            Environment=SERVER_ENV=production
-            Environment=SERVER_PORT=8080
-            EnvironmentFile=-/etc/portfolio/production.env
-            
-            # Performance tuning
-            LimitNOFILE=65535
-            OOMScoreAdjust=-1000
-            
-            # Security settings
-            NoNewPrivileges=true
-            PrivateTmp=true
-            ProtectSystem=strict
-            ProtectHome=true
-            ReadWritePaths=/var/www/portfolio
-            
-            [Install]
-            WantedBy=multi-user.target
-            EOF
-            
-            # Create nginx configuration
-            cat > deploy-package/nginx-portfolio.conf << 'EOF'
-            server {
-                listen 80 default_server;
-                listen [::]:80 default_server;
-                server_name _;
-                
-                # Security headers
-                add_header X-Frame-Options DENY always;
-                add_header X-Content-Type-Options nosniff always;
-                add_header X-XSS-Protection "1; mode=block" always;
-                add_header Referrer-Policy strict-origin-when-cross-origin always;
-                
-                # WASM MIME type
-                location ~* \.wasm$ {
-                    add_header Content-Type application/wasm;
-                    proxy_pass http://127.0.0.1:8080;
-                }
-                
-                # Proxy to Go server
-                location / {
-                    proxy_pass http://127.0.0.1:8080;
-                    proxy_http_version 1.1;
-                    proxy_set_header Upgrade $http_upgrade;
-                    proxy_set_header Connection 'upgrade';
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                    proxy_set_header X-Forwarded-Proto $scheme;
-                    proxy_cache_bypass $http_upgrade;
-                    proxy_read_timeout 86400;
-                }
-                
-                # Health check endpoint
-                location /health {
-                    proxy_pass http://127.0.0.1:8080/health;
-                    proxy_http_version 1.1;
-                    proxy_set_header Host $host;
-                    access_log off;
-                }
-            }
-            EOF
-            
-            # Create comprehensive deployment script
-            cat > deploy-package/deploy.sh << 'EOF'
-            #!/bin/bash
-            set -e
-            
-            echo "🚀 Starting comprehensive Go + WASM deployment..."
-            
-            # Setup environment
-            ./setup-env.sh
-            
-            # Stop existing service
-            sudo systemctl stop portfolio || true
-            
-            # Backup current deployment
-            sudo mv /var/www/portfolio /var/www/portfolio.backup.$(date +%s) || true
-            
-            # Deploy new version
-            sudo mkdir -p /var/www/portfolio
-            sudo cp portfolio-server /var/www/portfolio/
-            sudo cp -r static /var/www/portfolio/ || true
-            sudo cp -r templates /var/www/portfolio/ || true
-            
-            # Create environment symlink if production.env exists
-            if [ -f /etc/portfolio/production.env ]; then
-              sudo ln -sf /etc/portfolio/production.env /var/www/portfolio/.env
-              echo "✅ Created .env symlink"
-            else
-              echo "❌ WARNING: No production.env found - server will use defaults"
-            fi
-            
-            # Set ownership
-            sudo chown -R portfolio:portfolio /var/www/portfolio
-            
-            # Install and start service
-            sudo cp portfolio.service /etc/systemd/system/
-            sudo systemctl daemon-reload
-            sudo systemctl enable portfolio
-            sudo systemctl start portfolio
-            
-            # Configure nginx
-            sudo cp nginx-portfolio.conf /etc/nginx/sites-available/default
-            sudo nginx -t && sudo systemctl reload nginx
-            
-            # Health check
-            echo "⏳ Waiting for service to start..."
-            sleep 10
-            
-            # Check service status
-            sudo systemctl status portfolio --no-pager || true
-            
-            # Test endpoints
-            curl -f http://localhost:8080/health || (echo "❌ Health check failed" && exit 1)
-            curl -f http://localhost/health || (echo "❌ Nginx proxy failed" && exit 1)
-            
-            echo "✅ Comprehensive deployment completed successfully!"
-            echo "🌐 Application available at: http://129.80.170.232"
-            EOF
-            chmod +x deploy-package/deploy.sh
-            
-            # Create archive
-            tar -czf portfolio-deploy.tar.gz -C deploy-package .
-            echo "📦 Deployment package created: portfolio-deploy.tar.gz"
+            echo "💾 Saving Docker image..."
+            docker save portfolio-app:latest | gzip > portfolio-app.tar.gz
+            ls -lh portfolio-app.tar.gz
+      
       - persist_to_workspace:
           root: .
           paths:
-            - portfolio-deploy.tar.gz
+            - portfolio-app.tar.gz
 
-  # Deploy to production with full setup
+  # Deploy to production server
   deploy-production:
-    executor: deploy-executor
+    executor: docker-executor
     steps:
       - checkout
       - attach_workspace:
           at: .
       - add_ssh_keys:
           fingerprints:
-            - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
+            - "SHA256:XUKEgesVvQ7EG6ERyVsv/PnQ21/qSbQNvQN1GR47N7c"
+      
       - run:
-          name: Deploy comprehensive Go + WASM application
+          name: Deploy to OCI server
           command: |
-            echo "🚀 Starting full deployment to production..."
-            echo "Package: portfolio-deploy.tar.gz"
+            echo "🚀 Starting deployment to production server..."
             
-            # Transfer deployment package
-            scp -o IdentitiesOnly=yes -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@129.80.170.232:/tmp/
+            # Server details
+            SERVER_HOST="129.80.244.212"
+            SERVER_USER="ubuntu"
             
-            # Transfer environment files if they exist
-            if [ -f production.env ]; then
-              echo "📁 Transferring production environment..."
-              base64 production.env | ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no ubuntu@129.80.170.232 'cat > /tmp/production.env.b64'
-            fi
+            # Transfer Docker image
+            echo "📤 Transferring Docker image..."
+            scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                portfolio-app.tar.gz ${SERVER_USER}@${SERVER_HOST}:/tmp/
             
-            # Execute comprehensive deployment
-            ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no ubuntu@129.80.170.232 << 'DEPLOY_SCRIPT'
-              cd /tmp
+            echo "🏃 Executing deployment on server..."
+            ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                ${SERVER_USER}@${SERVER_HOST} << 'DEPLOY_SCRIPT'
               
-              echo "📦 Installing system dependencies..."
-              sudo apt update
-              sudo apt install -y curl nginx
+              set -e
               
-              echo "📂 Extracting deployment package..."
-              rm -rf portfolio-deploy
-              mkdir portfolio-deploy
-              tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy
-              cd portfolio-deploy
+              log() {
+                echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
+              }
               
-              echo "🔧 Running deployment script..."
-              ./deploy.sh
+              log "🚀 Starting deployment process..."
               
-              echo "🧹 Cleaning up..."
-              cd /tmp
-              rm -rf portfolio-deploy portfolio-deploy.tar.gz production.env.b64 || true
+              # Load new Docker image
+              log "📦 Loading new Docker image..."
+              docker load < /tmp/portfolio-app.tar.gz
               
-              echo "✅ Full deployment completed!"
+              # Create backup of current deployment
+              if docker ps --format "table {{.Names}}" | grep -q portfolio-app; then
+                log "💾 Creating backup of current deployment..."
+                mkdir -p /opt/portfolio/backups/$(date +%Y%m%d_%H%M%S)
+                docker save portfolio-app:latest | gzip > /opt/portfolio/backups/$(date +%Y%m%d_%H%M%S)/portfolio-backup.tar.gz 2>/dev/null || true
+              fi
+              
+              # Stop existing container
+              log "🛑 Stopping existing container..."
+              docker stop portfolio-app 2>/dev/null || true
+              docker rm portfolio-app 2>/dev/null || true
+              
+              # Start new container
+              log "🐳 Starting new container..."
+              docker run -d \
+                --name portfolio-app \
+                --restart unless-stopped \
+                -p 127.0.0.1:8000:8000 \
+                --health-cmd="wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1" \
+                --health-interval=30s \
+                --health-timeout=10s \
+                --health-retries=3 \
+                --log-driver=json-file \
+                --log-opt max-size=10m \
+                --log-opt max-file=3 \
+                portfolio-app:latest
+              
+              # Wait for container to be healthy
+              log "⏳ Waiting for container to be healthy..."
+              i=1
+              while [ $i -le 60 ]; do
+                HEALTH=$(docker inspect --format='{{.State.Health.Status}}' portfolio-app 2>/dev/null || echo "starting")
+                if [ "$HEALTH" = "healthy" ]; then
+                  log "✅ Container is healthy!"
+                  break
+                fi
+                if [ $i -eq 60 ]; then
+                  log "❌ Container failed to become healthy after 2 minutes"
+                  docker logs --tail 20 portfolio-app
+                  exit 1
+                fi
+                log "Container health status: $HEALTH (attempt $i/60)"
+                sleep 2
+                i=$((i + 1))
+              done
+              
+              # Test application directly
+              log "🧪 Testing application..."
+              if docker exec portfolio-app wget --no-verbose --tries=1 --spider http://localhost:8000/health; then
+                log "✅ Direct health check passed"
+              else
+                log "❌ Direct health check failed"
+                docker logs --tail 20 portfolio-app
+                exit 1
+              fi
+              
+              # Test through Nginx proxy
+              if curl -f http://localhost/health >/dev/null 2>&1; then
+                log "✅ Nginx proxy test passed"
+              else
+                log "❌ Nginx proxy test failed"
+                sudo systemctl status nginx --no-pager
+                exit 1
+              fi
+              
+              # Test homepage content
+              HOMEPAGE_SIZE=$(curl -s http://localhost/ | wc -c)
+              if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
+                log "✅ Homepage test passed (${HOMEPAGE_SIZE} bytes)"
+              else
+                log "❌ Homepage test failed (${HOMEPAGE_SIZE} bytes)"
+                exit 1
+              fi
+              
+              # Cleanup
+              log "🧹 Cleaning up..."
+              rm -f /tmp/portfolio-app.tar.gz
+              
+              # Cleanup old Docker images (keep last 3)
+              docker image prune -f >/dev/null 2>&1 || true
+              OLD_IMAGES=$(docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}" | grep portfolio-app | tail -n +4 | awk '{print $3}')
+              if [ -n "$OLD_IMAGES" ]; then
+                echo "$OLD_IMAGES" | xargs docker rmi >/dev/null 2>&1 || true
+                log "🗑️  Cleaned up old Docker images"
+              fi
+              
+              # Show final status
+              log "📊 Deployment status:"
+              docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep portfolio-app
+              
+              log "🎉 Deployment completed successfully!"
+              log "🌐 Portfolio is live at: http://129.80.244.212"
+              
             DEPLOY_SCRIPT
             
-            echo "🎉 Deployment successful!"
-            echo "🌐 Application: http://129.80.170.232"
-            echo "💚 Health: http://129.80.170.232/health"
+            echo "✅ Deployment completed successfully!"
+            echo ""
+            echo "🌐 Portfolio URLs:"
+            echo "  • Production: http://129.80.244.212"
+            echo "  • Health check: http://129.80.244.212/health"
+            echo ""
+            echo "📊 Deployment summary:"
+            echo "  • Image: portfolio-app:latest"
+            echo "  • Container: portfolio-app"
+            echo "  • Server: ${SERVER_HOST}"
+            echo "  • Status: ✅ Live"
 
-# Workflows - Define job orchestration
+  # Health check job (can be run independently)
+  health-check:
+    executor: docker-executor
+    steps:
+      - run:
+          name: Check production health
+          command: |
+            echo "🏥 Checking production server health..."
+            
+            SERVER_URL="http://129.80.244.212"
+            
+            # Check health endpoint
+            if curl -f -s "${SERVER_URL}/health" -o /dev/null; then
+              echo "✅ Health check passed"
+              curl -s "${SERVER_URL}/health" | jq . 2>/dev/null || curl -s "${SERVER_URL}/health"
+            else
+              echo "❌ Health check failed"
+              exit 1
+            fi
+            
+            # Check homepage
+            HOMEPAGE_SIZE=$(curl -s "${SERVER_URL}/" | wc -c)
+            if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
+              echo "✅ Homepage check passed (${HOMEPAGE_SIZE} bytes)"
+            else
+              echo "❌ Homepage check failed (${HOMEPAGE_SIZE} bytes)"
+              exit 1
+            fi
+            
+            echo "🎉 All health checks passed!"
+
+# Workflows
 workflows:
-  version: 2
-  
-  # Comprehensive build-test-deploy workflow
-  full-deployment:
+  # Main deployment workflow
+  build-and-deploy:
     jobs:
-      # Setup phase (parallel)
-      - setup-rust:
-          filters:
-            branches:
-              ignore: /^dependabot\/.*/
-      - setup-frontend:
-          filters:
-            branches:
-              ignore: /^dependabot\/.*/
-      - setup-go:
+      - build-and-test:
           filters:
             branches:
               ignore: /^dependabot\/.*/
       
-      # Quality checks and tests (parallel, after setup)
-      - code-quality-rust:
-          requires:
-            - setup-rust
-      - test-go:
-          requires:
-            - setup-go
-      
-      # Build phase (parallel, after setup and quality)
-      - build-wasm:
-          requires:
-            - setup-rust
-            - code-quality-rust
-      - build-frontend:
-          requires:
-            - setup-frontend
-      - build-go:
-          requires:
-            - setup-go
-            - test-go
-            - build-wasm
-            - build-frontend
-      
-      # Integration testing with all artifacts
-      - integration-test:
-          requires:
-            - build-go
-      
-      # Package everything together
-      - package-deployment:
-          requires:
-            - integration-test
-          filters:
-            branches:
-              only: 
-                - main
-                - master
-                - develop
-      
-      # Full production deployment (only on main/master)
       - deploy-production:
           requires:
-            - package-deployment
+            - build-and-test
           filters:
             branches:
-              only: 
-                - main
+              only:
                 - master
+                - main
           context: production-deploy
+      
+      - health-check:
+          requires:
+            - deploy-production
+          filters:
+            branches:
+              only:
+                - master
+                - main
 
-  # Weekly security and dependency updates
-  security-check:
+  # Scheduled health checks (every 6 hours)
+  scheduled-health-check:
     triggers:
       - schedule:
-          cron: "0 2 * * 1"  # Weekly on Monday at 2 AM
+          cron: "0 */6 * * *"
           filters:
             branches:
               only: main
     jobs:
-      - setup-rust
-      - setup-go
-      - code-quality-rust:
-          requires:
-            - setup-rust
-      - test-go:
-          requires:
-            - setup-go
+      - health-check
 
-# Configuration parameters
-parameters:
-  rust-version:
-    type: string
-    default: "1.83"
-  go-version:
-    type: string
-    default: "1.24"
-  node-version:
-    type: string
-    default: "18.19"
+  # Weekly dependency and security check
+  weekly-maintenance:
+    triggers:
+      - schedule:
+          cron: "0 2 * * 1"  # Monday at 2 AM
+          filters:
+            branches:
+              only: main
+    jobs:
+      - build-and-test
