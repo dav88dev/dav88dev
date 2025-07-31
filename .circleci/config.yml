@@ -1,12 +1,21 @@
 version: 2.1
 
+# Executors - Define execution environments
 executors:
   go-executor:
     docker:
       - image: cimg/go:1.21-node
+    resource_class: medium
     working_directory: ~/project
 
+  deploy-executor:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+
+# Jobs - Define individual tasks
 jobs:
+  # Run tests
   test:
     executor: go-executor
     steps:
@@ -36,6 +45,7 @@ jobs:
             go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
             golangci-lint run --timeout 5m
 
+  # Build everything
   build:
     executor: go-executor
     steps:
@@ -74,81 +84,154 @@ jobs:
             GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o portfolio-server .
       
       - run:
-          name: Prepare deployment package
+          name: Create deployment package
           command: |
-            mkdir -p deploy
-            cp portfolio-server deploy/
-            cp -r static deploy/
-            cp .env.example deploy/.env.example
-            tar -czf deployment.tar.gz -C deploy .
+            mkdir -p deploy-package
+            
+            # Copy binary
+            cp portfolio-server deploy-package/
+            chmod +x deploy-package/portfolio-server
+            
+            # Copy templates and static files
+            cp -r templates deploy-package/
+            cp -r static deploy-package/
+            
+            # Create systemd service file
+            cat > deploy-package/portfolio.service << 'EOF'
+[Unit]
+Description=Go Portfolio Website
+After=network.target
+
+[Service]
+Type=exec
+User=portfolio
+Group=portfolio
+WorkingDirectory=/var/www/portfolio
+ExecStart=/var/www/portfolio/portfolio-server
+Restart=always
+RestartSec=5
+Environment=SERVER_ENV=production
+
+# Performance tuning
+LimitNOFILE=65535
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/portfolio
+
+[Install]
+WantedBy=multi-user.target
+EOF
+            
+            # Create deployment script
+            cat > deploy-package/deploy.sh << 'EOF'
+#!/bin/bash
+set -e
+
+echo "🚀 Starting Go deployment..."
+
+# Stop existing service
+sudo systemctl stop portfolio || true
+
+# Backup current files
+sudo mv /var/www/portfolio/portfolio-server /var/www/portfolio/portfolio-server.backup.$(date +%s) || true
+sudo mv /var/www/portfolio/static /var/www/portfolio/static.backup.$(date +%s) || true
+
+# Copy new files
+sudo cp portfolio-server /var/www/portfolio/
+sudo cp -r static /var/www/portfolio/
+sudo cp -r templates /var/www/portfolio/
+sudo chown -R portfolio:portfolio /var/www/portfolio
+
+# Create .env symlink if needed
+if [ ! -f /var/www/portfolio/.env ]; then
+  if [ -f /etc/portfolio/production.env ]; then
+    sudo -u portfolio ln -sf /etc/portfolio/production.env /var/www/portfolio/.env
+    echo "✅ Created .env symlink"
+  else
+    echo "❌ WARNING: No production.env found at /etc/portfolio/production.env"
+  fi
+fi
+
+# Install and start service
+sudo cp portfolio.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable portfolio
+sudo systemctl start portfolio
+
+# Health check
+sleep 5
+curl -f http://localhost:8080/health || exit 1
+
+echo "✅ Deployment completed successfully!"
+EOF
+            chmod +x deploy-package/deploy.sh
+            
+            # Create archive
+            tar -czf portfolio-deploy.tar.gz -C deploy-package .
       
       - persist_to_workspace:
           root: .
           paths:
-            - deployment.tar.gz
+            - portfolio-deploy.tar.gz
 
-  deploy:
-    docker:
-      - image: cimg/base:stable
+  # Deploy to production
+  deploy-production:
+    executor: deploy-executor
     steps:
+      - checkout
       - attach_workspace:
           at: .
-      
       - add_ssh_keys:
           fingerprints:
             - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
-      
       - run:
-          name: Debug SSH setup
+          name: Deploy to production server
           command: |
-            echo "=== SSH Agent Status ==="
-            ssh-add -l || echo "No SSH keys in agent"
-            echo "=== SSH Config ==="
-            ls -la ~/.ssh/
-            echo "=== Test SSH Connection ==="
-            ssh -v -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ConnectTimeout=10 ubuntu@162.241.203.20 'echo "Connection test successful"' || echo "SSH connection failed"
-      
-      - run:
-          name: Setup SSH known hosts
-          command: |
-            mkdir -p ~/.ssh
-            ssh-keyscan -H 162.241.203.20 >> ~/.ssh/known_hosts
-      
-      - run:
-          name: Deploy to VPS
-          command: |
-            # Upload deployment package
-            scp -o StrictHostKeyChecking=no -o IdentitiesOnly=yes deployment.tar.gz ubuntu@162.241.203.20:/tmp/
+            echo "🚀 Deploying Go application..."
             
-            # Test SSH connection first
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ConnectTimeout=30 ubuntu@162.241.203.20 'echo "SSH connection successful"'
+            # Transfer deployment package to server
+            scp -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@162.241.203.20:/tmp/
             
-            # Deploy on server with individual commands
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /var/www/portfolio && echo "🔗 Setting up .env symbolic link..."'
+            # Execute deployment
+            ssh -o StrictHostKeyChecking=no ubuntu@162.241.203.20 << 'DEPLOY_SCRIPT'
+              cd /tmp
+              
+              # Extract deployment package
+              rm -rf portfolio-deploy
+              mkdir portfolio-deploy
+              tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy
+              cd portfolio-deploy
+              
+              # Run deployment script
+              ./deploy.sh
+              
+              # Cleanup
+              cd /tmp
+              rm -rf portfolio-deploy portfolio-deploy.tar.gz
+            DEPLOY_SCRIPT
             
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'if [ ! -f /home/portfolio/.env ]; then if [ -f /etc/portfolio/production.env ]; then sudo -u portfolio ln -sf /etc/portfolio/production.env /home/portfolio/.env && echo "✅ Created symbolic link"; else echo "❌ ERROR: Secure .env file not found" && exit 1; fi; else echo "✅ .env file already exists"; fi'
-            
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /var/www/portfolio && echo "📦 Extracting deployment files..." && mkdir -p /tmp/deploy && tar -xzf /tmp/deployment.tar.gz -C /tmp/deploy/'
-            
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /var/www/portfolio && echo "🚀 Deploying application..." && sudo -u portfolio cp /tmp/deploy/portfolio-server portfolio-server.new && sudo -u portfolio cp -r /tmp/deploy/static static.new'
-            
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /var/www/portfolio && echo "🔄 Running deployment script..." && sudo -u portfolio ./deploy.sh'
-            
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'echo "🧹 Cleaning up..." && rm -rf /tmp/deploy /tmp/deployment.tar.gz && echo "✅ Deployment completed successfully!"'
+            echo "✅ Deployment completed successfully!"
+            echo "🌐 Application available at: http://162.241.203.20"
 
+# Workflows
 workflows:
   version: 2
-  test-build-deploy:
+  
+  build-test-deploy:
     jobs:
       - test
       - build:
           requires:
             - test
-      - deploy:
+      - deploy-production:
           requires:
             - build
           filters:
             branches:
-              only:
+              only: 
                 - main
                 - master
