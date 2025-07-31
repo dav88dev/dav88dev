@@ -7,8 +7,13 @@
 **IMMEDIATE ACTIONS REQUIRED ON SERVER:**
 
 ```bash
-# 1. Create .env file with secure permissions
-sudo -u portfolio tee /home/portfolio/.env > /dev/null << 'EOF'
+# 1. Create secure directory for environment files
+sudo mkdir -p /etc/portfolio
+sudo chmod 750 /etc/portfolio
+sudo chown root:portfolio /etc/portfolio
+
+# 2. Create production .env file in secure location
+sudo tee /etc/portfolio/production.env > /dev/null << 'EOF'
 # Production Environment Configuration
 # NEVER commit this file to version control
 
@@ -44,13 +49,19 @@ EXTERNAL_OPENAI_MODEL=gpt-4
 BUGSNAG_API_KEY=your_bugsnag_api_key_here
 EOF
 
-# 2. Set ultra-secure permissions (owner read/write only)
-sudo chmod 600 /home/portfolio/.env
-sudo chown portfolio:portfolio /home/portfolio/.env
+# 3. Set ultra-secure permissions (root owns, portfolio group can read)
+sudo chmod 640 /etc/portfolio/production.env
+sudo chown root:portfolio /etc/portfolio/production.env
 
-# 3. Verify security
+# 4. Create symbolic link in application directory (done by CircleCI)
+# sudo -u portfolio ln -sf /etc/portfolio/production.env /home/portfolio/.env
+
+# 5. Verify security
+ls -la /etc/portfolio/production.env
+# Should show: -rw-r----- 1 root portfolio
+
 ls -la /home/portfolio/.env
-# Should show: -rw------- 1 portfolio portfolio
+# Should show: lrwxrwxrwx 1 portfolio portfolio -> /etc/portfolio/production.env
 ```
 
 ### 2. Nginx Security Configuration
