@@ -3,6 +3,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"runtime"
 	"time"
@@ -101,12 +102,12 @@ func (h *HealthController) GetDetailedHealth(c *gin.Context) {
 func formatBytes(bytes uint64) string {
 	const unit = 1024
 	if bytes < unit {
-		return string(rune(bytes)) + " B"
+		return fmt.Sprintf("%d B", bytes)
 	}
 	div, exp := uint64(unit), 0
 	for n := bytes / unit; n >= unit; n /= unit {
 		div *= unit
 		exp++
 	}
-	return string(rune(bytes/div)) + " " + "KMGTPE"[exp:exp+1] + "B"
+	return fmt.Sprintf("%.1f %sB", float64(bytes)/float64(div), "KMGTPE"[exp:exp+1])
 }

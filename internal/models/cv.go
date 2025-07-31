@@ -3,7 +3,9 @@ package models
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 // CVData represents the complete CV data structure
@@ -90,9 +92,26 @@ func LoadCVData() (*CVData, error) {
 	return getDefaultCVData(), nil
 }
 
-// loadFromFile loads CV data from a JSON file
+// loadFromFile loads CV data from a JSON file with security checks
 func loadFromFile(path string) (*CVData, error) {
-	data, err := ioutil.ReadFile(path)
+	// Get the working directory
+	workDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	
+	// Get absolute path
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Security: Ensure path is within project directory
+	if !strings.HasPrefix(absPath, workDir) {
+		return nil, os.ErrPermission
+	}
+	
+	data, err := os.ReadFile(absPath)
 	if err != nil {
 		return nil, err
 	}
@@ -203,14 +222,27 @@ func getDefaultCVData() *CVData {
 // LoadAssets loads the built frontend assets from Vite manifest
 func LoadAssets() (*Assets, error) {
 	// Load the Vite manifest to get asset paths
-	manifestData, err := ioutil.ReadFile("static/.vite/manifest.json")
+	manifestPath := "static/.vite/manifest.json"
+	
+	// Security check
+	absPath, err := filepath.Abs(manifestPath)
+	if err != nil {
+		return getDefaultAssets(), nil
+	}
+	
+	workDir, err := os.Getwd()
+	if err != nil {
+		return getDefaultAssets(), nil
+	}
+	
+	if !strings.HasPrefix(absPath, workDir) {
+		return getDefaultAssets(), nil
+	}
+	
+	manifestData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		// Return default paths if manifest not found
-		return &Assets{
-			CSSMain:      "/static/css/style-vzPr3PIw.css",
-			JSMain:       "/static/js/main-CpuuI82n.js",
-			JSThreeScene: "/static/js/threeScene-1KqCK-lv.js",
-		}, nil
+		return getDefaultAssets(), nil
 	}
 	
 	var manifest map[string]interface{}
@@ -244,4 +276,13 @@ func LoadAssets() (*Assets, error) {
 	}
 	
 	return assets, nil
+}
+
+// getDefaultAssets returns default asset paths
+func getDefaultAssets() *Assets {
+	return &Assets{
+		CSSMain:      "/static/css/style-vzPr3PIw.css",
+		JSMain:       "/static/js/main-CpuuI82n.js",
+		JSThreeScene: "/static/js/threeScene-1KqCK-lv.js",
+	}
 }

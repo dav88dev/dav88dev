@@ -4,6 +4,7 @@ package routes
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/dav88dev/myWebsite-go/config"
@@ -14,8 +15,12 @@ import (
 // SetupRoutes configures all application routes
 // Following RESTful API design patterns and enterprise routing structure
 func SetupRoutes(router *gin.Engine, cfg *config.Config) {
-	// Load HTML templates (only the Go template, not the Tera one)
-	router.LoadHTMLFiles("templates/index.html")
+	// Load HTML templates (only the Go templates, not the Tera ones)
+	router.LoadHTMLFiles(
+		"templates/index.html",
+		"templates/404.html",
+		"templates/500.html",
+	)
 	
 	// Initialize controllers
 	healthController := controllers.NewHealthController(cfg)
@@ -86,10 +91,10 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 		c.File("./static/favicon.ico")
 	})
 	
-	// Handle SPA routing - serve index.html for client-side routes
+	// Handle 404 errors
 	router.NoRoute(func(c *gin.Context) {
 		// Check if it's an API request
-		if len(c.Request.URL.Path) > 4 && c.Request.URL.Path[:4] == "/api" {
+		if strings.HasPrefix(c.Request.URL.Path, "/api") {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error":   "Not Found",
 				"message": "API endpoint not found",
@@ -98,10 +103,18 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 			return
 		}
 		
-		// For non-API requests, serve the SPA index.html
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title":       "Portfolio - DAV88DEV",
-			"environment": cfg.Environment,
+		// Check if it's a static file request
+		if strings.HasPrefix(c.Request.URL.Path, "/static") {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		
+		// Load CV data for the template
+		cvData, _ := models.LoadCVData()
+		
+		// For non-API requests, serve the 404 page
+		c.HTML(http.StatusNotFound, "404.html", gin.H{
+			"CVData": cvData,
 		})
 	})
 }
