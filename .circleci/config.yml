@@ -143,4 +143,3 @@ workflows:
               only:
                 - main
                 - master
-                - feature/go-migration  # Remove this after merge to main
