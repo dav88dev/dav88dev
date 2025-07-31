@@ -80,7 +80,7 @@ upstream go_backend {
     keepalive 32;
 }
 
-# HTTP server - redirect to HTTPS
+# HTTP server - temporarily serve directly until SSL is set up
 server {
     listen 80;
     listen [::]:80;
@@ -89,20 +89,85 @@ server {
     # Security headers
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     
-    # Redirect to HTTPS
-    return 301 https://$server_name$request_uri;
+    # Root directory for static files
+    root /var/www/portfolio/static;
+    
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml+rss;
+    
+    # Client body size
+    client_max_body_size 10M;
+    
+    # Static files with aggressive caching
+    location /static/ {
+        alias /var/www/portfolio/static/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    # Favicon
+    location = /favicon.ico {
+        alias /var/www/portfolio/static/favicon.ico;
+        expires 1y;
+        access_log off;
+    }
+    
+    # API endpoints with rate limiting
+    location /api/ {
+        limit_req zone=api burst=50 nodelay;
+        
+        proxy_pass http://go_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Health check endpoint
+    location /health {
+        proxy_pass http://go_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        access_log off;
+    }
+    
+    # Main application
+    location / {
+        limit_req zone=general burst=20 nodelay;
+        try_files $uri @go_backend;
+    }
+    
+    # Go backend
+    location @go_backend {
+        proxy_pass http://go_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Once SSL is configured, uncomment this line and remove all location blocks above:
+    # return 301 https://$server_name$request_uri;
 }
 
-# HTTPS server
-server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name dav88.dev www.dav88.dev;
-    
-    # SSL will be configured by certbot
-    # ssl_certificate /etc/letsencrypt/live/dav88.dev/fullchain.pem;
-    # ssl_certificate_key /etc/letsencrypt/live/dav88.dev/privkey.pem;
+# HTTPS server (will be enabled after SSL setup)
+# server {
+#     listen 443 ssl http2;
+#     listen [::]:443 ssl http2;
+#     server_name dav88.dev www.dav88.dev;
+#     
+#     # SSL will be configured by certbot
+#     # ssl_certificate /etc/letsencrypt/live/dav88.dev/fullchain.pem;
+#     # ssl_certificate_key /etc/letsencrypt/live/dav88.dev/privkey.pem;
     
     # SSL configuration
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -202,7 +267,7 @@ server {
         access_log off;
         log_not_found off;
     }
-}
+# }  # End of HTTPS server block (commented out until SSL is set up)
 EOF
 
 # Enable the site
