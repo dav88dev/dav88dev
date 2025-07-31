@@ -94,21 +94,22 @@ jobs:
       - attach_workspace:
           at: .
       
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
+      - run:
+          name: Setup SSH key
+          command: |
+            mkdir -p ~/.ssh
+            echo "${VPS_SSH_KEY_BASE64}" | base64 -d > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan -H ${VPS_HOST} >> ~/.ssh/known_hosts
       
       - run:
           name: Deploy to VPS
           command: |
-            # Configure SSH
-            ssh-keyscan -H 129.80.170.232 >> ~/.ssh/known_hosts
-            
             # Upload deployment package
-            scp deployment.tar.gz ubuntu@129.80.170.232:/tmp/
+            scp -i ~/.ssh/id_rsa deployment.tar.gz ${VPS_USER}@${VPS_HOST}:/tmp/
             
             # Deploy on server
-            ssh ubuntu@129.80.170.232 << 'ENDSSH'
+            ssh -i ~/.ssh/id_rsa ${VPS_USER}@${VPS_HOST} << 'ENDSSH'
               cd /var/www/portfolio
               
               # Extract new files
