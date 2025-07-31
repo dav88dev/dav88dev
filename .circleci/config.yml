@@ -108,10 +108,10 @@ jobs:
           name: Deploy to VPS
           command: |
             # Upload deployment package
-            scp -o StrictHostKeyChecking=no deployment.tar.gz ubuntu@162.241.203.20:/tmp/
+            scp -o StrictHostKeyChecking=no -o IdentitiesOnly=yes deployment.tar.gz ubuntu@162.241.203.20:/tmp/
             
             # Deploy on server
-            ssh -o StrictHostKeyChecking=no ubuntu@162.241.203.20 \<< 'ENDSSH'
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 \<< 'ENDSSH'
               cd /var/www/portfolio
               
               # Extract new files
