@@ -1,471 +1,145 @@
 version: 2.1
 
-# Orbs for simplified common tasks
-orbs:
-  node: circleci/node@5.1.0
-
-# Executors - Define execution environments
 executors:
-  rust-executor:
+  go-executor:
     docker:
-      - image: cimg/rust:1.83
-    resource_class: medium
-    environment:
-      CARGO_TERM_COLOR: always
-      RUST_BACKTRACE: 1
+      - image: cimg/go:1.21-node
+    working_directory: ~/project
 
-  node-executor:
-    docker:
-      - image: cimg/node:18.19
-    resource_class: small
-
-  deploy-executor:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-
-# Jobs - Define individual tasks
 jobs:
-  # Install and cache Rust dependencies
-  setup-rust:
-    executor: rust-executor
+  test:
+    executor: go-executor
     steps:
       - checkout
+      
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+            - go-mod-v1-
+      
       - run:
-          name: Install wasm-pack
-          command: |
-            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-      - run:
-          name: Install musl target and tools for static linking
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y musl-tools musl-dev
-            rustup target add x86_64-unknown-linux-musl
-      - run:
-          name: Cache Rust dependencies
-          command: |
-            cargo fetch
-            cd wasm-frontend && cargo fetch
+          name: Install dependencies
+          command: go mod download
+      
       - save_cache:
-          key: rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
+          key: go-mod-v1-{{ checksum "go.sum" }}
           paths:
-            - ~/.cargo/registry
-            - ~/.cargo/git
-            - target
-            - wasm-frontend/target
+            - "/go/pkg/mod"
+      
+      - run:
+          name: Run tests
+          command: go test -v ./...
+      
+      - run:
+          name: Run linting
+          command: |
+            go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+            golangci-lint run --timeout 5m
 
-  # Install and cache Node.js dependencies
-  setup-frontend:
-    executor: node-executor
+  build:
+    executor: go-executor
     steps:
       - checkout
-      - node/install-packages:
-          app-dir: frontend
-          cache-version: v2
+      
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+            - go-mod-v1-
+      
+      - restore_cache:
+          keys:
+            - node-deps-v1-{{ checksum "frontend/package-lock.json" }}
+            - node-deps-v1-
+      
+      - run:
+          name: Install frontend dependencies
+          command: |
+            cd frontend
+            npm ci
+      
       - save_cache:
-          key: frontend-deps-v2-{{ checksum "frontend/package-lock.json" }}
+          key: node-deps-v1-{{ checksum "frontend/package-lock.json" }}
           paths:
             - frontend/node_modules
-
-  # Code quality and security checks
-  code-quality:
-    executor: rust-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
-            - rust-deps-v2-
+      
       - run:
-          name: Install clippy and rustfmt
-          command: |
-            rustup component add clippy rustfmt
-      - run:
-          name: Check compilation
-          command: |
-            cargo check --all
-            cd wasm-frontend && cargo check
-
-  # Run tests
-  test:
-    executor: rust-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
-            - rust-deps-v2-
-      - run:
-          name: Run unit tests
-          command: |
-            cargo test --verbose
-      - run:
-          name: Run integration tests
-          command: |
-            cargo test --all --verbose
-      - store_test_results:
-          path: target/test-results
-
-  # Build frontend assets
-  build-frontend:
-    executor: node-executor
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - frontend-deps-v2-{{ checksum "frontend/package-lock.json" }}
-            - frontend-deps-v2-
-      - run:
-          name: Build frontend assets
+          name: Build frontend
           command: |
             cd frontend
             npm run build
+      
       - run:
-          name: Verify build artifacts
+          name: Build Go binary
           command: |
-            ls -la static/
-            test -f static/.vite/manifest.json || (echo "Vite manifest not found!" && exit 1)
+            GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o portfolio-server .
+      
+      - run:
+          name: Prepare deployment package
+          command: |
+            mkdir -p deploy
+            cp portfolio-server deploy/
+            cp -r static deploy/
+            cp .env.example deploy/.env.example
+            tar -czf deployment.tar.gz -C deploy .
+      
       - persist_to_workspace:
           root: .
           paths:
-            - static/css
-            - static/js
-            - static/.vite
-            - static/images
-            - static/manifest.json
-            - static/robots.txt
-            - static/sitemap.xml
-            - static/sw.js
+            - deployment.tar.gz
 
-  # Build WASM
-  build-wasm:
-    executor: rust-executor
+  deploy:
+    docker:
+      - image: cimg/base:stable
     steps:
-      - checkout
-      - restore_cache:
-          keys:
-            - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
-            - rust-deps-v2-
-      - run:
-          name: Install wasm-pack
-          command: |
-            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
-            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
-      - run:
-          name: Build WASM package
-          command: |
-            cd wasm-frontend
-            wasm-pack build --target web --out-dir ../static/wasm
-      - run:
-          name: Verify WASM artifacts
-          command: |
-            ls -la static/wasm/
-            test -f static/wasm/wasm_frontend.js || (echo "WASM JS bindings not found!" && exit 1)
-            test -f static/wasm/wasm_frontend_bg.wasm || (echo "WASM binary not found!" && exit 1)
-      - persist_to_workspace:
-          root: .
-          paths:
-            - static/wasm
-
-  # Build Rust application
-  build-rust:
-    executor: rust-executor
-    steps:
-      - checkout
       - attach_workspace:
           at: .
-      - restore_cache:
-          keys:
-            - rust-deps-v2-{{ checksum "Cargo.lock" }}-{{ checksum "wasm-frontend/Cargo.lock" }}
-            - rust-deps-v2-
-      - run:
-          name: Install musl target and tools
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y musl-tools musl-dev
-            rustup target add x86_64-unknown-linux-musl
-      - run:
-          name: Build release binary
-          command: |
-            RUSTFLAGS="-C target-cpu=x86-64 -C link-self-contained=yes" cargo build --release --target x86_64-unknown-linux-musl
-      - run:
-          name: Verify binary
-          command: |
-            file target/x86_64-unknown-linux-musl/release/personal_website
-            ldd target/x86_64-unknown-linux-musl/release/personal_website || echo "Statically linked binary (expected)"
-      - persist_to_workspace:
-          root: .
-          paths:
-            - target/x86_64-unknown-linux-musl/release/personal_website
-
-  # Integration tests with built artifacts
-  integration-test:
-    executor: rust-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Start application in background
-          command: |
-            chmod +x target/x86_64-unknown-linux-musl/release/personal_website
-            RUST_LOG=info ./target/x86_64-unknown-linux-musl/release/personal_website &
-            sleep 5
-          background: true
-      - run:
-          name: Wait for server to start
-          command: |
-            timeout 30 bash -c 'until curl -sf http://localhost:8000/health -o /dev/null; do sleep 1; done'
-            echo "✓ Server is up and running"
-      - run:
-          name: Test endpoints
-          command: |
-            # Test health endpoint
-            curl -sf http://localhost:8000/health -o /dev/null && echo "✓ Health check passed"
-            
-            # Test main page
-            curl -sf http://localhost:8000/ -o /dev/null && echo "✓ Main page accessible"
-            
-            # Test WASM assets
-            curl -sf http://localhost:8000/static/wasm/wasm_frontend.js -o /dev/null && echo "✓ WASM JS accessible"
-            curl -sf http://localhost:8000/static/wasm/wasm_frontend_bg.wasm -o /dev/null && echo "✓ WASM binary accessible"
-            
-            # Test Vite assets
-            curl -sf http://localhost:8000/static/.vite/manifest.json -o /dev/null && echo "✓ Vite manifest accessible"
-
-  # Package for bare metal deployment
-  package-deployment:
-    executor: deploy-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: Create deployment package
-          command: |
-            mkdir -p deploy-package
-            
-            # Copy binary
-            cp target/x86_64-unknown-linux-musl/release/personal_website deploy-package/
-            chmod +x deploy-package/personal_website
-            
-            # Copy templates and static files
-            cp -r templates deploy-package/
-            cp -r static deploy-package/
-            
-            # Verify critical assets exist
-            echo "🔍 Verifying assets..."
-            test -f deploy-package/static/images/logo.png || (echo "❌ logo.png missing!" && exit 1)
-            test -f deploy-package/static/js/full-wasm-skills.js || (echo "❌ full-wasm-skills.js missing!" && exit 1)
-            test -f deploy-package/static/wasm/wasm_frontend.js || (echo "❌ WASM files missing!" && exit 1)
-            echo "✅ All critical assets verified"
-            
-            # Create systemd service file
-            cat > deploy-package/portfolio.service \<< 'EOF'
-            [Unit]
-            Description=Personal Portfolio Website
-            After=network.target
-            
-            [Service]
-            Type=exec
-            User=root
-            Group=root
-            WorkingDirectory=/opt/portfolio
-            ExecStart=/opt/portfolio/personal_website
-            Restart=always
-            RestartSec=5
-            Environment=RUST_LOG=info
-            Environment=HOST=0.0.0.0
-            Environment=PORT=80
-            Environment=MIMALLOC_PAGE_RESET=1
-            
-            # Performance tuning
-            LimitNOFILE=65535
-            OOMScoreAdjust=-1000
-            
-            # Security settings
-            NoNewPrivileges=true
-            PrivateTmp=true
-            ProtectSystem=strict
-            ProtectHome=true
-            ReadWritePaths=/opt/portfolio
-            
-            [Install]
-            WantedBy=multi-user.target
-            EOF
-            
-            # Create deployment script
-            cat > deploy-package/deploy.sh \<< 'EOF'
-            #!/bin/bash
-            set -e
-            
-            echo "🚀 Starting bare metal deployment..."
-            
-            # Stop existing service
-            sudo systemctl stop portfolio || true
-            
-            # Backup current deployment
-            sudo mv /opt/portfolio /opt/portfolio.backup.$(date +%s) || true
-            
-            # Create directory and copy files
-            sudo mkdir -p /opt/portfolio
-            sudo cp -r * /opt/portfolio/
-            sudo chown -R root:root /opt/portfolio
-            
-            # Install and start service
-            sudo cp portfolio.service /etc/systemd/system/
-            sudo systemctl daemon-reload
-            sudo systemctl enable portfolio
-            sudo systemctl start portfolio
-            
-            # Health check
-            sleep 5
-            curl -f http://localhost/health || exit 1
-            
-            echo "✅ Deployment completed successfully!"
-            EOF
-            chmod +x deploy-package/deploy.sh
-            
-            # Create archive
-            tar -czf portfolio-deploy.tar.gz -C deploy-package .
-      - persist_to_workspace:
-          root: .
-          paths:
-            - portfolio-deploy.tar.gz
-
-  # Deploy to production (bare metal)
-  deploy-production:
-    executor: deploy-executor
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
+      
       - add_ssh_keys:
           fingerprints:
             - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
+      
       - run:
-          name: Deploy to production server
+          name: Deploy to VPS
           command: |
-            echo "🚀 Deploying bare metal Rust application..."
-            echo "Deployment package: portfolio-deploy.tar.gz"
+            # Configure SSH
+            ssh-keyscan -H 129.80.170.232 >> ~/.ssh/known_hosts
             
-            # Transfer deployment package to server
-            scp -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@129.80.170.232:/tmp/
+            # Upload deployment package
+            scp deployment.tar.gz ubuntu@129.80.170.232:/tmp/
             
-            # Execute bare metal deployment
-            ssh -o StrictHostKeyChecking=no ubuntu@129.80.170.232 \<< 'DEPLOY_SCRIPT'
-              cd /tmp
+            # Deploy on server
+            ssh ubuntu@129.80.170.232 << 'ENDSSH'
+              cd /var/www/portfolio
               
-              # Install dependencies
-              echo "📦 Installing system dependencies..."
-              sudo apt update
-              sudo apt install -y curl
+              # Extract new files
+              mkdir -p /tmp/deploy
+              tar -xzf /tmp/deployment.tar.gz -C /tmp/deploy/
               
-              
-              # Extract deployment package
-              rm -rf portfolio-deploy
-              mkdir portfolio-deploy
-              tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy
-              cd portfolio-deploy
+              # Copy files with correct names for deployment script
+              sudo -u portfolio cp /tmp/deploy/portfolio-server portfolio-server.new
+              sudo -u portfolio cp -r /tmp/deploy/static static.new
               
               # Run deployment script
-              ./deploy.sh
+              sudo -u portfolio ./deploy.sh
               
               # Cleanup
-              cd /tmp
-              rm -rf portfolio-deploy portfolio-deploy.tar.gz
-            DEPLOY_SCRIPT
-            
-            echo "✅ Bare metal deployment completed successfully!"
-            echo "🌐 Application available at: http://129.80.170.232"
+              rm -rf /tmp/deploy /tmp/deployment.tar.gz
+            ENDSSH
 
-# Workflows - Define job orchestration
 workflows:
   version: 2
-  
-  # Main workflow for all commits
-  build-test-deploy:
+  test-build-deploy:
     jobs:
-      # Setup phase (parallel)
-      - setup-rust:
-          filters:
-            branches:
-              ignore: /^dependabot\/.*/
-      - setup-frontend:
-          filters:
-            branches:
-              ignore: /^dependabot\/.*/
-      
-      # Quality checks (parallel, after setup)
-      - code-quality:
+      - test
+      - build:
           requires:
-            - setup-rust
-      - test:
-          requires:
-            - setup-rust
-      
-      # Build phase (parallel, after setup)
-      - build-frontend:
-          requires:
-            - setup-frontend
-      - build-wasm:
-          requires:
-            - setup-rust
-      - build-rust:
-          requires:
-            - setup-rust
-            - build-frontend
-            - build-wasm
-      
-      # Integration testing
-      - integration-test:
-          requires:
-            - build-rust
-            - code-quality
             - test
-      
-      # Package for bare metal deployment
-      - package-deployment:
+      - deploy:
           requires:
-            - integration-test
+            - build
           filters:
             branches:
-              only: 
+              only:
                 - main
                 - master
-                - develop
-      
-      # Production deployment (only on main/master)
-      - deploy-production:
-          requires:
-            - package-deployment
-          filters:
-            branches:
-              only: 
-                - main
-                - master
-          context: production-deploy  # CircleCI context for production secrets
-
-  # Security and dependency updates
-  security-check:
-    triggers:
-      - schedule:
-          cron: "0 2 * * 1"  # Weekly on Monday at 2 AM
-          filters:
-            branches:
-              only: main
-    jobs:
-      - setup-rust
-      - code-quality:
-          requires:
-            - setup-rust
-
-# Configuration for build optimization
-parameters:
-  rust-version:
-    type: string
-    default: "1.83"
-  node-version:
-    type: string
-    default: "18.19"
+                - feature/go-migration  # Remove this after merge to main
