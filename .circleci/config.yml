@@ -99,6 +99,16 @@ jobs:
             - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
       
       - run:
+          name: Debug SSH setup
+          command: |
+            echo "=== SSH Agent Status ==="
+            ssh-add -l || echo "No SSH keys in agent"
+            echo "=== SSH Config ==="
+            ls -la ~/.ssh/
+            echo "=== Test SSH Connection ==="
+            ssh -v -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ConnectTimeout=10 ubuntu@162.241.203.20 'echo "Connection test successful"' || echo "SSH connection failed"
+      
+      - run:
           name: Setup SSH known hosts
           command: |
             mkdir -p ~/.ssh
@@ -110,38 +120,43 @@ jobs:
             # Upload deployment package
             scp -o StrictHostKeyChecking=no -o IdentitiesOnly=yes deployment.tar.gz ubuntu@162.241.203.20:/tmp/
             
-            # Deploy on server
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 \<< 'ENDSSH'
+            # Test SSH connection first
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ConnectTimeout=30 ubuntu@162.241.203.20 'echo "SSH connection successful"'
+            
+            # Deploy on server with timeout protection
+            timeout 300 ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'bash -s' << 'DEPLOY_SCRIPT'
+              set -e
               cd /var/www/portfolio
               
-              # Create symbolic link to secure .env file
+              echo "🔗 Setting up .env symbolic link..."
               if [ ! -f /home/portfolio/.env ]; then
                 if [ -f /etc/portfolio/production.env ]; then
                   sudo -u portfolio ln -sf /etc/portfolio/production.env /home/portfolio/.env
                   echo "✅ Created symbolic link to secure .env file"
                 else
                   echo "❌ ERROR: Secure .env file not found at /etc/portfolio/production.env"
-                  echo "Please create the production environment file manually on the server first"
                   exit 1
                 fi
               else
                 echo "✅ .env file already exists"
               fi
               
-              # Extract new files
+              echo "📦 Extracting deployment files..."
               mkdir -p /tmp/deploy
               tar -xzf /tmp/deployment.tar.gz -C /tmp/deploy/
               
-              # Copy files with correct names for deployment script
+              echo "🚀 Deploying application..."
               sudo -u portfolio cp /tmp/deploy/portfolio-server portfolio-server.new
               sudo -u portfolio cp -r /tmp/deploy/static static.new
               
-              # Run deployment script
+              echo "🔄 Running deployment script..."
               sudo -u portfolio ./deploy.sh
               
-              # Cleanup
+              echo "🧹 Cleaning up..."
               rm -rf /tmp/deploy /tmp/deployment.tar.gz
-            ENDSSH
+              
+              echo "✅ Deployment completed successfully!"
+            DEPLOY_SCRIPT
 
 workflows:
   version: 2
