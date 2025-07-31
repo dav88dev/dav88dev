@@ -123,40 +123,18 @@ jobs:
             # Test SSH connection first
             ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ConnectTimeout=30 ubuntu@162.241.203.20 'echo "SSH connection successful"'
             
-            # Deploy on server with timeout protection
-            timeout 300 ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'bash -s' << 'DEPLOY_SCRIPT'
-              set -e
-              cd /var/www/portfolio
-              
-              echo "🔗 Setting up .env symbolic link..."
-              if [ ! -f /home/portfolio/.env ]; then
-                if [ -f /etc/portfolio/production.env ]; then
-                  sudo -u portfolio ln -sf /etc/portfolio/production.env /home/portfolio/.env
-                  echo "✅ Created symbolic link to secure .env file"
-                else
-                  echo "❌ ERROR: Secure .env file not found at /etc/portfolio/production.env"
-                  exit 1
-                fi
-              else
-                echo "✅ .env file already exists"
-              fi
-              
-              echo "📦 Extracting deployment files..."
-              mkdir -p /tmp/deploy
-              tar -xzf /tmp/deployment.tar.gz -C /tmp/deploy/
-              
-              echo "🚀 Deploying application..."
-              sudo -u portfolio cp /tmp/deploy/portfolio-server portfolio-server.new
-              sudo -u portfolio cp -r /tmp/deploy/static static.new
-              
-              echo "🔄 Running deployment script..."
-              sudo -u portfolio ./deploy.sh
-              
-              echo "🧹 Cleaning up..."
-              rm -rf /tmp/deploy /tmp/deployment.tar.gz
-              
-              echo "✅ Deployment completed successfully!"
-            DEPLOY_SCRIPT
+            # Deploy on server with individual commands
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /var/www/portfolio && echo "🔗 Setting up .env symbolic link..."'
+            
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'if [ ! -f /home/portfolio/.env ]; then if [ -f /etc/portfolio/production.env ]; then sudo -u portfolio ln -sf /etc/portfolio/production.env /home/portfolio/.env && echo "✅ Created symbolic link"; else echo "❌ ERROR: Secure .env file not found" && exit 1; fi; else echo "✅ .env file already exists"; fi'
+            
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /var/www/portfolio && echo "📦 Extracting deployment files..." && mkdir -p /tmp/deploy && tar -xzf /tmp/deployment.tar.gz -C /tmp/deploy/'
+            
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /var/www/portfolio && echo "🚀 Deploying application..." && sudo -u portfolio cp /tmp/deploy/portfolio-server portfolio-server.new && sudo -u portfolio cp -r /tmp/deploy/static static.new'
+            
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /var/www/portfolio && echo "🔄 Running deployment script..." && sudo -u portfolio ./deploy.sh'
+            
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'echo "🧹 Cleaning up..." && rm -rf /tmp/deploy /tmp/deployment.tar.gz && echo "✅ Deployment completed successfully!"'
 
 workflows:
   version: 2
