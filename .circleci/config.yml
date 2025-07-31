@@ -116,7 +116,8 @@ jobs:
               
               # Create production .env file if it doesn't exist
               if [ ! -f /home/portfolio/.env ]; then
-                sudo -u portfolio tee /home/portfolio/.env > /dev/null << 'ENVEOF'
+                echo "Creating production .env file..."
+                sudo -u portfolio bash -c 'cat > /home/portfolio/.env << EOF
 # Production Environment Configuration
 SERVER_PORT=8080
 SERVER_ENV=production
@@ -145,7 +146,7 @@ EXTERNAL_OPENAI_MODEL=gpt-4
 
 # Error Monitoring (REPLACE WITH REAL VALUE)
 BUGSNAG_API_KEY=your_bugsnag_api_key_here
-ENVEOF
+EOF'
                 sudo chmod 600 /home/portfolio/.env
                 sudo chown portfolio:portfolio /home/portfolio/.env
                 echo "✅ Created production .env file"
