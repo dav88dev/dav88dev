@@ -121,13 +121,13 @@ jobs:
             echo "🚀 Deploying Go application..."
             
             # Transfer deployment package to server
-            scp -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@162.241.203.20:/tmp/
+            scp -o IdentitiesOnly=yes -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@129.80.170.232:/tmp/
             
             # Execute deployment
-            ssh -o StrictHostKeyChecking=no ubuntu@162.241.203.20 'cd /tmp && rm -rf portfolio-deploy && mkdir portfolio-deploy && tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy && cd portfolio-deploy && ./deploy.sh && cd /tmp && rm -rf portfolio-deploy portfolio-deploy.tar.gz'
+            ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no ubuntu@129.80.170.232 'cd /tmp && rm -rf portfolio-deploy && mkdir portfolio-deploy && tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy && cd portfolio-deploy && ./deploy.sh && cd /tmp && rm -rf portfolio-deploy portfolio-deploy.tar.gz'
             
             echo "✅ Deployment completed successfully!"
-            echo "🌐 Application available at: http://162.241.203.20"
+            echo "🌐 Application available at: http://129.80.170.232"
 
 # Workflows
 workflows:
