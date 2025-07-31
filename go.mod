@@ -1,6 +1,6 @@
 module github.com/dav88dev/myWebsite-go
 
-go 1.24.4
+go 1.21
 
 require (
 	github.com/caarlos0/env/v11 v11.2.2
