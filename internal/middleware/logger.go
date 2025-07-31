@@ -13,7 +13,7 @@ import (
 // Supports different log levels and structured logging patterns
 func Logger(logLevel string) gin.HandlerFunc {
 	// Configure log output format based on environment
-	gin.DefaultWriter = gin.DefaultWriter
+	// gin.DefaultWriter is already configured by default
 	
 	return gin.HandlerFunc(func(c *gin.Context) {
 		// Start timer
