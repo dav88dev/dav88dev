@@ -96,7 +96,7 @@ jobs:
       
       - add_ssh_keys:
           fingerprints:
-            - "${SSH_FINGERPRINT}"
+            - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
       
       - run:
           name: Setup SSH known hosts
