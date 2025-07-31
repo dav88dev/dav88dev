@@ -32,10 +32,11 @@ func main() {
 		log.Fatalf("❌ Failed to load configuration: %v", err)
 	}
 
-	// Setup MongoDB connection with enterprise patterns
+	// Setup MongoDB connection with enterprise patterns (optional)
 	err = cfg.SetupMongoDB()
 	if err != nil {
-		log.Fatalf("❌ Failed to setup MongoDB: %v", err)
+		log.Printf("⚠️  MongoDB setup failed: %v", err)
+		log.Println("📝 Continuing without MongoDB - database features will be disabled")
 	}
 
 	// Configure Gin mode based on environment
@@ -157,11 +158,11 @@ func handleGracefulShutdown() {
 	<-quit
 	log.Println("🔄 Shutting down gracefully...")
 	
-	// Disconnect from MongoDB
+	// Disconnect from MongoDB (if connected)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	
-	if _, client, _, err := mgm.DefaultConfigs(); err == nil {
+	if _, client, _, err := mgm.DefaultConfigs(); err == nil && client != nil {
 		if err := client.Disconnect(ctx); err != nil {
 			log.Printf("⚠️  Error disconnecting from MongoDB: %v", err)
 		} else {

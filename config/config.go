@@ -78,12 +78,13 @@ func LoadConfig() (*Config, error) {
 
 // validate ensures all required configuration is present
 func (c *Config) validate() error {
-	if c.MongoURI == "" {
-		return fmt.Errorf("database URI is required")
-	}
-	if c.MongoDatabase == "" {
-		return fmt.Errorf("database name is required")
-	}
+	// MongoDB is optional - only validate if provided
+	// if c.MongoURI == "" {
+	//     return fmt.Errorf("database URI is required")
+	// }
+	// if c.MongoDatabase == "" {
+	//     return fmt.Errorf("database name is required")
+	// }
 	
 	// Production-specific validations
 	if c.Environment == "production" {
