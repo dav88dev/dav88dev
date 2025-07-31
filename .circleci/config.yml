@@ -97,77 +97,50 @@ jobs:
             cp -r static deploy-package/
             
             # Create systemd service file
-            cat > deploy-package/portfolio.service << 'EOF'
-[Unit]
-Description=Go Portfolio Website
-After=network.target
-
-[Service]
-Type=exec
-User=portfolio
-Group=portfolio
-WorkingDirectory=/var/www/portfolio
-ExecStart=/var/www/portfolio/portfolio-server
-Restart=always
-RestartSec=5
-Environment=SERVER_ENV=production
-
-# Performance tuning
-LimitNOFILE=65535
-
-# Security settings
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/www/portfolio
-
-[Install]
-WantedBy=multi-user.target
-EOF
+            echo '[Unit]' > deploy-package/portfolio.service
+            echo 'Description=Go Portfolio Website' >> deploy-package/portfolio.service
+            echo 'After=network.target' >> deploy-package/portfolio.service
+            echo '' >> deploy-package/portfolio.service
+            echo '[Service]' >> deploy-package/portfolio.service
+            echo 'Type=exec' >> deploy-package/portfolio.service
+            echo 'User=portfolio' >> deploy-package/portfolio.service
+            echo 'Group=portfolio' >> deploy-package/portfolio.service
+            echo 'WorkingDirectory=/var/www/portfolio' >> deploy-package/portfolio.service
+            echo 'ExecStart=/var/www/portfolio/portfolio-server' >> deploy-package/portfolio.service
+            echo 'Restart=always' >> deploy-package/portfolio.service
+            echo 'RestartSec=5' >> deploy-package/portfolio.service
+            echo 'Environment=SERVER_ENV=production' >> deploy-package/portfolio.service
+            echo 'LimitNOFILE=65535' >> deploy-package/portfolio.service
+            echo '' >> deploy-package/portfolio.service
+            echo '[Install]' >> deploy-package/portfolio.service
+            echo 'WantedBy=multi-user.target' >> deploy-package/portfolio.service
             
             # Create deployment script
-            cat > deploy-package/deploy.sh << 'EOF'
-#!/bin/bash
-set -e
-
-echo "🚀 Starting Go deployment..."
-
-# Stop existing service
-sudo systemctl stop portfolio || true
-
-# Backup current files
-sudo mv /var/www/portfolio/portfolio-server /var/www/portfolio/portfolio-server.backup.$(date +%s) || true
-sudo mv /var/www/portfolio/static /var/www/portfolio/static.backup.$(date +%s) || true
-
-# Copy new files
-sudo cp portfolio-server /var/www/portfolio/
-sudo cp -r static /var/www/portfolio/
-sudo cp -r templates /var/www/portfolio/
-sudo chown -R portfolio:portfolio /var/www/portfolio
-
-# Create .env symlink if needed
-if [ ! -f /var/www/portfolio/.env ]; then
-  if [ -f /etc/portfolio/production.env ]; then
-    sudo -u portfolio ln -sf /etc/portfolio/production.env /var/www/portfolio/.env
-    echo "✅ Created .env symlink"
-  else
-    echo "❌ WARNING: No production.env found at /etc/portfolio/production.env"
-  fi
-fi
-
-# Install and start service
-sudo cp portfolio.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable portfolio
-sudo systemctl start portfolio
-
-# Health check
-sleep 5
-curl -f http://localhost:8080/health || exit 1
-
-echo "✅ Deployment completed successfully!"
-EOF
+            echo '#!/bin/bash' > deploy-package/deploy.sh
+            echo 'set -e' >> deploy-package/deploy.sh
+            echo 'echo "🚀 Starting Go deployment..."' >> deploy-package/deploy.sh
+            echo 'sudo systemctl stop portfolio || true' >> deploy-package/deploy.sh
+            echo 'sudo mv /var/www/portfolio/portfolio-server /var/www/portfolio/portfolio-server.backup.$(date +%s) || true' >> deploy-package/deploy.sh
+            echo 'sudo mv /var/www/portfolio/static /var/www/portfolio/static.backup.$(date +%s) || true' >> deploy-package/deploy.sh
+            echo 'sudo cp portfolio-server /var/www/portfolio/' >> deploy-package/deploy.sh
+            echo 'sudo cp -r static /var/www/portfolio/' >> deploy-package/deploy.sh
+            echo 'sudo cp -r templates /var/www/portfolio/' >> deploy-package/deploy.sh
+            echo 'sudo chown -R portfolio:portfolio /var/www/portfolio' >> deploy-package/deploy.sh
+            echo 'if [ ! -f /var/www/portfolio/.env ]; then' >> deploy-package/deploy.sh
+            echo '  if [ -f /etc/portfolio/production.env ]; then' >> deploy-package/deploy.sh
+            echo '    sudo -u portfolio ln -sf /etc/portfolio/production.env /var/www/portfolio/.env' >> deploy-package/deploy.sh
+            echo '    echo "✅ Created .env symlink"' >> deploy-package/deploy.sh
+            echo '  else' >> deploy-package/deploy.sh
+            echo '    echo "❌ WARNING: No production.env found"' >> deploy-package/deploy.sh
+            echo '  fi' >> deploy-package/deploy.sh
+            echo 'fi' >> deploy-package/deploy.sh
+            echo 'sudo cp portfolio.service /etc/systemd/system/' >> deploy-package/deploy.sh
+            echo 'sudo systemctl daemon-reload' >> deploy-package/deploy.sh
+            echo 'sudo systemctl enable portfolio' >> deploy-package/deploy.sh
+            echo 'sudo systemctl start portfolio' >> deploy-package/deploy.sh
+            echo 'sleep 5' >> deploy-package/deploy.sh
+            echo 'curl -f http://localhost:8080/health || exit 1' >> deploy-package/deploy.sh
+            echo 'echo "✅ Deployment completed successfully!"' >> deploy-package/deploy.sh
             chmod +x deploy-package/deploy.sh
             
             # Create archive
@@ -197,22 +170,7 @@ EOF
             scp -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@162.241.203.20:/tmp/
             
             # Execute deployment
-            ssh -o StrictHostKeyChecking=no ubuntu@162.241.203.20 << 'DEPLOY_SCRIPT'
-              cd /tmp
-              
-              # Extract deployment package
-              rm -rf portfolio-deploy
-              mkdir portfolio-deploy
-              tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy
-              cd portfolio-deploy
-              
-              # Run deployment script
-              ./deploy.sh
-              
-              # Cleanup
-              cd /tmp
-              rm -rf portfolio-deploy portfolio-deploy.tar.gz
-            DEPLOY_SCRIPT
+            ssh -o StrictHostKeyChecking=no ubuntu@162.241.203.20 'cd /tmp && rm -rf portfolio-deploy && mkdir portfolio-deploy && tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy && cd portfolio-deploy && ./deploy.sh && cd /tmp && rm -rf portfolio-deploy portfolio-deploy.tar.gz'
             
             echo "✅ Deployment completed successfully!"
             echo "🌐 Application available at: http://162.241.203.20"
