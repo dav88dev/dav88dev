@@ -158,23 +158,19 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run:
-          name: Setup SSH key
-          command: |
-            mkdir -p ~/.ssh
-            echo "${SSH_PRIVATE_KEY}" | base64 -d > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
-            ssh-keyscan -H 162.241.203.20 >> ~/.ssh/known_hosts
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
       - run:
           name: Deploy to production server
           command: |
             echo "🚀 Deploying Go application..."
             
             # Transfer deployment package to server
-            scp -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i ~/.ssh/id_rsa portfolio-deploy.tar.gz ubuntu@162.241.203.20:/tmp/
+            scp -o StrictHostKeyChecking=no -o IdentitiesOnly=yes portfolio-deploy.tar.gz ubuntu@162.241.203.20:/tmp/
             
             # Execute deployment
-            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes -i ~/.ssh/id_rsa ubuntu@162.241.203.20 'cd /tmp && rm -rf portfolio-deploy && mkdir portfolio-deploy && tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy && cd portfolio-deploy && ./deploy.sh && cd /tmp && rm -rf portfolio-deploy portfolio-deploy.tar.gz'
+            ssh -o StrictHostKeyChecking=no -o IdentitiesOnly=yes ubuntu@162.241.203.20 'cd /tmp && rm -rf portfolio-deploy && mkdir portfolio-deploy && tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy && cd portfolio-deploy && ./deploy.sh && cd /tmp && rm -rf portfolio-deploy portfolio-deploy.tar.gz'
             
             echo "✅ Deployment completed successfully!"
             echo "🌐 Application available at: http://162.241.203.20"
