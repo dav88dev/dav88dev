@@ -22,23 +22,33 @@ type clientInfo struct {
 	resetTime time.Time
 }
 
-var limiter *rateLimiter
+var (
+	limiter     *rateLimiter
+	limiterOnce sync.Once
+)
 
 // RateLimit creates a rate limiting middleware
 // rps: requests per second allowed per IP
 func RateLimit(rps int) gin.HandlerFunc {
 	// Initialize rate limiter (singleton pattern)
-	if limiter == nil {
+	limiterOnce.Do(func() {
 		limiter = &rateLimiter{
 			clients: make(map[string]*clientInfo),
 			rate:    rps,
 			window:  time.Second,
 		}
 		
-		// Start cleanup goroutine for expired entries
+		// Start cleanup goroutine for expired entries (only once)
 		go limiter.cleanup()
-	}
+	})
 
+	// Update rate if different
+	limiter.mu.Lock()
+	if limiter.rate != rps {
+		limiter.rate = rps
+	}
+	limiter.mu.Unlock()
+	
 	return func(c *gin.Context) {
 		clientIP := c.ClientIP()
 		

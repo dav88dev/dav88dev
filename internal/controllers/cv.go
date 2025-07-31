@@ -2,9 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -64,6 +65,15 @@ func (cv *CVController) GetCV(c *gin.Context) {
 func (cv *CVController) GetCVSection(c *gin.Context) {
 	section := c.Param("section")
 	
+	// Validate section parameter
+	if !isValidSection(section) {
+		c.JSON(http.StatusBadRequest, CVResponse{
+			Success: false,
+			Error:   "Invalid section parameter",
+		})
+		return
+	}
+	
 	// Load CV data if not cached
 	if len(cv.cvDataCache) == 0 {
 		cvData, err := cv.loadCVData()
@@ -108,9 +118,24 @@ func (cv *CVController) loadCVData() (map[string]interface{}, error) {
 	
 	var data map[string]interface{}
 	
+	// Get the working directory to ensure we only read from project
+	workDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	
 	for _, path := range possiblePaths {
-		absPath, _ := filepath.Abs(path)
-		fileData, err := ioutil.ReadFile(absPath)
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			continue
+		}
+		
+		// Security: Ensure path is within project directory
+		if !strings.HasPrefix(absPath, workDir) {
+			continue
+		}
+		
+		fileData, err := os.ReadFile(absPath)
 		if err != nil {
 			continue
 		}
@@ -175,4 +200,25 @@ func (cv *CVController) getMockCVData() map[string]interface{} {
 			},
 		},
 	}
+}
+
+// isValidSection validates if the section parameter is allowed
+func isValidSection(section string) bool {
+	validSections := []string{
+		"personal", "personal_info",
+		"experience",
+		"education",
+		"skills",
+		"projects",
+		"certifications",
+		"languages",
+		"interests",
+	}
+	
+	for _, valid := range validSections {
+		if section == valid {
+			return true
+		}
+	}
+	return false
 }
