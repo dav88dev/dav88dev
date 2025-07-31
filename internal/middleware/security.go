@@ -32,11 +32,11 @@ func SecurityHeaders() gin.HandlerFunc {
 		// Using nonce-based CSP for inline scripts instead of unsafe-inline
 		csp := fmt.Sprintf(
 			"default-src 'self'; "+
-				"script-src 'self' 'nonce-%s' https://cdn.jsdelivr.net; "+
+				"script-src 'self' 'nonce-%s' https://cdn.jsdelivr.net https://d2wy8f7a9ursnm.cloudfront.net; "+
 				"style-src 'self' 'nonce-%s' https://fonts.googleapis.com; "+
 				"font-src 'self' https://fonts.gstatic.com data:; "+
 				"img-src 'self' data: https:; "+
-				"connect-src 'self' https://api.openai.com; "+
+				"connect-src 'self' https://api.openai.com https://notify.bugsnag.com https://sessions.bugsnag.com; "+
 				"frame-ancestors 'none'; "+
 				"base-uri 'self'; "+
 				"form-action 'self'; "+

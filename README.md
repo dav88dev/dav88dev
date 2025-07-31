@@ -1,219 +1,253 @@
-# Personal Portfolio Website
+# Portfolio Website
 
-A modern, enterprise-grade portfolio website built with Go (Gin framework), featuring interactive Three.js animations, MongoDB integration, and a responsive design.
+A modern, high-performance portfolio website built with Go, featuring real-time error monitoring, 3D animations, and enterprise-grade security.
 
-## 🚀 Tech Stack
+## Features
 
-### Backend
-- **Go 1.21+** with Gin Framework v1.10.1
-- **MongoDB Atlas** with MGM ODM
-- **HTTP/2** support with H2C for development
-- **Enterprise middleware stack** (CORS, rate limiting, security headers, compression)
+- **High-Performance Backend**: Built with Go and Gin framework for blazing-fast response times
+- **Real-Time Error Monitoring**: Integrated Bugsnag for production error tracking and performance monitoring
+- **Interactive 3D Animations**: Three.js powered visual effects
+- **Enterprise Security**: Comprehensive security headers, CSP with nonces, rate limiting
+- **MongoDB Integration**: Scalable data storage with MongoDB Atlas
+- **Modern Frontend**: Vite-powered build system with optimal bundling
+- **PWA Support**: Progressive Web App capabilities
+- **Custom Error Pages**: Beautiful 404 and 500 error pages
 
-### Frontend  
-- **Vite 5.x** build system with legacy browser support
-- **Three.js** for interactive 3D background animations
-- **Modern CSS** with responsive design
-- **Progressive Web App** capabilities
+## Tech Stack
 
-## 📋 Prerequisites
+- **Backend**: Go 1.21+, Gin Framework v1.10.1
+- **Database**: MongoDB Atlas with MGM ODM
+- **Error Monitoring**: Bugsnag (backend + frontend performance)
+- **Frontend Build**: Vite 5.x
+- **3D Graphics**: Three.js
+- **Deployment**: Production-ready with graceful shutdown
+
+## Prerequisites
 
 - Go 1.21 or higher
 - Node.js 18+ and npm
-- MongoDB Atlas account (or local MongoDB)
+- MongoDB (local or Atlas)
 - Git
 
-## 🛠️ Installation
+## Quick Start
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/dav88dev/myWebsite.git
-   cd myWebsite
-   ```
+### 1. Clone the Repository
 
-2. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your MongoDB credentials and other settings
-   ```
-
-3. **Install Go dependencies**
-   ```bash
-   go mod download
-   ```
-
-4. **Install frontend dependencies**
-   ```bash
-   cd frontend
-   npm install
-   cd ..
-   ```
-
-5. **Build frontend assets**
-   ```bash
-   cd frontend
-   npm run build
-   cd ..
-   ```
-
-6. **Build the Go server**
-   ```bash
-   go build -o portfolio-server .
-   ```
-
-## 🚦 Running the Application
-
-### Development Mode
 ```bash
-# Start the server (default port 8080)
-./portfolio-server
-
-# Or with custom port
-SERVER_PORT=8081 ./portfolio-server
+git clone https://github.com/dav88dev/myWebsite.git
+cd myWebsite
 ```
 
-### Production Mode
+### 2. Environment Setup
+
 ```bash
+cp .env.example .env
+```
+
+Edit `.env` with your configuration:
+- MongoDB connection string
+- Bugsnag API key (for production)
+- Other environment-specific settings
+
+### 3. Install Dependencies
+
+```bash
+# Backend dependencies
+go mod download
+
+# Frontend dependencies
+cd frontend
+npm install
+cd ..
+```
+
+### 4. Build Frontend Assets
+
+```bash
+cd frontend
+npm run build
+cd ..
+```
+
+### 5. Run the Application
+
+#### Development Mode
+```bash
+go run main.go
+```
+
+#### Production Mode
+```bash
+# Build the binary
+go build -o portfolio-server .
+
 # Set production environment
 export SERVER_ENV=production
 export GIN_MODE=release
 
-# Run with production config
+# Run the server
 ./portfolio-server
 ```
 
-## 📁 Project Structure
+The application will be available at `http://localhost:8080`
 
-```
-myWebsite/
-├── main.go                     # Application entry point
-├── config/                     # Configuration management
-│   └── config.go              # Environment config loader
-├── internal/                   # Private application code
-│   ├── controllers/           # HTTP request handlers
-│   │   ├── health.go         # Health check endpoints
-│   │   └── cv.go            # CV/Resume API endpoints
-│   ├── middleware/           # HTTP middleware
-│   │   ├── logger.go        # Request logging
-│   │   ├── metrics.go       # Application metrics
-│   │   ├── ratelimit.go     # Rate limiting
-│   │   ├── recovery.go      # Panic recovery
-│   │   └── security.go      # Security headers
-│   ├── models/              # Data models
-│   │   └── cv.go           # CV data structures
-│   └── routes/             # Route definitions
-│       └── api.go          # API route setup
-├── templates/              # HTML templates
-│   ├── index.html         # Main page
-│   ├── 404.html          # 404 error page
-│   └── 500.html          # 500 error page
-├── frontend/              # Frontend build system
-│   ├── src/              # Source files
-│   └── vite.config.js    # Vite configuration
-└── static/               # Static assets (built by Vite)
-    ├── css/             # Compiled CSS
-    ├── js/              # Compiled JavaScript
-    └── images/          # Images and icons
-```
+## API Endpoints
 
-## 🔗 API Endpoints
-
-### Health Checks
-- `GET /health` - Basic health status
+### Health Monitoring
+- `GET /health` - Basic health check
 - `GET /health/detailed` - Detailed system metrics
 
 ### CV/Resume API
-- `GET /api/cv` - Get complete CV data
-- `GET /api/cv/:section` - Get specific CV section
-  - Valid sections: `personal`, `experience`, `education`, `skills`, `projects`
+- `GET /api/cv` - Complete CV data
+- `GET /api/cv/:section` - Specific sections (personal, experience, education, skills, projects)
 
-### Development Tools
-- `GET /dev/config` - View configuration (dev only)
-- `GET /dev/request-info` - Request debugging (dev only)
+### Development Tools (dev mode only)
+- `GET /dev/config` - Configuration info
+- `GET /dev/request-info` - Request debugging
+- `GET /dev/test-error` - Test error handling
 
-## 🔒 Security Features
+## Security Features
 
-- **CSP Headers** with nonce-based script/style policies
-- **Rate Limiting** (configurable per environment)
-- **CORS Protection** with origin whitelisting
-- **Input Validation** on all API endpoints
-- **Path Traversal Protection** for file operations
-- **Security Headers** (X-Frame-Options, X-Content-Type-Options, etc.)
+- **Content Security Policy (CSP)** with per-request nonces
+- **Rate Limiting** (configurable, production-enabled)
+- **CORS Protection** with whitelist
+- **Input Validation** on all endpoints
+- **Path Traversal Protection**
+- **Security Headers** (HSTS, X-Frame-Options, etc.)
+- **Graceful Error Handling** with custom pages
 
-## 🧪 Testing
+## Error Monitoring
 
-```bash
-# Run tests
-go test ./...
+### Backend (Bugsnag)
+- Automatic error capture in production
+- Performance tracking
+- Release tracking
+- Local logging in development
 
-# Run with coverage
-go test -cover ./...
+### Frontend (Bugsnag Performance)
+- Web vitals monitoring
+- Resource timing
+- User interaction tracking
+- Automatic in production
 
-# Test specific endpoint
-curl http://localhost:8080/health
-```
-
-## 📊 Monitoring
-
-The application includes built-in metrics accessible via:
-```bash
-curl http://localhost:8080/health/detailed
-```
-
-Metrics include:
-- Request counts and latency
-- Error rates
-- Memory usage
-- Goroutine counts
-- Status code distribution
-
-## 🌐 Environment Variables
+## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `SERVER_PORT` | Server port | `8080` |
 | `SERVER_ENV` | Environment (development/production) | `development` |
-| `DB_MONGO_URI` | MongoDB connection string | `mongodb://localhost:27017` |
+| `DB_MONGO_URI` | MongoDB connection string | Required |
 | `DB_MONGO_DATABASE` | Database name | `portfolio_dev` |
+| `BUGSNAG_API_KEY` | Bugsnag API key | Required for production |
 | `SECURITY_CORS_ORIGINS` | Allowed CORS origins | `*` |
-| `SECURITY_RATE_LIMIT_RPS` | Requests per second limit | `100` |
+| `SECURITY_RATE_LIMIT_RPS` | Rate limit (requests/second) | `100` |
 
-See `.env.example` for complete list.
+See `.env.example` for complete configuration options.
 
-## 🚀 Deployment
+## Development
 
-### Docker (Coming Soon)
+### Running Tests
 ```bash
-docker build -t portfolio-server .
-docker run -p 8080:8080 portfolio-server
+go test ./...
 ```
 
-### Manual Deployment
-1. Build frontend: `cd frontend && npm run build`
-2. Build server: `go build -o portfolio-server .`
-3. Copy binary and static files to server
-4. Set environment variables
-5. Run with process manager (systemd, supervisor, etc.)
+### Code Quality
+```bash
+# Format code
+go fmt ./...
 
-## 📝 License
+# Lint
+golangci-lint run
+
+# Security scan
+gosec ./...
+```
+
+### Frontend Development
+```bash
+cd frontend
+npm run dev  # Start Vite dev server
+npm run build  # Production build
+npm run preview  # Preview production build
+```
+
+## Deployment
+
+### Using Systemd (Linux)
+
+1. Build the binary:
+```bash
+go build -o portfolio-server .
+```
+
+2. Create systemd service file `/etc/systemd/system/portfolio.service`:
+```ini
+[Unit]
+Description=Portfolio Website
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/portfolio
+ExecStart=/var/www/portfolio/portfolio-server
+Restart=on-failure
+Environment="SERVER_ENV=production"
+Environment="GIN_MODE=release"
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. Start the service:
+```bash
+sudo systemctl enable portfolio
+sudo systemctl start portfolio
+```
+
+### Using Docker (Coming Soon)
+
+```bash
+docker build -t portfolio .
+docker run -p 8080:8080 --env-file .env portfolio
+```
+
+## Monitoring
+
+### Application Metrics
+Access detailed metrics at `/health/detailed`:
+- Request counts and latency
+- Memory usage
+- Goroutine counts
+- Database connection status
+
+### Error Tracking
+View errors in Bugsnag dashboard:
+- Real-time error notifications
+- Error grouping and trends
+- Performance metrics
+- User impact analysis
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 👤 Author
+## Author
 
 **David Aghayan**
 - Email: info@dav88.dev
 - GitHub: [@dav88dev](https://github.com/dav88dev)
 - Website: [dav88.dev](https://dav88.dev)
 
-## 🤝 Contributing
+## Acknowledgments
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 🐛 Bug Reports
-
-Please use the [GitHub Issues](https://github.com/dav88dev/myWebsite/issues) to report bugs.
+- Built with love using Go and modern web technologies
+- Special thanks to the open-source community
