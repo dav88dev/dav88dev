@@ -109,7 +109,7 @@ jobs:
             scp -i ~/.ssh/id_rsa deployment.tar.gz ${VPS_USER}@${VPS_HOST}:/tmp/
             
             # Deploy on server
-            ssh -i ~/.ssh/id_rsa ${VPS_USER}@${VPS_HOST} << 'ENDSSH'
+            ssh -i ~/.ssh/id_rsa ${VPS_USER}@${VPS_HOST} \<< 'ENDSSH'
               cd /var/www/portfolio
               
               # Extract new files
