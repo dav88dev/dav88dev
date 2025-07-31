@@ -1,12 +1,34 @@
 version: 2.1
 
+# Orbs for simplified common tasks
+orbs:
+  node: circleci/node@5.1.0
+
 # Executors - Define execution environments
 executors:
+  rust-executor:
+    docker:
+      - image: cimg/rust:1.83
+    resource_class: medium
+    environment:
+      CARGO_TERM_COLOR: always
+      RUST_BACKTRACE: 1
+
   go-executor:
     docker:
-      - image: cimg/go:1.21-node
+      - image: cimg/go:1.24-node
     resource_class: medium
     working_directory: ~/project
+    environment:
+      GO_VERSION: "1.24"
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+
+  node-executor:
+    docker:
+      - image: cimg/node:18.19
+    resource_class: small
 
   deploy-executor:
     docker:
@@ -15,97 +37,417 @@ executors:
 
 # Jobs - Define individual tasks
 jobs:
-  # Run tests
-  test:
-    executor: go-executor
+  # Install and cache Rust dependencies for WASM
+  setup-rust:
+    executor: rust-executor
     steps:
       - checkout
-      
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
-            - go-mod-v1-
-      
       - run:
-          name: Install dependencies
-          command: go mod download
-      
-      - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
-      
-      - run:
-          name: Run tests
-          command: go test -v ./...
-
-  # Build everything
-  build:
-    executor: go-executor
-    steps:
-      - checkout
-      
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
-            - go-mod-v1-
-      
-      - restore_cache:
-          keys:
-            - node-deps-v1-{{ checksum "frontend/package-lock.json" }}
-            - node-deps-v1-
-      
-      - run:
-          name: Install frontend dependencies
+          name: Install wasm-pack
           command: |
-            cd frontend
-            npm ci
-      
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
+      - run:
+          name: Cache Rust dependencies
+          command: |
+            cd wasm-frontend && cargo fetch
       - save_cache:
-          key: node-deps-v1-{{ checksum "frontend/package-lock.json" }}
+          key: rust-wasm-deps-v2-{{ checksum "wasm-frontend/Cargo.lock" }}
+          paths:
+            - ~/.cargo/registry
+            - ~/.cargo/git
+            - wasm-frontend/target
+
+  # Install and cache Node.js dependencies
+  setup-frontend:
+    executor: node-executor
+    steps:
+      - checkout
+      - node/install-packages:
+          app-dir: frontend
+          cache-version: v2
+      - save_cache:
+          key: frontend-deps-v2-{{ checksum "frontend/package-lock.json" }}
           paths:
             - frontend/node_modules
-      
+
+  # Setup Go dependencies
+  setup-go:
+    executor: go-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v2-{{ checksum "go.sum" }}
+            - go-mod-v2-
       - run:
-          name: Build frontend
+          name: Install Go dependencies
+          command: go mod download
+      - save_cache:
+          key: go-mod-v2-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+
+  # Run Go tests
+  test-go:
+    executor: go-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - go-mod-v2-{{ checksum "go.sum" }}
+            - go-mod-v2-
+      - run:
+          name: Run Go tests
+          command: go test -v ./...
+
+  # Code quality checks for Rust WASM
+  code-quality-rust:
+    executor: rust-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - rust-wasm-deps-v2-{{ checksum "wasm-frontend/Cargo.lock" }}
+            - rust-wasm-deps-v2-
+      - run:
+          name: Install clippy and rustfmt
+          command: |
+            rustup component add clippy rustfmt
+      - run:
+          name: Check WASM compilation
+          command: |
+            cd wasm-frontend && cargo check
+
+  # Build WASM frontend
+  build-wasm:
+    executor: rust-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - rust-wasm-deps-v2-{{ checksum "wasm-frontend/Cargo.lock" }}
+            - rust-wasm-deps-v2-
+      - run:
+          name: Install wasm-pack
+          command: |
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+            echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
+      - run:
+          name: Build WASM package
+          command: |
+            cd wasm-frontend
+            wasm-pack build --target web --out-dir ../static/wasm
+      - run:
+          name: Verify WASM artifacts
+          command: |
+            ls -la static/wasm/
+            test -f static/wasm/wasm_frontend.js || (echo "WASM JS bindings not found!" && exit 1)
+            test -f static/wasm/wasm_frontend_bg.wasm || (echo "WASM binary not found!" && exit 1)
+      - persist_to_workspace:
+          root: .
+          paths:
+            - static/wasm
+
+  # Build frontend assets
+  build-frontend:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - frontend-deps-v2-{{ checksum "frontend/package-lock.json" }}
+            - frontend-deps-v2-
+      - run:
+          name: Build frontend assets
           command: |
             cd frontend
             npm run build
-      
       - run:
-          name: Build Go binary
+          name: Verify build artifacts
+          command: |
+            ls -la static/
+            # Verify critical frontend assets exist
+            test -d static/css || echo "CSS directory created"
+            test -d static/js || echo "JS directory created"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - static/css
+            - static/js
+            - static/images
+            - static/*.json
+            - static/*.txt
+            - static/*.xml
+            - static/*.ico
+
+  # Build Go backend
+  build-go:
+    executor: go-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          keys:
+            - go-mod-v2-{{ checksum "go.sum" }}
+            - go-mod-v2-
+      - run:
+          name: Install Go dependencies
+          command: go mod download
+      - run:
+          name: Build Go binary for Linux
           command: |
             GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o portfolio-server .
-      
       - run:
-          name: Create deployment package
+          name: Verify binary
+          command: |
+            file portfolio-server
+            ls -la portfolio-server
+      - persist_to_workspace:
+          root: .
+          paths:
+            - portfolio-server
+
+  # Integration tests with all built artifacts
+  integration-test:
+    executor: go-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Start application in background
+          command: |
+            chmod +x portfolio-server
+            SERVER_PORT=8080 ./portfolio-server &
+            sleep 5
+          background: true
+      - run:
+          name: Wait for server to start
+          command: |
+            timeout 30 bash -c 'until curl -sf http://localhost:8080/health -o /dev/null; do sleep 1; done'
+            echo "✓ Server is up and running"
+      - run:
+          name: Test endpoints
+          command: |
+            # Test health endpoint
+            curl -sf http://localhost:8080/health -o /dev/null && echo "✓ Health check passed"
+            
+            # Test API endpoints
+            curl -sf http://localhost:8080/api/cv -o /dev/null && echo "✓ CV API accessible"
+            
+            # Test WASM assets (if they exist)
+            if [ -f static/wasm/wasm_frontend.js ]; then
+              curl -sf http://localhost:8080/static/wasm/wasm_frontend.js -o /dev/null && echo "✓ WASM JS accessible"
+              curl -sf http://localhost:8080/static/wasm/wasm_frontend_bg.wasm -o /dev/null && echo "✓ WASM binary accessible"
+            fi
+
+  # Package everything for deployment
+  package-deployment:
+    executor: deploy-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Create comprehensive deployment package
           command: |
             mkdir -p deploy-package
             
-            # Copy binary
+            # Copy Go binary
             cp portfolio-server deploy-package/
             chmod +x deploy-package/portfolio-server
             
-            # Copy templates and static files
-            cp -r templates deploy-package/
-            cp -r static deploy-package/
+            # Copy all static assets (including WASM if built)
+            cp -r static deploy-package/ || mkdir -p deploy-package/static
+            cp -r templates deploy-package/ || mkdir -p deploy-package/templates
+            
+            # Verify critical assets exist
+            echo "🔍 Verifying deployment assets..."
+            ls -la deploy-package/
+            test -f deploy-package/portfolio-server || (echo "❌ Go binary missing!" && exit 1)
+            test -d deploy-package/static || (echo "❌ Static directory missing!" && exit 1)
+            
+            # Check for WASM assets
+            if [ -f deploy-package/static/wasm/wasm_frontend.js ]; then
+              echo "✅ WASM assets included"
+            else
+              echo "⚠️  No WASM assets found - continuing without them"
+            fi
+            
+            # Create production environment setup script
+            cat > deploy-package/setup-env.sh << 'EOF'
+            #!/bin/bash
+            set -e
+            echo "🔧 Setting up production environment..."
+            
+            # Create portfolio user if it doesn't exist
+            sudo useradd -r -s /bin/false portfolio || true
+            
+            # Create directories
+            sudo mkdir -p /var/www/portfolio
+            sudo mkdir -p /etc/portfolio
+            
+            # Set up environment file from base64 (if provided)
+            if [ -f /tmp/production.env.b64 ]; then
+              sudo base64 -d /tmp/production.env.b64 > /tmp/production.env
+              sudo mv /tmp/production.env /etc/portfolio/production.env
+              sudo chown root:portfolio /etc/portfolio/production.env
+              sudo chmod 640 /etc/portfolio/production.env
+              echo "✅ Production environment configured"
+            else
+              echo "⚠️  No environment file provided"
+            fi
+            
+            echo "✅ Environment setup completed"
+            EOF
+            chmod +x deploy-package/setup-env.sh
             
             # Create systemd service file
-            printf '%s\n' '[Unit]' 'Description=Go Portfolio Website' 'After=network.target' '' '[Service]' 'Type=exec' 'User=portfolio' 'Group=portfolio' 'WorkingDirectory=/var/www/portfolio' 'ExecStart=/var/www/portfolio/portfolio-server' 'Restart=always' 'RestartSec=5' 'Environment=SERVER_ENV=production' 'LimitNOFILE=65535' '' '[Install]' 'WantedBy=multi-user.target' > deploy-package/portfolio.service
+            cat > deploy-package/portfolio.service << 'EOF'
+            [Unit]
+            Description=Go Portfolio Website with WASM Frontend
+            After=network.target
             
-            # Create deployment script
-            printf '%s\n' '#!/bin/bash' 'set -e' 'echo "🚀 Starting Go deployment..."' 'sudo systemctl stop portfolio || true' 'sudo mkdir -p /var/www/portfolio' 'sudo useradd -r -s /bin/false portfolio || true' 'sudo mv /var/www/portfolio/portfolio-server /var/www/portfolio/portfolio-server.backup.$(date +%s) || true' 'sudo mv /var/www/portfolio/static /var/www/portfolio/static.backup.$(date +%s) || true' 'sudo cp portfolio-server /var/www/portfolio/' 'sudo cp -r static /var/www/portfolio/' 'sudo cp -r templates /var/www/portfolio/' 'if [ -f /etc/portfolio/production.env ]; then' '  sudo ln -sf /etc/portfolio/production.env /var/www/portfolio/.env' '  echo "✅ Created .env symlink"' 'else' '  echo "❌ WARNING: No production.env found"' 'fi' 'sudo chown -R portfolio:portfolio /var/www/portfolio' 'sudo cp portfolio.service /etc/systemd/system/' 'sudo systemctl daemon-reload' 'sudo systemctl enable portfolio' 'sudo systemctl start portfolio' 'sleep 5' 'curl -f http://localhost:8080/health || exit 1' 'echo "✅ Deployment completed successfully!"' > deploy-package/deploy.sh
+            [Service]
+            Type=exec
+            User=portfolio
+            Group=portfolio
+            WorkingDirectory=/var/www/portfolio
+            ExecStart=/var/www/portfolio/portfolio-server
+            Restart=always
+            RestartSec=5
+            Environment=SERVER_ENV=production
+            Environment=SERVER_PORT=8080
+            EnvironmentFile=-/etc/portfolio/production.env
+            
+            # Performance tuning
+            LimitNOFILE=65535
+            OOMScoreAdjust=-1000
+            
+            # Security settings
+            NoNewPrivileges=true
+            PrivateTmp=true
+            ProtectSystem=strict
+            ProtectHome=true
+            ReadWritePaths=/var/www/portfolio
+            
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+            
+            # Create nginx configuration
+            cat > deploy-package/nginx-portfolio.conf << 'EOF'
+            server {
+                listen 80 default_server;
+                listen [::]:80 default_server;
+                server_name _;
+                
+                # Security headers
+                add_header X-Frame-Options DENY always;
+                add_header X-Content-Type-Options nosniff always;
+                add_header X-XSS-Protection "1; mode=block" always;
+                add_header Referrer-Policy strict-origin-when-cross-origin always;
+                
+                # WASM MIME type
+                location ~* \.wasm$ {
+                    add_header Content-Type application/wasm;
+                    proxy_pass http://127.0.0.1:8080;
+                }
+                
+                # Proxy to Go server
+                location / {
+                    proxy_pass http://127.0.0.1:8080;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                    proxy_cache_bypass $http_upgrade;
+                    proxy_read_timeout 86400;
+                }
+                
+                # Health check endpoint
+                location /health {
+                    proxy_pass http://127.0.0.1:8080/health;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    access_log off;
+                }
+            }
+            EOF
+            
+            # Create comprehensive deployment script
+            cat > deploy-package/deploy.sh << 'EOF'
+            #!/bin/bash
+            set -e
+            
+            echo "🚀 Starting comprehensive Go + WASM deployment..."
+            
+            # Setup environment
+            ./setup-env.sh
+            
+            # Stop existing service
+            sudo systemctl stop portfolio || true
+            
+            # Backup current deployment
+            sudo mv /var/www/portfolio /var/www/portfolio.backup.$(date +%s) || true
+            
+            # Deploy new version
+            sudo mkdir -p /var/www/portfolio
+            sudo cp portfolio-server /var/www/portfolio/
+            sudo cp -r static /var/www/portfolio/ || true
+            sudo cp -r templates /var/www/portfolio/ || true
+            
+            # Create environment symlink if production.env exists
+            if [ -f /etc/portfolio/production.env ]; then
+              sudo ln -sf /etc/portfolio/production.env /var/www/portfolio/.env
+              echo "✅ Created .env symlink"
+            else
+              echo "❌ WARNING: No production.env found - server will use defaults"
+            fi
+            
+            # Set ownership
+            sudo chown -R portfolio:portfolio /var/www/portfolio
+            
+            # Install and start service
+            sudo cp portfolio.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+            sudo systemctl enable portfolio
+            sudo systemctl start portfolio
+            
+            # Configure nginx
+            sudo cp nginx-portfolio.conf /etc/nginx/sites-available/default
+            sudo nginx -t && sudo systemctl reload nginx
+            
+            # Health check
+            echo "⏳ Waiting for service to start..."
+            sleep 10
+            
+            # Check service status
+            sudo systemctl status portfolio --no-pager || true
+            
+            # Test endpoints
+            curl -f http://localhost:8080/health || (echo "❌ Health check failed" && exit 1)
+            curl -f http://localhost/health || (echo "❌ Nginx proxy failed" && exit 1)
+            
+            echo "✅ Comprehensive deployment completed successfully!"
+            echo "🌐 Application available at: http://129.80.170.232"
+            EOF
             chmod +x deploy-package/deploy.sh
             
             # Create archive
             tar -czf portfolio-deploy.tar.gz -C deploy-package .
-      
+            echo "📦 Deployment package created: portfolio-deploy.tar.gz"
       - persist_to_workspace:
           root: .
           paths:
             - portfolio-deploy.tar.gz
 
-  # Deploy to production
+  # Deploy to production with full setup
   deploy-production:
     executor: deploy-executor
     steps:
@@ -116,34 +458,145 @@ jobs:
           fingerprints:
             - "SHA256:ge50UMA30q/hgTEUuAKltaEcXJO3WXliuqFvNnpTdlw"
       - run:
-          name: Deploy to production server
+          name: Deploy comprehensive Go + WASM application
           command: |
-            echo "🚀 Deploying Go application..."
+            echo "🚀 Starting full deployment to production..."
+            echo "Package: portfolio-deploy.tar.gz"
             
-            # Transfer deployment package to server
+            # Transfer deployment package
             scp -o IdentitiesOnly=yes -o StrictHostKeyChecking=no portfolio-deploy.tar.gz ubuntu@129.80.170.232:/tmp/
             
-            # Execute deployment
-            ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no ubuntu@129.80.170.232 'cd /tmp && rm -rf portfolio-deploy && mkdir portfolio-deploy && tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy && cd portfolio-deploy && ./deploy.sh && cd /tmp && rm -rf portfolio-deploy portfolio-deploy.tar.gz'
+            # Transfer environment files if they exist
+            if [ -f production.env ]; then
+              echo "📁 Transferring production environment..."
+              base64 production.env | ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no ubuntu@129.80.170.232 'cat > /tmp/production.env.b64'
+            fi
             
-            echo "✅ Deployment completed successfully!"
-            echo "🌐 Application available at: http://129.80.170.232"
+            # Execute comprehensive deployment
+            ssh -o IdentitiesOnly=yes -o StrictHostKeyChecking=no ubuntu@129.80.170.232 << 'DEPLOY_SCRIPT'
+              cd /tmp
+              
+              echo "📦 Installing system dependencies..."
+              sudo apt update
+              sudo apt install -y curl nginx
+              
+              echo "📂 Extracting deployment package..."
+              rm -rf portfolio-deploy
+              mkdir portfolio-deploy
+              tar -xzf portfolio-deploy.tar.gz -C portfolio-deploy
+              cd portfolio-deploy
+              
+              echo "🔧 Running deployment script..."
+              ./deploy.sh
+              
+              echo "🧹 Cleaning up..."
+              cd /tmp
+              rm -rf portfolio-deploy portfolio-deploy.tar.gz production.env.b64 || true
+              
+              echo "✅ Full deployment completed!"
+            DEPLOY_SCRIPT
+            
+            echo "🎉 Deployment successful!"
+            echo "🌐 Application: http://129.80.170.232"
+            echo "💚 Health: http://129.80.170.232/health"
 
-# Workflows
+# Workflows - Define job orchestration
 workflows:
   version: 2
   
-  build-test-deploy:
+  # Comprehensive build-test-deploy workflow
+  full-deployment:
     jobs:
-      - test
-      - build:
+      # Setup phase (parallel)
+      - setup-rust:
+          filters:
+            branches:
+              ignore: /^dependabot\/.*/
+      - setup-frontend:
+          filters:
+            branches:
+              ignore: /^dependabot\/.*/
+      - setup-go:
+          filters:
+            branches:
+              ignore: /^dependabot\/.*/
+      
+      # Quality checks and tests (parallel, after setup)
+      - code-quality-rust:
           requires:
-            - test
-      - deploy-production:
+            - setup-rust
+      - test-go:
           requires:
-            - build
+            - setup-go
+      
+      # Build phase (parallel, after setup and quality)
+      - build-wasm:
+          requires:
+            - setup-rust
+            - code-quality-rust
+      - build-frontend:
+          requires:
+            - setup-frontend
+      - build-go:
+          requires:
+            - setup-go
+            - test-go
+            - build-wasm
+            - build-frontend
+      
+      # Integration testing with all artifacts
+      - integration-test:
+          requires:
+            - build-go
+      
+      # Package everything together
+      - package-deployment:
+          requires:
+            - integration-test
           filters:
             branches:
               only: 
                 - main
                 - master
+                - develop
+      
+      # Full production deployment (only on main/master)
+      - deploy-production:
+          requires:
+            - package-deployment
+          filters:
+            branches:
+              only: 
+                - main
+                - master
+          context: production-deploy
+
+  # Weekly security and dependency updates
+  security-check:
+    triggers:
+      - schedule:
+          cron: "0 2 * * 1"  # Weekly on Monday at 2 AM
+          filters:
+            branches:
+              only: main
+    jobs:
+      - setup-rust
+      - setup-go
+      - code-quality-rust:
+          requires:
+            - setup-rust
+      - test-go:
+          requires:
+            - setup-go
+
+# Configuration parameters
+parameters:
+  rust-version:
+    type: string
+    default: "1.83"
+  go-version:
+    type: string
+    default: "1.24"
+  node-version:
+    type: string
+    default: "18.19"
