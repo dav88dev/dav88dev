@@ -17,6 +17,8 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/static"
 	"github.com/kamva/mgm/v3"
+	"github.com/bugsnag/bugsnag-go/v2"
+	"github.com/bugsnag/bugsnag-go-gin"
 
 	"github.com/dav88dev/myWebsite-go/config"
 	"github.com/dav88dev/myWebsite-go/internal/middleware"
@@ -78,10 +80,26 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	// 1. Recovery middleware - handles panics gracefully with custom 500 page
 	router.Use(middleware.Recovery())
 
-	// 2. Custom logging middleware for enterprise observability
+	// 2. Bugsnag error monitoring middleware (production only)
+	if cfg.IsProduction() {
+		bugsnagApiKey := os.Getenv("BUGSNAG_API_KEY")
+		if bugsnagApiKey != "" {
+			router.Use(bugsnaggin.AutoNotify(bugsnag.Configuration{
+				APIKey: bugsnagApiKey,
+				ProjectPackages: []string{"main", "github.com/dav88dev/myWebsite-go"},
+				ReleaseStage: cfg.Environment,
+				AppVersion: "1.0.0",
+			}))
+			log.Println("📊 Bugsnag error monitoring enabled (production)")
+		}
+	} else {
+		log.Println("📊 Bugsnag disabled in development mode (errors logged locally)")
+	}
+
+	// 3. Custom logging middleware for enterprise observability
 	router.Use(middleware.Logger(cfg.LogLevel))
 
-	// 3. CORS middleware with production-ready configuration
+	// 4. CORS middleware with production-ready configuration
 	corsConfig := cors.Config{
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Cache-Control"},
@@ -99,18 +117,18 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	}
 	router.Use(cors.New(corsConfig))
 
-	// 4. Compression middleware - Gzip with optimal settings
+	// 5. Compression middleware - Gzip with optimal settings
 	router.Use(gzip.Gzip(gzip.BestCompression))
 
-	// 5. Rate limiting middleware (production only)
+	// 6. Rate limiting middleware (production only)
 	if cfg.EnableRateLimit {
 		router.Use(middleware.RateLimit(cfg.RateLimitRPS))
 	}
 
-	// 6. Security headers middleware
+	// 7. Security headers middleware
 	router.Use(middleware.SecurityHeaders())
 
-	// 7. Static file serving with enterprise caching
+	// 8. Static file serving with enterprise caching
 	// Serve static files from multiple locations for flexibility
 	router.Use(static.Serve("/", static.LocalFile("./static", false)))
 	router.Use(static.Serve("/static", static.LocalFile("./static", false)))
@@ -121,7 +139,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 		router.Use(static.Serve("/assets", static.LocalFile("./dist/assets", false)))
 	}
 
-	// 8. Request metrics middleware for monitoring
+	// 9. Request metrics middleware for monitoring
 	router.Use(middleware.Metrics())
 
 	return router

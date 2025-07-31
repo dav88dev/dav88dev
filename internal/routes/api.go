@@ -155,5 +155,11 @@ func setupDevRoutes(router *gin.Engine, cfg *config.Config) {
 				"query_params": c.Request.URL.Query(),
 			})
 		})
+		
+		// Test endpoint for Bugsnag error reporting
+		dev.GET("/test-error", func(c *gin.Context) {
+			// This will trigger a panic that Bugsnag should catch
+			panic("Test error for Bugsnag integration!")
+		})
 	}
 }
