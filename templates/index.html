@@ -71,10 +71,19 @@
     </script>
     
     <!-- Critical CSS inlined for faster rendering -->
-    <style>
+    <style nonce="{{.CSPNonce}}">
         :root{--primary-color:#6366f1;--secondary-color:#8b5cf6;--accent-color:#06b6d4;--text-primary:#1f2937;--text-secondary:#6b7280;--bg-primary:#fff;--bg-secondary:#f9fafb;--border-color:#e5e7eb;--shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);--easing-smooth:cubic-bezier(.4,0,.2,1)}*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;color:var(--text-primary);background:var(--bg-primary);overflow-x:hidden}.loader{position:fixed;top:0;left:0;width:100%;height:100%;background:#111827;display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1;transition:opacity .5s ease}.loader.hidden{opacity:0;pointer-events:none}.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;padding:0 2rem}.hero-content{text-align:center;max-width:800px}.hero-name{font-size:4rem;font-weight:700;background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:1rem}.hero-subtitle{font-size:1.5rem;color:var(--text-secondary);margin-bottom:1.5rem}.btn{display:inline-block;padding:.75rem 2rem;font-weight:600;text-decoration:none;border-radius:50px;transition:all .3s ease}.btn-primary{background:linear-gradient(135deg,var(--primary-color),var(--secondary-color));color:#fff;box-shadow:var(--shadow-md)}.container{max-width:1200px;margin:0 auto;padding:0 2rem}
     </style>
-    <link rel="preload" href="{{.Assets.CSSMain}}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="{{.Assets.CSSMain}}" as="style">
+    <script nonce="{{.CSPNonce}}">
+        // Load CSS asynchronously 
+        document.addEventListener('DOMContentLoaded', function() {
+            var link = document.querySelector('link[rel="preload"][as="style"]');
+            if (link) {
+                link.rel = 'stylesheet';
+            }
+        });
+    </script>
     <noscript><link rel="stylesheet" href="{{.Assets.CSSMain}}"></noscript>
     <link rel="manifest" href="/static/manifest.json">
     
@@ -86,7 +95,7 @@
     <link rel="manifest" href="/static/images/favicons/site.webmanifest">
     <link rel="stylesheet" href="/static/fonts/inter.css">
     <!-- Local JavaScript libraries for better performance -->
-    <script type="importmap">
+    <script type="importmap" nonce="{{.CSPNonce}}">
     {
         "imports": {
             "three": "/static/js/vendor/three.module.min.js"
@@ -401,7 +410,7 @@
     <script src="{{.Assets.JSThreeScene}}" type="module" defer></script>
     <!-- Skills visualization - load after main content -->
     <script src="/static/js/full-wasm-skills.js" type="module" defer></script>
-    <script>
+    <script nonce="{{.CSPNonce}}">
         // Register service worker for PWA functionality
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
