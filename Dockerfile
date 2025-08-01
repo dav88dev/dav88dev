@@ -57,7 +57,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 -O- http://localhost:8000/health > /dev/null || exit 1
 
 # Set environment variables
-ENV SERVER_ENV=production
+ENV SERVER_ENV=development
 ENV SERVER_PORT=8000
 
 # Run the application

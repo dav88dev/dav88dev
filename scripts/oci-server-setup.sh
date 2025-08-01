@@ -277,7 +277,10 @@ docker run -d \
     --name portfolio-app \
     --restart unless-stopped \
     -p 127.0.0.1:8000:8000 \
-    --health-cmd="wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1" \
+    -e SERVER_ENV=production \
+    -e SECURITY_JWT_SECRET="$(openssl rand -base64 32)" \
+    -e SECURITY_SESSION_SECRET="$(openssl rand -base64 32)" \
+    --health-cmd="wget --no-verbose --tries=1 -O- http://localhost:8000/health > /dev/null || exit 1" \
     --health-interval=30s \
     --health-timeout=10s \
     --health-retries=3 \

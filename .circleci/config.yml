@@ -35,7 +35,12 @@ jobs:
             echo "🧪 Testing Docker image..."
             
             # Start container in background
-            docker run -d --name test-portfolio -p 8000:8000 portfolio-app:latest
+            docker run -d --name test-portfolio -p 8000:8000 \
+              -e SERVER_ENV=production \
+              -e SERVER_PORT=8000 \
+              -e SECURITY_JWT_SECRET="$SECURITY_JWT_SECRET" \
+              -e SECURITY_SESSION_SECRET="$SECURITY_SESSION_SECRET" \
+              portfolio-app:latest
             
             # Wait for container to be ready
             echo "⏳ Waiting for container to be ready..."
