@@ -1,6 +1,6 @@
 version: 2.1
 
-# Optimized CircleCI pipeline for Dockerized Rust Portfolio
+# Optimized CircleCI pipeline for Dockerized Go Portfolio
 executors:
   docker-executor:
     docker:
@@ -22,7 +22,7 @@ jobs:
       - run:
           name: Build Docker image
           command: |
-            echo "🐳 Building portfolio Docker image..."
+            echo "🐳 Building Go portfolio Docker image..."
             docker build -t portfolio-app:${CIRCLE_SHA1} .
             docker tag portfolio-app:${CIRCLE_SHA1} portfolio-app:latest
             
@@ -115,114 +115,7 @@ jobs:
             
             echo "🏃 Executing deployment on server..."
             ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-                ${SERVER_USER}@${SERVER_HOST} << 'DEPLOY_SCRIPT'
-              
-              set -e
-              
-              log() {
-                echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
-              }
-              
-              log "🚀 Starting deployment process..."
-              
-              # Load new Docker image
-              log "📦 Loading new Docker image..."
-              docker load < /tmp/portfolio-app.tar.gz
-              
-              # Create backup of current deployment
-              if docker ps --format "table {{.Names}}" | grep -q portfolio-app; then
-                log "💾 Creating backup of current deployment..."
-                mkdir -p /opt/portfolio/backups/$(date +%Y%m%d_%H%M%S)
-                docker save portfolio-app:latest | gzip > /opt/portfolio/backups/$(date +%Y%m%d_%H%M%S)/portfolio-backup.tar.gz 2>/dev/null || true
-              fi
-              
-              # Stop existing container
-              log "🛑 Stopping existing container..."
-              docker stop portfolio-app 2>/dev/null || true
-              docker rm portfolio-app 2>/dev/null || true
-              
-              # Start new container
-              log "🐳 Starting new container..."
-              docker run -d \
-                --name portfolio-app \
-                --restart unless-stopped \
-                -p 127.0.0.1:8000:8000 \
-                --health-cmd="wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1" \
-                --health-interval=30s \
-                --health-timeout=10s \
-                --health-retries=3 \
-                --log-driver=json-file \
-                --log-opt max-size=10m \
-                --log-opt max-file=3 \
-                portfolio-app:latest
-              
-              # Wait for container to be healthy
-              log "⏳ Waiting for container to be healthy..."
-              i=1
-              while [ $i -le 60 ]; do
-                HEALTH=$(docker inspect --format='{{.State.Health.Status}}' portfolio-app 2>/dev/null || echo "starting")
-                if [ "$HEALTH" = "healthy" ]; then
-                  log "✅ Container is healthy!"
-                  break
-                fi
-                if [ $i -eq 60 ]; then
-                  log "❌ Container failed to become healthy after 2 minutes"
-                  docker logs --tail 20 portfolio-app
-                  exit 1
-                fi
-                log "Container health status: $HEALTH (attempt $i/60)"
-                sleep 2
-                i=$((i + 1))
-              done
-              
-              # Test application directly
-              log "🧪 Testing application..."
-              if docker exec portfolio-app wget --no-verbose --tries=1 --spider http://localhost:8000/health; then
-                log "✅ Direct health check passed"
-              else
-                log "❌ Direct health check failed"
-                docker logs --tail 20 portfolio-app
-                exit 1
-              fi
-              
-              # Test through Nginx proxy
-              if curl -f http://localhost/health >/dev/null 2>&1; then
-                log "✅ Nginx proxy test passed"
-              else
-                log "❌ Nginx proxy test failed"
-                sudo systemctl status nginx --no-pager
-                exit 1
-              fi
-              
-              # Test homepage content
-              HOMEPAGE_SIZE=$(curl -s http://localhost/ | wc -c)
-              if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
-                log "✅ Homepage test passed (${HOMEPAGE_SIZE} bytes)"
-              else
-                log "❌ Homepage test failed (${HOMEPAGE_SIZE} bytes)"
-                exit 1
-              fi
-              
-              # Cleanup
-              log "🧹 Cleaning up..."
-              rm -f /tmp/portfolio-app.tar.gz
-              
-              # Cleanup old Docker images (keep last 3)
-              docker image prune -f >/dev/null 2>&1 || true
-              OLD_IMAGES=$(docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}" | grep portfolio-app | tail -n +4 | awk '{print $3}')
-              if [ -n "$OLD_IMAGES" ]; then
-                echo "$OLD_IMAGES" | xargs docker rmi >/dev/null 2>&1 || true
-                log "🗑️  Cleaned up old Docker images"
-              fi
-              
-              # Show final status
-              log "📊 Deployment status:"
-              docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep portfolio-app
-              
-              log "🎉 Deployment completed successfully!"
-              log "🌐 Portfolio is live at: http://129.80.244.212"
-              
-            DEPLOY_SCRIPT
+                ${SERVER_USER}@${SERVER_HOST} "/opt/portfolio/deploy.sh"
             
             echo "✅ Deployment completed successfully!"
             echo ""
