@@ -77,10 +77,17 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 			return
 		}
 		
+		// Get CSP nonce from context
+		cspNonce, exists := c.Get("CSPNonce")
+		if !exists {
+			cspNonce = ""
+		}
+		
 		// Render template with complete data
 		templateData := models.TemplateData{
-			CVData: *cvData,
-			Assets: *assets,
+			CVData:   *cvData,
+			Assets:   *assets,
+			CSPNonce: cspNonce.(string),
 		}
 		
 		c.HTML(http.StatusOK, "index.html", templateData)

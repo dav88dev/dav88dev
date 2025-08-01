@@ -69,8 +69,9 @@ type Assets struct {
 
 // TemplateData represents data passed to templates
 type TemplateData struct {
-	CVData CVData `json:"cv_data"`
-	Assets Assets `json:"assets"`
+	CVData   CVData `json:"cv_data"`
+	Assets   Assets `json:"assets"`
+	CSPNonce string `json:"csp_nonce"`
 }
 
 // LoadCVData loads CV data from multiple possible sources
