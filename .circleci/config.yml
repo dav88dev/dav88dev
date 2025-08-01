@@ -42,7 +42,7 @@ jobs:
             echo "⏳ Waiting for container to be ready..."
             i=1
             while [ $i -le 30 ]; do
-              if docker exec test-portfolio wget --no-verbose --tries=1 --spider http://localhost:8000/health 2>/dev/null; then
+              if docker exec test-portfolio wget --no-verbose --tries=1 -O- http://localhost:8000/health > /dev/null 2>&1; then
                 echo "✅ Container is healthy!"
                 break
               fi
