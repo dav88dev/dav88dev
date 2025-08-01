@@ -271,15 +271,13 @@ if [ -f "/tmp/portfolio-app.tar.gz" ]; then
     rm -f /tmp/portfolio-app.tar.gz
 fi
 
-# Run new container
-log "Starting new container..."
+# Run new container with all environment variables
+log "Starting new container with production environment..."
 docker run -d \
     --name portfolio-app \
     --restart unless-stopped \
     -p 127.0.0.1:8000:8000 \
-    -e SERVER_ENV=production \
-    -e SECURITY_JWT_SECRET="$(openssl rand -base64 32)" \
-    -e SECURITY_SESSION_SECRET="$(openssl rand -base64 32)" \
+    --env-file <(env | grep -E '^(SERVER_|DB_|SECURITY_|EXTERNAL_|BUGSNAG_)') \
     --health-cmd="wget --no-verbose --tries=1 -O- http://localhost:8000/health > /dev/null || exit 1" \
     --health-interval=30s \
     --health-timeout=10s \
