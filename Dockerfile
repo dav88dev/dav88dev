@@ -11,11 +11,12 @@ RUN wasm-pack build --target web --out-dir ../static/wasm
 
 # Stage 2: Frontend Builder  
 FROM node:22-alpine AS frontend-builder
-WORKDIR /frontend
-COPY frontend/package*.json ./
-RUN npm ci
-COPY frontend/ ./
-RUN npm run build
+WORKDIR /app
+COPY frontend/package*.json ./frontend/
+RUN cd frontend && npm ci
+COPY frontend/ ./frontend/
+COPY static/ ./static/
+RUN cd frontend && npm run build
 
 # Stage 3: Go Builder
 FROM golang:1.24-alpine AS go-builder
@@ -43,7 +44,7 @@ COPY --chown=portfolio:portfolio static/ ./static/
 COPY --from=wasm-builder --chown=portfolio:portfolio /static/wasm ./static/wasm/
 
 # Copy frontend build outputs (this will overlay existing static files)
-COPY --from=frontend-builder --chown=portfolio:portfolio /frontend/dist ./static/
+COPY --from=frontend-builder --chown=portfolio:portfolio /app/static ./static/
 
 # Switch to non-root user
 USER portfolio
@@ -53,7 +54,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
+    CMD wget --no-verbose --tries=1 -O- http://localhost:8000/health > /dev/null || exit 1
 
 # Set environment variables
 ENV SERVER_ENV=production
