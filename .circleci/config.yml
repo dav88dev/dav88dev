@@ -133,7 +133,7 @@ jobs:
                  export DB_MONGO_RETRY_READS='$DB_MONGO_RETRY_READS' && \
                  export SECURITY_JWT_SECRET='$SECURITY_JWT_SECRET' && \
                  export SECURITY_SESSION_SECRET='$SECURITY_SESSION_SECRET' && \
-                 export SECURITY_CORS_ORIGINS='$SECURITY_CORS_ORIGINS' && \
+                 export SECURITY_CORS_ORIGINS='https://dav88.dev' && \
                  export SECURITY_RATE_LIMIT_RPS='$SECURITY_RATE_LIMIT_RPS' && \
                  export SECURITY_ENABLE_RATE_LIMIT='$SECURITY_ENABLE_RATE_LIMIT' && \
                  export EXTERNAL_OPENAI_API_KEY='$EXTERNAL_OPENAI_API_KEY' && \
