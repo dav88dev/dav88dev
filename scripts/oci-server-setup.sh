@@ -277,7 +277,25 @@ docker run -d \
     --name portfolio-app \
     --restart unless-stopped \
     -p 127.0.0.1:8000:8000 \
-    --env-file <(env | grep -E '^(SERVER_|DB_|SECURITY_|EXTERNAL_|BUGSNAG_)') \
+    -e SERVER_ENV="${SERVER_ENV:-production}" \
+    -e SERVER_PORT="${SERVER_PORT:-8080}" \
+    -e SERVER_LOG_LEVEL="${SERVER_LOG_LEVEL:-info}" \
+    -e SERVER_ENABLE_HTTPS="${SERVER_ENABLE_HTTPS:-false}" \
+    -e DB_MONGO_URI="${DB_MONGO_URI}" \
+    -e DB_MONGO_DATABASE="${DB_MONGO_DATABASE}" \
+    -e DB_MONGO_TIMEOUT="${DB_MONGO_TIMEOUT}" \
+    -e DB_MONGO_MAX_POOL_SIZE="${DB_MONGO_MAX_POOL_SIZE}" \
+    -e DB_MONGO_MIN_POOL_SIZE="${DB_MONGO_MIN_POOL_SIZE}" \
+    -e DB_MONGO_MAX_IDLE_TIME="${DB_MONGO_MAX_IDLE_TIME}" \
+    -e DB_MONGO_RETRY_READS="${DB_MONGO_RETRY_READS}" \
+    -e SECURITY_JWT_SECRET="${SECURITY_JWT_SECRET}" \
+    -e SECURITY_SESSION_SECRET="${SECURITY_SESSION_SECRET}" \
+    -e SECURITY_CORS_ORIGINS="${SECURITY_CORS_ORIGINS}" \
+    -e SECURITY_RATE_LIMIT_RPS="${SECURITY_RATE_LIMIT_RPS}" \
+    -e SECURITY_ENABLE_RATE_LIMIT="${SECURITY_ENABLE_RATE_LIMIT}" \
+    -e EXTERNAL_OPENAI_API_KEY="${EXTERNAL_OPENAI_API_KEY}" \
+    -e EXTERNAL_OPENAI_MODEL="${EXTERNAL_OPENAI_MODEL}" \
+    -e BUGSNAG_API_KEY="${BUGSNAG_API_KEY}" \
     --health-cmd="wget --no-verbose --tries=1 -O- http://localhost:8000/health > /dev/null || exit 1" \
     --health-interval=30s \
     --health-timeout=10s \
@@ -291,12 +309,13 @@ docker run -d \
 log "Waiting for container to be healthy..."
 i=1
 while [ $i -le 30 ]; do
-    if docker exec portfolio-app wget --no-verbose --tries=1 --spider http://localhost:8000/health 2>/dev/null; then
+    if docker exec portfolio-app wget --no-verbose --tries=1 -O- http://localhost:8000/health > /dev/null 2>&1; then
         log "✅ Container is healthy and ready!"
         break
     fi
     if [ $i -eq 30 ]; then
         log "❌ Container failed to become healthy"
+        docker logs --tail 20 portfolio-app
         exit 1
     fi
     sleep 2

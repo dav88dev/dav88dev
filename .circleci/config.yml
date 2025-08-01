@@ -120,25 +120,25 @@ jobs:
             echo "🏃 Executing deployment on server..."
             ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
                 ${SERVER_USER}@${SERVER_HOST} \
-                "SERVER_ENV='$SERVER_ENV' \
-                 SERVER_PORT='$SERVER_PORT' \
-                 SERVER_LOG_LEVEL='$SERVER_LOG_LEVEL' \
-                 SERVER_ENABLE_HTTPS='$SERVER_ENABLE_HTTPS' \
-                 DB_MONGO_URI='$DB_MONGO_URI' \
-                 DB_MONGO_DATABASE='$DB_MONGO_DATABASE' \
-                 DB_MONGO_TIMEOUT='$DB_MONGO_TIMEOUT' \
-                 DB_MONGO_MAX_POOL_SIZE='$DB_MONGO_MAX_POOL_SIZE' \
-                 DB_MONGO_MIN_POOL_SIZE='$DB_MONGO_MIN_POOL_SIZE' \
-                 DB_MONGO_MAX_IDLE_TIME='$DB_MONGO_MAX_IDLE_TIME' \
-                 DB_MONGO_RETRY_READS='$DB_MONGO_RETRY_READS' \
-                 SECURITY_JWT_SECRET='$SECURITY_JWT_SECRET' \
-                 SECURITY_SESSION_SECRET='$SECURITY_SESSION_SECRET' \
-                 SECURITY_CORS_ORIGINS='$SECURITY_CORS_ORIGINS' \
-                 SECURITY_RATE_LIMIT_RPS='$SECURITY_RATE_LIMIT_RPS' \
-                 SECURITY_ENABLE_RATE_LIMIT='$SECURITY_ENABLE_RATE_LIMIT' \
-                 EXTERNAL_OPENAI_API_KEY='$EXTERNAL_OPENAI_API_KEY' \
-                 EXTERNAL_OPENAI_MODEL='$EXTERNAL_OPENAI_MODEL' \
-                 BUGSNAG_API_KEY='$BUGSNAG_API_KEY' \
+                "export SERVER_ENV='$SERVER_ENV' && \
+                 export SERVER_PORT='$SERVER_PORT' && \
+                 export SERVER_LOG_LEVEL='$SERVER_LOG_LEVEL' && \
+                 export SERVER_ENABLE_HTTPS='$SERVER_ENABLE_HTTPS' && \
+                 export DB_MONGO_URI='$DB_MONGO_URI' && \
+                 export DB_MONGO_DATABASE='$DB_MONGO_DATABASE' && \
+                 export DB_MONGO_TIMEOUT='$DB_MONGO_TIMEOUT' && \
+                 export DB_MONGO_MAX_POOL_SIZE='$DB_MONGO_MAX_POOL_SIZE' && \
+                 export DB_MONGO_MIN_POOL_SIZE='$DB_MONGO_MIN_POOL_SIZE' && \
+                 export DB_MONGO_MAX_IDLE_TIME='$DB_MONGO_MAX_IDLE_TIME' && \
+                 export DB_MONGO_RETRY_READS='$DB_MONGO_RETRY_READS' && \
+                 export SECURITY_JWT_SECRET='$SECURITY_JWT_SECRET' && \
+                 export SECURITY_SESSION_SECRET='$SECURITY_SESSION_SECRET' && \
+                 export SECURITY_CORS_ORIGINS='$SECURITY_CORS_ORIGINS' && \
+                 export SECURITY_RATE_LIMIT_RPS='$SECURITY_RATE_LIMIT_RPS' && \
+                 export SECURITY_ENABLE_RATE_LIMIT='$SECURITY_ENABLE_RATE_LIMIT' && \
+                 export EXTERNAL_OPENAI_API_KEY='$EXTERNAL_OPENAI_API_KEY' && \
+                 export EXTERNAL_OPENAI_MODEL='$EXTERNAL_OPENAI_MODEL' && \
+                 export BUGSNAG_API_KEY='$BUGSNAG_API_KEY' && \
                  /opt/portfolio/deploy.sh"
             
             echo "✅ Deployment completed successfully!"
