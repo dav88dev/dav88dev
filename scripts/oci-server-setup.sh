@@ -1,5 +1,5 @@
 #!/bin/sh
-# OCI Ubuntu 24.04 Minimal Server Setup for Docker Portfolio Deployment
+# OCI Ubuntu 24.04 Minimal Server Setup for Docker Go Portfolio Deployment
 # Optimized for Oracle Cloud Infrastructure - POSIX compliant
 
 set -e

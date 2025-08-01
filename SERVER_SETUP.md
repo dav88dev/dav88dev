@@ -1,6 +1,6 @@
 # OCI Server Setup Guide
 
-This guide helps you set up a fresh Ubuntu 24.04 minimal server on Oracle Cloud Infrastructure (OCI) for Docker portfolio deployment.
+This guide helps you set up a fresh Ubuntu 24.04 minimal server on Oracle Cloud Infrastructure (OCI) for Docker Go portfolio deployment.
 
 ## 🚀 Quick Setup
 

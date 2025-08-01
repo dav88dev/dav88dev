@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for Rust web application with WASM frontend
+# Multi-stage Dockerfile for Go web application with WASM frontend
 # Optimized for production deployment
 
 # Stage 1: WASM Builder
@@ -17,22 +17,23 @@ RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# Stage 3: Rust Builder
-FROM rust:1.83-alpine AS rust-builder
-RUN apk add --no-cache musl-dev
+# Stage 3: Go Builder
+FROM golang:1.24-alpine AS go-builder
+RUN apk add --no-cache git ca-certificates tzdata
 WORKDIR /build
-COPY Cargo.toml Cargo.lock ./
-COPY src/ src/
-RUN cargo build --release --target x86_64-unknown-linux-musl
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o portfolio-server .
 
 # Stage 4: Final Runtime Image
 FROM alpine:3.20
-RUN apk --no-cache add ca-certificates tzdata && \
+RUN apk --no-cache add ca-certificates tzdata wget && \
     adduser -D -u 1001 -s /bin/sh portfolio
 WORKDIR /app
 
-# Copy Rust binary
-COPY --from=rust-builder --chown=portfolio:portfolio /build/target/x86_64-unknown-linux-musl/release/personal_website ./
+# Copy Go binary
+COPY --from=go-builder --chown=portfolio:portfolio /build/portfolio-server ./
 
 # Copy static assets and templates
 COPY --chown=portfolio:portfolio templates/ ./templates/
@@ -42,7 +43,7 @@ COPY --chown=portfolio:portfolio static/ ./static/
 COPY --from=wasm-builder --chown=portfolio:portfolio /static/wasm ./static/wasm/
 
 # Copy frontend build outputs (this will overlay existing static files)
-COPY --from=frontend-builder --chown=portfolio:portfolio /static ./static/
+COPY --from=frontend-builder --chown=portfolio:portfolio /frontend/dist ./static/
 
 # Switch to non-root user
 USER portfolio
@@ -55,7 +56,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
 
 # Set environment variables
-ENV RUST_LOG=info
+ENV SERVER_ENV=production
+ENV SERVER_PORT=8000
 
 # Run the application
-ENTRYPOINT ["./personal_website"]
+ENTRYPOINT ["./portfolio-server"]
