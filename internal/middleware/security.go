@@ -29,14 +29,14 @@ func SecurityHeaders() gin.HandlerFunc {
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 		
 		// Content-Security-Policy: Prevents various attacks
-		// Using nonce-based CSP for inline scripts instead of unsafe-inline
+		// Using nonce-based CSP for inline scripts and styles
 		csp := fmt.Sprintf(
 			"default-src 'self'; "+
-				"script-src 'self' 'nonce-%s' https://cdn.jsdelivr.net https://d2wy8f7a9ursnm.cloudfront.net; "+
-				"style-src 'self' 'nonce-%s' https://fonts.googleapis.com; "+
+				"script-src 'self' 'nonce-%s' 'unsafe-inline' https://cdn.jsdelivr.net https://d2wy8f7a9ursnm.cloudfront.net; "+
+				"style-src 'self' 'nonce-%s' 'unsafe-inline' https://fonts.googleapis.com; "+
 				"font-src 'self' https://fonts.gstatic.com data:; "+
 				"img-src 'self' data: https:; "+
-				"connect-src 'self' https://api.openai.com https://notify.bugsnag.com https://sessions.bugsnag.com; "+
+				"connect-src 'self' https://api.openai.com https://notify.bugsnag.com https://sessions.bugsnag.com https://otlp.bugsnag.com; "+
 				"frame-ancestors 'none'; "+
 				"base-uri 'self'; "+
 				"form-action 'self'; "+
