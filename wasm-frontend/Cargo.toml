@@ -16,7 +16,7 @@ console_error_panic_hook = "0.1"
 wee_alloc = "0.4"
 
 # Math and 3D graphics
-glam = "0.27"
+glam = "0.30"
 nalgebra = "0.33"
 
 [dependencies.web-sys]
