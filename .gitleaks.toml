@@ -32,7 +32,7 @@ commits = []
 paths = [
     ".gitleaks.toml",
     "docs/",
-    "*.md", 
+    ".*\\.md$", 
     "frontend/src/js/",  # Frontend code may have example tokens
 ]
 regexes = [
