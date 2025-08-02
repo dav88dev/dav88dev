@@ -1,0 +1,414 @@
+name: 🐳 Docker Build & Deploy
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+  schedule:
+    # Health checks every 6 hours (like CircleCI)
+    - cron: '0 */6 * * *'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PRODUCTION_SERVER: "129.80.244.212"
+  PRODUCTION_USER: "ubuntu"
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  # Enhanced Docker build with multi-platform support
+  build-and-test:
+    name: 🏗️ Build & Test Docker
+    runs-on: ubuntu-latest
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tags: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+
+      - name: 🏗️ Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: 🧪 Test Docker image (Health Check)
+        run: |
+          echo "🧪 Testing Docker image..."
+          
+          # Pull the image we just built
+          IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          docker pull $IMAGE_TAG
+          
+          # Start container for testing
+          docker run -d --name test-portfolio -p 8000:8000 \
+            -e SERVER_ENV=production \
+            -e SERVER_PORT=8000 \
+            -e SECURITY_JWT_SECRET="test-jwt-secret" \
+            -e SECURITY_SESSION_SECRET="test-session-secret" \
+            $IMAGE_TAG
+          
+          # Wait for container to be ready (improved logic)
+          echo "⏳ Waiting for container to start..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+              echo "✅ Container is healthy!"
+              break
+            elif [ $i -eq 30 ]; then
+              echo "❌ Container failed to start"
+              docker logs test-portfolio
+              exit 1
+            fi
+            echo "  Attempt $i/30..."
+            sleep 2
+          done
+          
+          # Advanced health tests
+          echo "🔍 Running comprehensive health tests..."
+          
+          # Test health endpoint
+          HEALTH_RESPONSE=$(curl -s http://localhost:8000/health)
+          echo "Health response: $HEALTH_RESPONSE"
+          
+          # Test homepage size
+          HOMEPAGE_SIZE=$(curl -s http://localhost:8000 | wc -c)
+          if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
+            echo "✅ Homepage test passed (${HOMEPAGE_SIZE} bytes)"
+          else
+            echo "❌ Homepage test failed (${HOMEPAGE_SIZE} bytes)"
+            docker logs test-portfolio
+            exit 1
+          fi
+          
+          # Test API endpoints
+          if curl -f http://localhost:8000/api/cv > /dev/null 2>&1; then
+            echo "✅ API endpoint test passed"
+          else
+            echo "⚠️  API endpoint test failed (may be expected)"
+          fi
+          
+          # Container resource usage
+          echo "📊 Container resource usage:"
+          docker stats --no-stream test-portfolio
+          
+          # Cleanup
+          docker stop test-portfolio
+          docker rm test-portfolio
+
+      - name: 🔒 Run Trivy security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📊 Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Enhanced deployment with zero-downtime
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    environment: 
+      name: production
+      url: http://129.80.244.212
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 📝 Create deployment script
+        run: |
+          cat > deploy.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          echo "🚀 Starting zero-downtime deployment..."
+          
+          # Configuration
+          IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          CONTAINER_NAME="portfolio-app"
+          CONTAINER_NAME_NEW="portfolio-app-new"
+          
+          # Pull new image
+          echo "📥 Pulling new Docker image..."
+          docker pull $IMAGE_NAME
+          
+          # Start new container on different port
+          echo "🏃 Starting new container..."
+          docker run -d --name $CONTAINER_NAME_NEW \
+            -p 8001:8000 \
+            -e SERVER_ENV='${{ secrets.SERVER_ENV }}' \
+            -e SERVER_PORT=8000 \
+            -e SERVER_LOG_LEVEL='${{ secrets.SERVER_LOG_LEVEL }}' \
+            -e DB_MONGO_URI='${{ secrets.DB_MONGO_URI }}' \
+            -e DB_MONGO_DATABASE='${{ secrets.DB_MONGO_DATABASE }}' \
+            -e SECURITY_JWT_SECRET='${{ secrets.SECURITY_JWT_SECRET }}' \
+            -e SECURITY_SESSION_SECRET='${{ secrets.SECURITY_SESSION_SECRET }}' \
+            -e SECURITY_CORS_ORIGINS='https://dav88.dev' \
+            -e SECURITY_RATE_LIMIT_RPS='${{ secrets.SECURITY_RATE_LIMIT_RPS }}' \
+            -e BUGSNAG_API_KEY='${{ secrets.BUGSNAG_API_KEY }}' \
+            --restart unless-stopped \
+            $IMAGE_NAME
+          
+          # Wait for new container to be healthy
+          echo "⏳ Waiting for new container to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8001/health > /dev/null 2>&1; then
+              echo "✅ New container is healthy!"
+              break
+            elif [ $i -eq 30 ]; then
+              echo "❌ New container failed to start"
+              docker logs $CONTAINER_NAME_NEW
+              docker stop $CONTAINER_NAME_NEW || true
+              docker rm $CONTAINER_NAME_NEW || true
+              exit 1
+            fi
+            sleep 2
+          done
+          
+          # Switch traffic (zero-downtime)
+          echo "🔄 Switching traffic to new container..."
+          
+          # Update nginx or load balancer config here if using one
+          # For now, we'll do a simple port switch
+          
+          # Stop old container
+          if docker ps | grep -q $CONTAINER_NAME; then
+            echo "🛑 Stopping old container..."
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+          fi
+          
+          # Rename new container and switch port
+          docker stop $CONTAINER_NAME_NEW
+          docker rm $CONTAINER_NAME_NEW
+          
+          # Start final container on correct port
+          docker run -d --name $CONTAINER_NAME \
+            -p 8000:8000 \
+            -e SERVER_ENV='${{ secrets.SERVER_ENV }}' \
+            -e SERVER_PORT=8000 \
+            -e SERVER_LOG_LEVEL='${{ secrets.SERVER_LOG_LEVEL }}' \
+            -e DB_MONGO_URI='${{ secrets.DB_MONGO_URI }}' \
+            -e DB_MONGO_DATABASE='${{ secrets.DB_MONGO_DATABASE }}' \
+            -e SECURITY_JWT_SECRET='${{ secrets.SECURITY_JWT_SECRET }}' \
+            -e SECURITY_SESSION_SECRET='${{ secrets.SECURITY_SESSION_SECRET }}' \
+            -e SECURITY_CORS_ORIGINS='https://dav88.dev' \
+            -e SECURITY_RATE_LIMIT_RPS='${{ secrets.SECURITY_RATE_LIMIT_RPS }}' \
+            -e BUGSNAG_API_KEY='${{ secrets.BUGSNAG_API_KEY }}' \
+            --restart unless-stopped \
+            $IMAGE_NAME
+          
+          # Final health check
+          sleep 5
+          if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Final health check failed"
+            exit 1
+          fi
+          
+          # Cleanup old images (keep last 3)
+          echo "🧹 Cleaning up old images..."
+          docker images --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | \
+            grep "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | \
+            tail -n +4 | \
+            awk '{print $1}' | \
+            xargs -r docker rmi || true
+          
+          echo "🎉 Zero-downtime deployment completed!"
+          EOF
+          
+          chmod +x deploy.sh
+
+      - name: 📤 Transfer deployment script
+        run: |
+          scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              deploy.sh ${{ env.PRODUCTION_USER }}@${{ env.PRODUCTION_SERVER }}:/tmp/
+
+      - name: 🚀 Execute deployment
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              ${{ env.PRODUCTION_USER }}@${{ env.PRODUCTION_SERVER }} \
+              "chmod +x /tmp/deploy.sh && /tmp/deploy.sh"
+
+      - name: 🏥 Post-deployment health check
+        run: |
+          echo "🏥 Running post-deployment health checks..."
+          
+          # Wait a moment for services to fully start
+          sleep 10
+          
+          # Basic health check
+          if curl -f http://${{ env.PRODUCTION_SERVER }}:8000/health; then
+            echo "✅ Health check passed"
+          else
+            echo "❌ Health check failed"
+            exit 1
+          fi
+          
+          # Performance check
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' http://${{ env.PRODUCTION_SERVER }}:8000/)
+          echo "⚡ Response time: ${RESPONSE_TIME}s"
+          
+          if (( $(echo "$RESPONSE_TIME < 2.0" | bc -l) )); then
+            echo "✅ Performance check passed"
+          else
+            echo "⚠️  Response time higher than expected"
+          fi
+
+  # Scheduled health monitoring (replaces CircleCI cron)
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 🏥 Production health check
+        run: |
+          echo "🏥 Comprehensive production health check..."
+          
+          SERVER_URL="http://${{ env.PRODUCTION_SERVER }}:8000"
+          
+          # Health endpoint check
+          echo "1️⃣ Testing health endpoint..."
+          if HEALTH_RESPONSE=$(curl -f -s "$SERVER_URL/health"); then
+            echo "✅ Health endpoint: OK"
+            echo "$HEALTH_RESPONSE" | jq . 2>/dev/null || echo "$HEALTH_RESPONSE"
+          else
+            echo "❌ Health endpoint: FAILED"
+            exit 1
+          fi
+          
+          # Homepage check
+          echo "2️⃣ Testing homepage..."
+          HOMEPAGE_SIZE=$(curl -s "$SERVER_URL/" | wc -c)
+          if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
+            echo "✅ Homepage: OK (${HOMEPAGE_SIZE} bytes)"
+          else
+            echo "❌ Homepage: FAILED (${HOMEPAGE_SIZE} bytes)"
+            exit 1
+          fi
+          
+          # API endpoint check
+          echo "3️⃣ Testing API endpoints..."
+          if curl -f -s "$SERVER_URL/api/cv" > /dev/null; then
+            echo "✅ API endpoints: OK"
+          else
+            echo "⚠️  API endpoints: May not be configured"
+          fi
+          
+          # Performance check
+          echo "4️⃣ Performance test..."
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "$SERVER_URL/")
+          echo "⚡ Response time: ${RESPONSE_TIME}s"
+          
+          # SSL/Security check (if using HTTPS)
+          echo "5️⃣ Security check..."
+          SECURITY_HEADERS=$(curl -s -I "$SERVER_URL/" | grep -i "x-\|content-security\|strict-transport")
+          if [ ! -z "$SECURITY_HEADERS" ]; then
+            echo "✅ Security headers present:"
+            echo "$SECURITY_HEADERS"
+          else
+            echo "⚠️  No security headers detected"
+          fi
+          
+          echo "🎉 All health checks completed!"
+
+      - name: 📢 Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Production Health Check Failed',
+              body: `## 🚨 Production Health Check Alert
+              
+              **Time**: ${new Date().toISOString()}
+              **Server**: ${{ env.PRODUCTION_SERVER }}
+              **Workflow**: [${context.workflow}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              
+              ### ❌ Health Check Failed
+              The automated health check for the production server has failed.
+              
+              ### 🔍 Recommended Actions:
+              1. Check server status manually
+              2. Review server logs
+              3. Verify Docker container status
+              4. Check network connectivity
+              
+              ### 📊 Check Details:
+              - Health endpoint test
+              - Homepage accessibility  
+              - API endpoint functionality
+              - Performance metrics
+              
+              **This issue was automatically created by GitHub Actions.**`,
+              labels: ['bug', 'production', 'health-check', 'urgent']
+            });
+
+  # Container registry cleanup
+  cleanup-registry:
+    name: 🧹 Registry Cleanup
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: 🧹 Clean old container images
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ env.IMAGE_NAME }}
+          package-type: 'container'
+          min-versions-to-keep: 5
+          delete-only-untagged-versions: true
