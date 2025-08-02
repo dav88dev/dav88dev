@@ -76,7 +76,15 @@ export default defineConfig({
         reduce_funcs: true,
         reduce_vars: true,
         sequences: true,
-        typeofs: true
+        typeofs: true,
+        // More aggressive compression
+        passes: 2,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_math: true,
+        unsafe_methods: true,
+        unsafe_proto: true,
+        unsafe_regexp: true
       },
       mangle: {
         safari10: true,
@@ -85,7 +93,8 @@ export default defineConfig({
         }
       },
       format: {
-        comments: false
+        comments: false,
+        ecma: 2020
       }
     },
     sourcemap: false,
@@ -102,6 +111,17 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: []
+    },
+    // Enable CSS code splitting for better caching
+    devSourcemap: false
+  },
+  
+  // Preload optimization
+  experimental: {
+    renderBuiltUrl(filename, { hostType }) {
+      if (hostType === 'js') {
+        return { runtime: `window.__prependToBase("${filename}")` }
+      }
     }
   }
 })
