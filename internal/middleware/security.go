@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"os"
 	
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +31,7 @@ func SecurityHeaders() gin.HandlerFunc {
 		
 		// Content-Security-Policy: Prevents various attacks
 		// Using nonce-based CSP for inline scripts and styles
-		csp := fmt.Sprintf(
+		cspBase := fmt.Sprintf(
 			"default-src 'self'; "+
 				"script-src 'self' 'nonce-%s' 'unsafe-inline' https://cdn.jsdelivr.net https://d2wy8f7a9ursnm.cloudfront.net; "+
 				"style-src 'self' 'nonce-%s' 'unsafe-inline' https://fonts.googleapis.com; "+
@@ -39,10 +40,15 @@ func SecurityHeaders() gin.HandlerFunc {
 				"connect-src 'self' https://api.openai.com https://notify.bugsnag.com https://sessions.bugsnag.com https://otlp.bugsnag.com; "+
 				"frame-ancestors 'none'; "+
 				"base-uri 'self'; "+
-				"form-action 'self'; "+
-				"upgrade-insecure-requests",
+				"form-action 'self';",
 			nonce, nonce)
-		c.Header("Content-Security-Policy", csp)
+		
+		// Only add upgrade-insecure-requests in production
+		if os.Getenv("SERVER_ENV") == "production" {
+			cspBase += " upgrade-insecure-requests"
+		}
+		
+		c.Header("Content-Security-Policy", cspBase)
 		
 		// Strict-Transport-Security: Enforces HTTPS
 		// Only add if served over HTTPS
@@ -55,9 +61,13 @@ func SecurityHeaders() gin.HandlerFunc {
 		
 		// Additional security headers
 		c.Header("X-Permitted-Cross-Domain-Policies", "none")
-		c.Header("Cross-Origin-Embedder-Policy", "require-corp")
-		c.Header("Cross-Origin-Opener-Policy", "same-origin")
-		c.Header("Cross-Origin-Resource-Policy", "same-origin")
+		
+		// Only add strict CORP/COEP/COOP in production
+		if os.Getenv("SERVER_ENV") == "production" {
+			c.Header("Cross-Origin-Embedder-Policy", "require-corp")
+			c.Header("Cross-Origin-Opener-Policy", "same-origin")
+			c.Header("Cross-Origin-Resource-Policy", "same-origin")
+		}
 		
 		c.Next()
 	}
