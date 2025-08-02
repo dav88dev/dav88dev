@@ -157,10 +157,8 @@ export function initTiltEffect() {
             });
             
             // Add subtle glow effect
-            element.style.boxShadow = `
-                0 20px 40px rgba(0,0,0,0.1),
-                ${rotateY * 2}px ${rotateX * 2}px 20px rgba(99, 102, 241, 0.2)
-            `;
+            // Use CSS class instead of inline styles
+            element.classList.add('tilt-shadow');
         });
         
         element.addEventListener('mouseleave', function() {
@@ -171,7 +169,7 @@ export function initTiltEffect() {
                 ease: 'power2.out'
             });
             
-            element.style.boxShadow = '';
+            element.classList.remove('tilt-shadow');
         });
     });
     
@@ -266,11 +264,12 @@ export function initMagneticButtons() {
             const x = e.clientX - rect.left - rect.width / 2;
             const y = e.clientY - rect.top - rect.height / 2;
             
-            button.style.transform = `translate(${x * 0.1}px, ${y * 0.1}px)`;
+            // Use GSAP instead of inline styles
+            gsap.set(button, { x: x * 0.1, y: y * 0.1 });
         });
         
         button.addEventListener('mouseleave', () => {
-            button.style.transform = 'translate(0, 0)';
+            gsap.set(button, { x: 0, y: 0 });
         });
     });
 }
@@ -301,7 +300,7 @@ export function initParallaxEffect() {
         parallaxElements.forEach((element, index) => {
             const speed = 0.2 + (index * 0.1);
             const yPos = -(scrollTop * speed);
-            element.style.transform = `translateY(${yPos}px)`;
+            gsap.set(element, { y: yPos });
         });
     }
     
