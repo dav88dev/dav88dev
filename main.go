@@ -129,7 +129,10 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	// 7. Security headers middleware
 	router.Use(middleware.SecurityHeaders())
 
-	// 8. Static file serving with enterprise caching
+	// 8. Cache headers for optimal performance
+	router.Use(middleware.CacheHeaders())
+
+	// 9. Static file serving with enterprise caching
 	// Serve static files from multiple locations for flexibility
 	router.Use(static.Serve("/", static.LocalFile("./static", false)))
 	router.Use(static.Serve("/static", static.LocalFile("./static", false)))
@@ -140,7 +143,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 		router.Use(static.Serve("/assets", static.LocalFile("./dist/assets", false)))
 	}
 
-	// 9. Request metrics middleware for monitoring
+	// 10. Request metrics middleware for monitoring
 	router.Use(middleware.Metrics())
 
 	return router
