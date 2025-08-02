@@ -19,9 +19,14 @@ if [ ! -f "static/wasm/wasm_frontend.js" ]; then
     echo "🦀 WASM not found - run ./build.sh for full WASM build"
 fi
 
-# Build frontend assets
-echo "📦 Building frontend..."
-cd frontend && npm run build && cd ..
+# Only build frontend if assets are missing or in production mode
+if [ ! -f "static/.vite/manifest.json" ] || [ "$1" = "--build" ]; then
+    echo "📦 Building frontend assets..."
+    cd frontend && npm run build && cd ..
+else
+    echo "⚡ Frontend assets exist - use --build flag to force rebuild"
+    echo "   For live reload during development, use: cd frontend && npm run dev"
+fi
 
 # Check if we have file watchers available
 if command -v inotifywait &> /dev/null; then

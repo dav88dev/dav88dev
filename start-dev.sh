@@ -33,9 +33,14 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-# Build frontend assets
-echo "🔨 Building frontend assets..."
-npm run build
+# Only build frontend if missing (for speed)
+if [ ! -f "../static/.vite/manifest.json" ]; then
+    echo "🔨 Building frontend assets..."
+    npm run build
+else
+    echo "⚡ Frontend assets exist - skipping build for speed"
+    echo "   Use 'npm run build' to force rebuild if needed"
+fi
 cd ..
 
 # Function to kill background processes on exit

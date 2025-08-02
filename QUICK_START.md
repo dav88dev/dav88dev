@@ -9,27 +9,30 @@
 
 ## Running the Website Locally
 
-### Option 1: Quick Start (Recommended)
+### Option 1: ⚡ SUPER FAST (No Builds - Recommended for Development)
+```bash
+./dev-fast.sh
+```
+*Starts instantly - uses existing built assets*
+
+### Option 2: Smart Build (Only builds if needed)
+```bash
+./dev.sh                # Skips build if assets exist
+./dev.sh --build        # Forces rebuild
+```
+
+### Option 3: Full Setup (First Time)
 ```bash
 ./start-dev.sh
 ```
 
-### Option 2: Manual Setup
+### Option 4: Manual
 ```bash
-# 1. Install dependencies
-go mod download
-cd frontend && npm install && cd ..
+# Frontend live reload during development
+cd frontend && npm run dev   # Port 3000 with live reload
 
-# 2. Build frontend
-cd frontend && npm run build && cd ..
-
-# 3. Start server
+# Backend only (in another terminal)
 SERVER_PORT=8081 go run main.go
-```
-
-### Option 3: Use existing dev script
-```bash
-./dev.sh
 ```
 
 ## URLs
