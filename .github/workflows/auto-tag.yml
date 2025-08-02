@@ -1,0 +1,286 @@
+name: 🏷️ Auto Tag
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      tag_type:
+        description: 'Type of tag to create'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+        - auto
+        - major
+        - minor
+        - patch
+        - prerelease
+      custom_version:
+        description: 'Custom version (e.g., 1.2.3) - overrides tag_type'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  auto-tag:
+    name: 🏷️ Create Version Tags
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Install dependencies
+        run: |
+          npm install -g semantic-release@^22.0.0
+          npm install -g @semantic-release/commit-analyzer@^11.0.0
+          npm install -g @semantic-release/release-notes-generator@^12.0.0
+
+      - name: 🔍 Determine version strategy
+        id: version-strategy
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.custom_version }}" ]; then
+              echo "strategy=custom" >> $GITHUB_OUTPUT
+              echo "version=${{ github.event.inputs.custom_version }}" >> $GITHUB_OUTPUT
+            else
+              echo "strategy=manual" >> $GITHUB_OUTPUT
+              echo "bump_type=${{ github.event.inputs.tag_type }}" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "strategy=auto" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📊 Get current version
+        id: current-version
+        run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          
+          # Extract version number (remove 'v' prefix if present)
+          CURRENT_VERSION=${LATEST_TAG#v}
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          
+          echo "Current version: $CURRENT_VERSION"
+
+      - name: 🧮 Calculate next version
+        id: next-version
+        run: |
+          CURRENT_VERSION="${{ steps.current-version.outputs.current_version }}"
+          STRATEGY="${{ steps.version-strategy.outputs.strategy }}"
+          
+          if [ "$STRATEGY" = "custom" ]; then
+            NEXT_VERSION="${{ steps.version-strategy.outputs.version }}"
+          elif [ "$STRATEGY" = "manual" ]; then
+            BUMP_TYPE="${{ steps.version-strategy.outputs.bump_type }}"
+            
+            # Parse current version
+            IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+            
+            case "$BUMP_TYPE" in
+              "major")
+                NEXT_VERSION="$((major + 1)).0.0"
+                ;;
+              "minor")
+                NEXT_VERSION="$major.$((minor + 1)).0"
+                ;;
+              "patch")
+                NEXT_VERSION="$major.$minor.$((patch + 1))"
+                ;;
+              "prerelease")
+                # Check if current is already a prerelease
+                if [[ $CURRENT_VERSION == *"-"* ]]; then
+                  # Increment prerelease number
+                  BASE_VERSION=$(echo $CURRENT_VERSION | cut -d'-' -f1)
+                  PRE_PART=$(echo $CURRENT_VERSION | cut -d'-' -f2)
+                  if [[ $PRE_PART =~ ^(.*\.)([0-9]+)$ ]]; then
+                    PRE_PREFIX="${BASH_REMATCH[1]}"
+                    PRE_NUM="${BASH_REMATCH[2]}"
+                    NEXT_VERSION="$BASE_VERSION-$PRE_PREFIX$((PRE_NUM + 1))"
+                  else
+                    NEXT_VERSION="$CURRENT_VERSION-rc.2"
+                  fi
+                else
+                  # Create first prerelease
+                  NEXT_VERSION="$major.$minor.$((patch + 1))-rc.1"
+                fi
+                ;;
+              "auto"|*)
+                # Use semantic-release to determine version
+                SEMANTIC_VERSION=$(npx semantic-release --dry-run --no-ci 2>/dev/null | grep -o "The next release version is [0-9]*\.[0-9]*\.[0-9]*" | sed 's/The next release version is //' || echo "")
+                if [ -n "$SEMANTIC_VERSION" ]; then
+                  NEXT_VERSION="$SEMANTIC_VERSION"
+                else
+                  echo "No version bump needed based on commits"
+                  exit 0
+                fi
+                ;;
+            esac
+          fi
+          
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT_VERSION"
+
+      - name: 🏷️ Create and push tag
+        id: create-tag
+        run: |
+          NEXT_VERSION="${{ steps.next-version.outputs.next_version }}"
+          
+          if [ -z "$NEXT_VERSION" ]; then
+            echo "No version to tag"
+            exit 0
+          fi
+          
+          TAG_NAME="v$NEXT_VERSION"
+          
+          # Check if tag already exists
+          if git tag -l | grep -q "^$TAG_NAME$"; then
+            echo "Tag $TAG_NAME already exists"
+            exit 1
+          fi
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Generate tag message
+          TAG_MESSAGE="Release $TAG_NAME
+
+          🚀 Automated release created by GitHub Actions
+          
+          📋 Changes since last release:
+          $(git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD | head -10)
+          
+          🔗 Full changelog: https://github.com/${{ github.repository }}/compare/${{ steps.current-version.outputs.latest_tag }}...$TAG_NAME
+          
+          🤖 Generated with GitHub Actions"
+          
+          # Create annotated tag
+          git tag -a "$TAG_NAME" -m "$TAG_MESSAGE"
+          
+          # Push tag
+          git push origin "$TAG_NAME"
+          
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Created and pushed tag: $TAG_NAME"
+
+      - name: 📦 Update package.json version
+        if: steps.create-tag.outputs.tag_name
+        run: |
+          NEXT_VERSION="${{ steps.next-version.outputs.next_version }}"
+          
+          # Update package.json version
+          npm version "$NEXT_VERSION" --no-git-tag-version --allow-same-version
+          
+          # Commit version update
+          git add package.json
+          git commit -m "chore(release): bump version to $NEXT_VERSION [skip ci]" || echo "No changes to commit"
+          git push origin master || echo "No changes to push"
+
+      - name: 📢 Create GitHub Release
+        if: steps.create-tag.outputs.tag_name
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tagName = '${{ steps.create-tag.outputs.tag_name }}';
+            const version = '${{ steps.next-version.outputs.next_version }}';
+            
+            // Generate release notes
+            const { data: comparison } = await github.rest.repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: '${{ steps.current-version.outputs.latest_tag }}',
+              head: tagName
+            });
+            
+            let releaseNotes = `## 🚀 What's Changed\n\n`;
+            
+            const commits = comparison.commits;
+            const features = commits.filter(c => c.commit.message.startsWith('feat'));
+            const fixes = commits.filter(c => c.commit.message.startsWith('fix'));
+            const others = commits.filter(c => !c.commit.message.startsWith('feat') && !c.commit.message.startsWith('fix'));
+            
+            if (features.length > 0) {
+              releaseNotes += `### ✨ New Features\n`;
+              features.forEach(commit => {
+                const message = commit.commit.message.split('\n')[0];
+                releaseNotes += `- ${message} ([${commit.sha.substring(0, 7)}](${commit.html_url}))\n`;
+              });
+              releaseNotes += '\n';
+            }
+            
+            if (fixes.length > 0) {
+              releaseNotes += `### 🐛 Bug Fixes\n`;
+              fixes.forEach(commit => {
+                const message = commit.commit.message.split('\n')[0];
+                releaseNotes += `- ${message} ([${commit.sha.substring(0, 7)}](${commit.html_url}))\n`;
+              });
+              releaseNotes += '\n';
+            }
+            
+            if (others.length > 0) {
+              releaseNotes += `### 🔧 Other Changes\n`;
+              others.slice(0, 10).forEach(commit => {
+                const message = commit.commit.message.split('\n')[0];
+                releaseNotes += `- ${message} ([${commit.sha.substring(0, 7)}](${commit.html_url}))\n`;
+              });
+              if (others.length > 10) {
+                releaseNotes += `- ... and ${others.length - 10} more commits\n`;
+              }
+              releaseNotes += '\n';
+            }
+            
+            releaseNotes += `### 📦 Assets\n`;
+            releaseNotes += `- Source code (zip)\n`;
+            releaseNotes += `- Source code (tar.gz)\n\n`;
+            
+            releaseNotes += `### 🚀 Quick Start\n`;
+            releaseNotes += '```bash\n';
+            releaseNotes += `git clone https://github.com/${context.repo.owner}/${context.repo.repo}.git\n`;
+            releaseNotes += `cd ${context.repo.repo}\n`;
+            releaseNotes += `git checkout ${tagName}\n`;
+            releaseNotes += `./dev.sh\n`;
+            releaseNotes += '```\n\n';
+            
+            releaseNotes += `**Full Changelog**: https://github.com/${context.repo.owner}/${context.repo.repo}/compare/${{ steps.current-version.outputs.latest_tag }}...${tagName}\n\n`;
+            releaseNotes += `---\n🤖 *This release was automatically generated*`;
+            
+            // Create release
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tagName,
+              name: `${tagName} - Portfolio Website`,
+              body: releaseNotes,
+              draft: false,
+              prerelease: version.includes('-'),
+              generate_release_notes: false
+            });
+            
+            console.log(`Created release: ${release.html_url}`);
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "🏷️ Auto Tag Summary:"
+          echo "===================="
+          if [ -n "${{ steps.create-tag.outputs.tag_name }}" ]; then
+            echo "✅ Created tag: ${{ steps.create-tag.outputs.tag_name }}"
+            echo "📦 Version: ${{ steps.next-version.outputs.next_version }}"
+            echo "🔗 GitHub Release: https://github.com/${{ github.repository }}/releases/tag/${{ steps.create-tag.outputs.tag_name }}"
+          else
+            echo "ℹ️ No tag created (no version bump needed)"
+          fi

@@ -1,0 +1,112 @@
+{
+  "branches": [
+    "master",
+    {
+      "name": "develop",
+      "prerelease": "beta"
+    },
+    {
+      "name": "feature/*",
+      "prerelease": "alpha"
+    }
+  ],
+  "repositoryUrl": "https://github.com/dav88dev/dav88dev.git",
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "feat", "release": "minor" },
+          { "type": "fix", "release": "patch" },
+          { "type": "perf", "release": "patch" },
+          { "type": "revert", "release": "patch" },
+          { "type": "docs", "release": "patch" },
+          { "type": "style", "release": "patch" },
+          { "type": "refactor", "release": "patch" },
+          { "type": "test", "release": "patch" },
+          { "type": "build", "release": "patch" },
+          { "type": "ci", "release": "patch" },
+          { "type": "chore", "release": false },
+          { "scope": "BREAKING", "release": "major" },
+          { "breaking": true, "release": "major" }
+        ],
+        "parserOpts": {
+          "noteKeywords": ["BREAKING CHANGE", "BREAKING CHANGES", "BREAKING"]
+        }
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "🚀 Features" },
+            { "type": "fix", "section": "🐛 Bug Fixes" },
+            { "type": "perf", "section": "⚡ Performance" },
+            { "type": "revert", "section": "⏪ Reverts" },
+            { "type": "docs", "section": "📚 Documentation" },
+            { "type": "style", "section": "🎨 Styling" },
+            { "type": "refactor", "section": "♻️ Refactoring" },
+            { "type": "test", "section": "🧪 Tests" },
+            { "type": "build", "section": "🏗️ Build" },
+            { "type": "ci", "section": "👷 CI/CD" },
+            { "type": "chore", "section": "🔧 Maintenance", "hidden": true }
+          ]
+        },
+        "writerOpts": {
+          "commitsSort": ["subject", "scope"]
+        }
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md",
+        "changelogTitle": "# 📋 Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n<!-- markdownlint-disable MD024 -->"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "echo 'Preparing release ${nextRelease.version}' && echo 'Building project...'",
+        "publishCmd": "echo 'Publishing version ${nextRelease.version}' && echo 'Deployment completed!'"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          {
+            "path": "portfolio-server",
+            "name": "portfolio-server-${nextRelease.gitTag}",
+            "label": "Portfolio Server Binary (Linux)"
+          },
+          {
+            "path": "static/**/*",
+            "name": "frontend-assets-${nextRelease.gitTag}.tar.gz",
+            "label": "Frontend Assets"
+          }
+        ],
+        "assignees": ["dav88dev"],
+        "addReleases": "bottom",
+        "draftRelease": false,
+        "releaseBodyTemplate": "## 🚀 Portfolio Website Release {{version}}\n\n### 📋 What's New:\n{{#each releases}}\n{{#if title}}\n### {{title}}\n{{/if}}\n{{#each commits}}\n- {{#if scope}}**{{scope}}:** {{/if}}{{subject}} ([{{shortHash}}]({{@root.repositoryUrl}}/commit/{{hash}}))\n{{/each}}\n{{/each}}\n\n### 🔽 Downloads:\n- `portfolio-server-{{gitTag}}` - Go backend server binary\n- `frontend-assets-{{gitTag}}.tar.gz` - Complete frontend assets\n\n### 🚀 Quick Deploy:\n```bash\nwget https://github.com/dav88dev/dav88dev/releases/download/{{gitTag}}/portfolio-server-{{gitTag}}\nchmod +x portfolio-server-{{gitTag}}\n./portfolio-server-{{gitTag}}\n```\n\n### 🔧 Tech Stack:\n- ✅ Go backend with Gin framework\n- ✅ Modern frontend with Vite build system\n- ✅ WASM skills visualization\n- ✅ Security headers & CSP compliance\n- ✅ Performance optimized assets\n\n---\n🤖 *This release was automatically generated*"
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": [
+          "CHANGELOG.md",
+          "package.json",
+          "package-lock.json",
+          "frontend/package.json",
+          "frontend/package-lock.json"
+        ],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ]
+  ]
+}

@@ -1,0 +1,95 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "needs-discussion"]
+assignees:
+  - dav88dev
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide details below.
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: 🚀 Feature Description
+      description: A clear and concise description of the feature you'd like to see.
+      placeholder: Describe the feature...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🤔 Problem Statement
+      description: What problem does this feature solve? What's the use case?
+      placeholder: This feature would help with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 💡 Proposed Solution
+      description: Describe the solution you'd like to see implemented.
+      placeholder: I would like to see...
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternatives Considered
+      description: Describe any alternative solutions or features you've considered.
+      placeholder: Alternative approaches could be...
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 📊 Priority Level
+      description: How important is this feature to you?
+      options:
+        - 🔥 Critical - Blocking major functionality
+        - 🚨 High - Would significantly improve experience
+        - 📋 Medium - Nice to have improvement
+        - 🎯 Low - Minor enhancement
+    validations:
+      required: true
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: ⚙️ Estimated Complexity
+      description: How complex do you think this feature would be to implement?
+      options:
+        - 🟢 Simple - Small change or addition
+        - 🟡 Medium - Moderate development effort
+        - 🔴 Complex - Significant development required
+        - 🤷 Unknown - Not sure about complexity
+
+  - type: checkboxes
+    id: affected-areas
+    attributes:
+      label: 🎯 Affected Areas
+      description: Which parts of the website would this feature affect?
+      options:
+        - label: Frontend UI/UX
+        - label: Backend API
+        - label: WASM Skills Visualization
+        - label: Performance
+        - label: SEO/Accessibility
+        - label: Mobile Experience
+        - label: Analytics/Tracking
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: 🎨 Mockups/Examples
+      description: If applicable, add mockups, examples, or links to similar implementations.
+      placeholder: You can drag and drop images here...
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 📋 Additional Context
+      description: Add any other context, examples, or technical details about the feature.

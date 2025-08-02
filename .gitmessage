@@ -1,0 +1,35 @@
+# <type>[optional scope]: <description>
+#
+# [optional body]
+#
+# [optional footer(s)]
+
+# --- COMMIT TYPE ---
+# feat:     A new feature
+# fix:      A bug fix
+# docs:     Documentation only changes
+# style:    Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+# refactor: A code change that neither fixes a bug nor adds a feature
+# perf:     A code change that improves performance
+# test:     Adding missing tests or correcting existing tests
+# build:    Changes that affect the build system or external dependencies
+# ci:       Changes to our CI configuration files and scripts
+# chore:    Other changes that don't modify src or test files
+# revert:   Reverts a previous commit
+
+# --- SCOPE EXAMPLES ---
+# frontend, backend, wasm, ci, docs, deps, config, security, performance, ui, api, release
+
+# --- EXAMPLES ---
+# feat(frontend): add dark mode toggle
+# fix(backend): resolve memory leak in request handler
+# docs(api): update endpoint documentation
+# perf(wasm): optimize skills visualization rendering
+# ci(release): add automated semantic versioning
+
+# --- BREAKING CHANGE ---
+# Add "BREAKING CHANGE:" in the footer for major version bumps
+# Example:
+# feat(api): change user authentication method
+# 
+# BREAKING CHANGE: The authentication endpoint now requires OAuth2 instead of API keys

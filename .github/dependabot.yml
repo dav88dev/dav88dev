@@ -1,0 +1,58 @@
+version: 2
+
+updates:
+  # Go dependencies
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "dav88dev"
+    commit-message:
+      prefix: "⬆️"
+      include: "scope"
+
+  # NPM dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"  
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "dav88dev"
+    commit-message:
+      prefix: "⬆️"
+      include: "scope"
+
+  # Rust dependencies (if WASM project exists)
+  - package-ecosystem: "cargo"
+    directory: "/wasm-frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "dav88dev"
+    commit-message:
+      prefix: "⬆️"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "dav88dev"
+    commit-message:
+      prefix: "⬆️"
+      include: "scope"
