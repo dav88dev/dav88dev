@@ -30,12 +30,8 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
 
-      - name: 📊 Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        continue-on-error: true
-        with:
-          sarif_file: 'trivy-results.sarif'
+      # SARIF upload disabled - requires GitHub Advanced Security
+      # Results are available in the scan output above
 
   secrets-scan:
     name: 🗝️ Secrets Scanning
@@ -66,12 +62,8 @@ jobs:
           output-file: hadolint-results.sarif
           no-fail: true
 
-      - name: 📊 Upload Hadolint scan results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        continue-on-error: true
-        with:
-          sarif_file: hadolint-results.sarif
+      # SARIF upload disabled - requires GitHub Advanced Security  
+      # Results are available in the scan output above
 
   # CodeQL analysis disabled - not needed for portfolio website
   # Re-enable only if security scanning is specifically required
