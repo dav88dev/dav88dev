@@ -24,8 +24,8 @@ export function initCursorEffects() {
         cursorX += (mouseX - cursorX) * 0.1;
         cursorY += (mouseY - cursorY) * 0.1;
         
-        cursor.style.left = cursorX + 'px';
-        cursor.style.top = cursorY + 'px';
+        cursor.style.setProperty('--cursor-x', cursorX + 'px');
+        cursor.style.setProperty('--cursor-y', cursorY + 'px');
         
         requestAnimationFrame(updateCursor);
     }
@@ -35,13 +35,11 @@ export function initCursorEffects() {
     const interactiveElements = document.querySelectorAll('a, button, .project-card');
     interactiveElements.forEach(el => {
         el.addEventListener('mouseenter', () => {
-            cursor.style.transform = 'scale(2)';
-            cursor.style.background = 'radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, transparent 70%)';
+            cursor.classList.add('cursor-hover');
         });
         
         el.addEventListener('mouseleave', () => {
-            cursor.style.transform = 'scale(1)';
-            cursor.style.background = 'radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%)';
+            cursor.classList.remove('cursor-hover');
         });
     });
 }
@@ -134,7 +132,7 @@ export function initPreloader() {
             scale: 1.1,
             ease: 'power2.inOut',
             onComplete: () => {
-                loader.style.display = 'none';
+                loader.classList.add('hidden');
                 // REMOVED: document.body.classList.add('page-transition');
                 // This was causing navigation to disappear
             }

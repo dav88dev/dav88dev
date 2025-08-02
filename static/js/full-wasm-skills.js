@@ -46,10 +46,10 @@ class FullWasmSkills {
             const hoveredSkill = this.renderer.get_hovered_skill();
             if (hoveredSkill && hoveredSkill.name) {
                 this.showTooltip(hoveredSkill, e.clientX, e.clientY);
-                canvas.style.cursor = 'pointer';
+                canvas.classList.add('cursor-pointer');
             } else {
                 this.hideTooltip();
-                canvas.style.cursor = 'default';
+                canvas.classList.remove('cursor-pointer');
             }
         });
 
@@ -58,7 +58,7 @@ class FullWasmSkills {
             if (!this.renderer) return;
             this.renderer.handle_mouse_leave();
             this.hideTooltip();
-            canvas.style.cursor = 'default';
+            canvas.classList.remove('cursor-pointer');
         });
 
         // Window resize
@@ -95,14 +95,11 @@ class FullWasmSkills {
             document.body.appendChild(this.tooltipElement);
         }
         
-        // Only set dynamic positioning and border color via style (safe)
-        this.tooltipElement.style.left = (x + 10) + 'px';
-        this.tooltipElement.style.top = (y - 60) + 'px';
-        this.tooltipElement.style.borderColor = skill.color;
-        this.tooltipElement.style.display = 'block';
-        
-        // Set CSS custom property for dynamic color
+        // Set positioning and color using CSS custom properties
+        this.tooltipElement.style.setProperty('--tooltip-x', (x + 10) + 'px');
+        this.tooltipElement.style.setProperty('--tooltip-y', (y - 60) + 'px');
         this.tooltipElement.style.setProperty('--skill-color', skill.color);
+        this.tooltipElement.classList.add('visible');
         
         // Use safe HTML structure with CSS classes
         this.tooltipElement.innerHTML = `
@@ -113,20 +110,34 @@ class FullWasmSkills {
 
     hideTooltip() {
         if (this.tooltipElement) {
-            this.tooltipElement.style.display = 'none';
+            this.tooltipElement.classList.remove('visible');
         }
     }
 
     showErrorFallback() {
-        const skillsContainer = document.querySelector('.skills-container');
-        if (skillsContainer) {
-            skillsContainer.innerHTML = `
-                <div class="wasm-skills-error">
-                    <h3>🚀 Technical Expertise</h3>
-                    <p>Full WASM visualization failed to load</p>
-                    <p class="error-details">Please refresh the page or check your browser console for errors.</p>
-                </div>
-            `;
+        // Try to load the JavaScript fallback
+        if (window.skillsFallback && window.skillsFallback.init) {
+            console.log('🔄 WASM failed, falling back to JavaScript visualization');
+            window.skillsFallback.init();
+        } else {
+            // Import fallback if not already loaded
+            import('/static/js/skills-fallback.js').then(() => {
+                if (window.skillsFallback && window.skillsFallback.init) {
+                    window.skillsFallback.init();
+                }
+            }).catch(() => {
+                // Final fallback - show error message
+                const skillsContainer = document.querySelector('.skills-container');
+                if (skillsContainer) {
+                    skillsContainer.innerHTML = `
+                        <div class="wasm-skills-error">
+                            <h3>🚀 Technical Expertise</h3>
+                            <p>Interactive visualization unavailable</p>
+                            <p class="error-details">Core skills: Machine Learning, PHP, Laravel, JavaScript, Rust, Vue.js, Python, MySQL, Docker, AWS, Kubernetes, Redis</p>
+                        </div>
+                    `;
+                }
+            });
         }
     }
 

@@ -86,21 +86,21 @@ class SkillsFallback {
                 
                 if (distance < 40) {
                     this.hoveredSkill = index;
-                    this.canvas.style.cursor = 'pointer';
+                    this.canvas.classList.add('cursor-pointer');
                     this.showTooltip(skill, e.clientX, e.clientY);
                     return;
                 }
             });
             
             if (this.hoveredSkill === null) {
-                this.canvas.style.cursor = 'default';
+                this.canvas.classList.remove('cursor-pointer');
                 this.hideTooltip();
             }
         });
 
         this.canvas.addEventListener('mouseleave', () => {
             this.hoveredSkill = null;
-            this.canvas.style.cursor = 'default';
+            this.canvas.classList.remove('cursor-pointer');
             this.hideTooltip();
         });
 
@@ -115,35 +115,24 @@ class SkillsFallback {
         if (!tooltip) {
             tooltip = document.createElement('div');
             tooltip.id = 'skills-tooltip';
-            tooltip.style.cssText = `
-                position: fixed;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 12px 16px;
-                border-radius: 8px;
-                font-size: 14px;
-                pointer-events: none;
-                z-index: 1000;
-                max-width: 300px;
-                border: 1px solid ${skill.color};
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            `;
+            tooltip.className = 'skills-tooltip';
             document.body.appendChild(tooltip);
         }
         
         tooltip.innerHTML = `
-            <strong style="color: ${skill.color}">${skill.name}</strong><br>
+            <strong class="skill-name">${skill.name}</strong><br>
             <small>${skill.description}</small>
         `;
-        tooltip.style.left = (x + 10) + 'px';
-        tooltip.style.top = (y - 60) + 'px';
-        tooltip.style.display = 'block';
+        tooltip.style.setProperty('--tooltip-x', (x + 10) + 'px');
+        tooltip.style.setProperty('--tooltip-y', (y - 60) + 'px');
+        tooltip.style.setProperty('--skill-color', skill.color);
+        tooltip.classList.add('visible');
     }
 
     hideTooltip() {
         const tooltip = document.getElementById('skills-tooltip');
         if (tooltip) {
-            tooltip.style.display = 'none';
+            tooltip.classList.remove('visible');
         }
     }
 
