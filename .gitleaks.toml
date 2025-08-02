@@ -25,29 +25,23 @@ description = "Docker Hub token"
 regex = '''dckr_pat_[a-zA-Z0-9_-]{20,}'''
 tags = ["docker", "token"]
 
-# Allowlist for specific patterns
-[[rules.allowlist]]
+# Global allowlist for common false positives
+[allowlist]
+description = "Global allowlist for portfolio website"
 commits = []
 paths = [
     ".gitleaks.toml",
     "docs/",
-    "*.md",
+    "*.md", 
     "frontend/src/js/",  # Frontend code may have example tokens
 ]
 regexes = [
+    # Test secrets and examples
     '''test[_-]?secret''',
     '''example[_-]?key''',
     '''fake[_-]?token''',
     '''placeholder''',
     '''<your[_-]?.*>''',
-]
-
-# Global allowlist for common false positives
-[allowlist]
-description = "Global allowlist"
-commits = []
-paths = []
-regexes = [
     # Common false positives
     '''test-jwt-secret''',
     '''test-session-secret''',
