@@ -25,32 +25,32 @@ var metrics = &requestMetrics{}
 func Metrics() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		
+
 		c.Next()
-		
+
 		// Calculate metrics
 		latency := time.Since(start)
 		statusCode := c.Writer.Status()
-		
+
 		// Update metrics using atomic operations
 		requestNum := metrics.totalRequests.Add(1)
 		metrics.totalLatency.Add(latency.Nanoseconds())
-		
+
 		// Track error rates
 		if statusCode >= 400 {
 			metrics.totalErrors.Add(1)
 		}
-		
+
 		// Track slow requests (>1 second)
 		if latency > time.Second {
 			metrics.slowRequests.Add(1)
 		}
-		
+
 		// Track status code distribution (thread-safe)
 		countInterface, _ := metrics.statusCodeCounts.LoadOrStore(statusCode, new(atomic.Int64))
 		count := countInterface.(*atomic.Int64)
 		count.Add(1)
-		
+
 		// Add response headers for debugging
 		c.Header("X-Response-Time", latency.String())
 		c.Header("X-Request-ID", strconv.FormatInt(requestNum, 10))
@@ -64,17 +64,17 @@ func GetMetrics() map[string]interface{} {
 	totalErrors := metrics.totalErrors.Load()
 	totalLatency := metrics.totalLatency.Load()
 	slowRequests := metrics.slowRequests.Load()
-	
+
 	avgLatency := time.Duration(0)
 	if totalRequests > 0 {
 		avgLatency = time.Duration(totalLatency / totalRequests)
 	}
-	
+
 	errorRate := float64(0)
 	if totalRequests > 0 {
 		errorRate = float64(totalErrors) / float64(totalRequests) * 100
 	}
-	
+
 	// Collect status code counts
 	statusCodes := make(map[int]int64)
 	metrics.statusCodeCounts.Range(func(key, value interface{}) bool {
@@ -83,7 +83,7 @@ func GetMetrics() map[string]interface{} {
 		statusCodes[statusCode] = count.Load()
 		return true
 	})
-	
+
 	return map[string]interface{}{
 		"total_requests":     totalRequests,
 		"total_errors":       totalErrors,

@@ -26,7 +26,7 @@ type Config struct {
 	EnableHTTPS bool   `env:"SERVER_ENABLE_HTTPS" envDefault:"false"`
 	CertFile    string `env:"SERVER_CERT_FILE"`
 	KeyFile     string `env:"SERVER_KEY_FILE"`
-	
+
 	// Database Configuration
 	MongoURI             string `env:"DB_MONGO_URI" envDefault:"mongodb://localhost:27017"`
 	MongoDatabase        string `env:"DB_MONGO_DATABASE" envDefault:"portfolio"`
@@ -35,19 +35,18 @@ type Config struct {
 	MongoMinPoolSize     int    `env:"DB_MONGO_MIN_POOL_SIZE" envDefault:"5"`
 	MongoMaxIdleTime     int    `env:"DB_MONGO_MAX_IDLE_TIME" envDefault:"300"`
 	MongoEnableRetryRead bool   `env:"DB_MONGO_RETRY_READS" envDefault:"true"`
-	
+
 	// Security Configuration
 	JWTSecret       string `env:"SECURITY_JWT_SECRET"`
 	SessionSecret   string `env:"SECURITY_SESSION_SECRET"`
 	CORSOrigins     string `env:"SECURITY_CORS_ORIGINS" envDefault:"*"`
 	RateLimitRPS    int    `env:"SECURITY_RATE_LIMIT_RPS" envDefault:"100"`
 	EnableRateLimit bool   `env:"SECURITY_ENABLE_RATE_LIMIT" envDefault:"true"`
-	
+
 	// External Services Configuration
 	OpenAIAPIKey string `env:"EXTERNAL_OPENAI_API_KEY"`
 	OpenAIModel  string `env:"EXTERNAL_OPENAI_MODEL" envDefault:"gpt-4"`
 }
-
 
 // LoadConfig loads configuration using enterprise best practices:
 // 1. Load .env file (dev environment)
@@ -85,7 +84,7 @@ func (c *Config) validate() error {
 	// if c.MongoDatabase == "" {
 	//     return fmt.Errorf("database name is required")
 	// }
-	
+
 	// Production-specific validations
 	if c.Environment == "production" {
 		if c.JWTSecret == "" {
@@ -169,13 +168,13 @@ func (c *Config) GetTLSConfig() (certFile, keyFile string, enabled bool) {
 // HTTP/2 requires HTTPS for real-world deployments but can use HTTP for development
 func (c *Config) StartServerWithHTTP2(handler http.Handler) error {
 	address := c.GetServerAddress()
-	
+
 	// Create HTTP server with HTTP/2 support
 	server := &http.Server{
 		Addr:    address,
 		Handler: handler,
 	}
-	
+
 	if c.EnableHTTPS {
 		// Production: HTTPS with HTTP/2
 		certFile, keyFile, enabled := c.GetTLSConfig()
@@ -183,14 +182,14 @@ func (c *Config) StartServerWithHTTP2(handler http.Handler) error {
 			// Configure TLS for HTTP/2
 			server.TLSConfig = &tls.Config{
 				NextProtos: []string{"h2", "http/1.1"}, // HTTP/2 and HTTP/1.1 fallback
-				MinVersion: tls.VersionTLS12,            // TLS 1.2 minimum for security
+				MinVersion: tls.VersionTLS12,           // TLS 1.2 minimum for security
 			}
-			
+
 			log.Printf("🔒 Starting HTTPS server with HTTP/2 support")
 			return server.ListenAndServeTLS(certFile, keyFile)
 		}
 	}
-	
+
 	// Development: HTTP with HTTP/2 clear-text (h2c)
 	if c.IsDevelopment() {
 		log.Printf("🛠️  Starting HTTP server with H2C (HTTP/2 over cleartext) support")
@@ -198,7 +197,7 @@ func (c *Config) StartServerWithHTTP2(handler http.Handler) error {
 		// For now, start regular HTTP server in development
 		return server.ListenAndServe()
 	}
-	
+
 	// Fallback: Regular HTTP server
 	log.Printf("🌐 Starting HTTP server (HTTP/1.1)")
 	return server.ListenAndServe()

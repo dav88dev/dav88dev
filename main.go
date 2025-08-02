@@ -12,13 +12,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/bugsnag/bugsnag-go-gin"
+	"github.com/bugsnag/bugsnag-go/v2"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/static"
+	"github.com/gin-gonic/gin"
 	"github.com/kamva/mgm/v3"
-	"github.com/bugsnag/bugsnag-go/v2"
-	"github.com/bugsnag/bugsnag-go-gin"
 
 	"github.com/dav88dev/myWebsite-go/config"
 	"github.com/dav88dev/myWebsite-go/internal/middleware"
@@ -56,7 +56,7 @@ func main() {
 
 	// Set maximum multipart memory (8 MB)
 	router.MaxMultipartMemory = 8 << 20
-	
+
 	// Start server with HTTP/2 support and proper error handling
 	address := cfg.GetServerAddress()
 	log.Printf("🌟 Starting server on %s (env: %s)", address, cfg.Environment)
@@ -77,7 +77,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	router := gin.New()
 
 	// Core middleware stack (order matters for performance)
-	
+
 	// 1. Recovery middleware - handles panics gracefully with custom 500 page
 	router.Use(middleware.Recovery())
 
@@ -86,10 +86,10 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 		bugsnagApiKey := os.Getenv("BUGSNAG_API_KEY")
 		if bugsnagApiKey != "" {
 			router.Use(bugsnaggin.AutoNotify(bugsnag.Configuration{
-				APIKey: bugsnagApiKey,
+				APIKey:          bugsnagApiKey,
 				ProjectPackages: []string{"main", "github.com/dav88dev/myWebsite-go"},
-				ReleaseStage: cfg.Environment,
-				AppVersion: "1.0.0",
+				ReleaseStage:    cfg.Environment,
+				AppVersion:      "1.0.0",
 			}))
 			log.Println("📊 Bugsnag error monitoring enabled (production)")
 		}
@@ -108,7 +108,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 		AllowCredentials: true,
 		MaxAge:           12 * 60 * 60, // 12 hours
 	}
-	
+
 	// Configure CORS for development vs production
 	if cfg.IsDevelopment() {
 		corsConfig.AllowOrigins = []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"}
@@ -136,7 +136,7 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	// Serve static files from multiple locations for flexibility
 	router.Use(static.Serve("/", static.LocalFile("./static", false)))
 	router.Use(static.Serve("/static", static.LocalFile("./static", false)))
-	
+
 	// Additional static paths for frontend assets
 	if cfg.IsDevelopment() {
 		// Development: Serve from dist for Vite builds
@@ -156,15 +156,15 @@ func handleGracefulShutdown() {
 	quit := make(chan os.Signal, 1)
 	// Register the channel to receive specific signals
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	
+
 	// Block until signal is received
 	<-quit
 	log.Println("🔄 Shutting down gracefully...")
-	
+
 	// Disconnect from MongoDB (if connected)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	
+
 	if _, client, _, err := mgm.DefaultConfigs(); err == nil && client != nil {
 		if err := client.Disconnect(ctx); err != nil {
 			log.Printf("⚠️  Error disconnecting from MongoDB: %v", err)
@@ -172,7 +172,7 @@ func handleGracefulShutdown() {
 			log.Println("✅ MongoDB disconnected")
 		}
 	}
-	
+
 	log.Println("✅ Graceful shutdown completed")
 	os.Exit(0)
 }

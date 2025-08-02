@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/dav88dev/myWebsite-go/config"
 	"github.com/dav88dev/myWebsite-go/internal/controllers"
 	"github.com/dav88dev/myWebsite-go/internal/models"
+	"github.com/gin-gonic/gin"
 )
 
 // SetupRoutes configures all application routes
@@ -21,15 +21,15 @@ func SetupRoutes(router *gin.Engine, cfg *config.Config) {
 		"templates/404.html",
 		"templates/500.html",
 	)
-	
+
 	// Initialize controllers
 	healthController := controllers.NewHealthController(cfg)
 	cvController := controllers.NewCVController()
-	
+
 	// Health check endpoints (no auth required)
 	router.GET("/health", healthController.GetHealth)
 	router.GET("/health/detailed", healthController.GetDetailedHealth)
-	
+
 	// API routes group
 	api := router.Group("/api")
 	{
@@ -40,15 +40,15 @@ func SetupRoutes(router *gin.Engine, cfg *config.Config) {
 			v1.GET("/cv", cvController.GetCV)
 			v1.GET("/cv/:section", cvController.GetCVSection)
 		}
-		
+
 		// Legacy API compatibility (no version)
 		api.GET("/cv", cvController.GetCV)
 		api.GET("/cv/:section", cvController.GetCVSection)
 	}
-	
+
 	// Static routes for templates and assets
 	setupStaticRoutes(router, cfg)
-	
+
 	// Development-specific routes
 	if cfg.IsDevelopment() {
 		setupDevRoutes(router, cfg)
@@ -67,7 +67,7 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 			})
 			return
 		}
-		
+
 		// Load frontend assets
 		assets, err := models.LoadAssets()
 		if err != nil {
@@ -76,28 +76,28 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 			})
 			return
 		}
-		
+
 		// Get CSP nonce from context
 		cspNonce, exists := c.Get("CSPNonce")
 		if !exists {
 			cspNonce = ""
 		}
-		
+
 		// Render template with complete data
 		templateData := models.TemplateData{
 			CVData:   *cvData,
 			Assets:   *assets,
 			CSPNonce: cspNonce.(string),
 		}
-		
+
 		c.HTML(http.StatusOK, "index.html", templateData)
 	})
-	
+
 	// Serve favicon
 	router.GET("/favicon.ico", func(c *gin.Context) {
 		c.File("./static/favicon.ico")
 	})
-	
+
 	// Handle 404 errors
 	router.NoRoute(func(c *gin.Context) {
 		// Check if it's an API request
@@ -109,16 +109,16 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 			})
 			return
 		}
-		
+
 		// Check if it's a static file request
 		if strings.HasPrefix(c.Request.URL.Path, "/static") {
 			c.Status(http.StatusNotFound)
 			return
 		}
-		
+
 		// Load CV data for the template
 		cvData, _ := models.LoadCVData()
-		
+
 		// For non-API requests, serve the 404 page
 		c.HTML(http.StatusNotFound, "404.html", gin.H{
 			"CVData": cvData,
@@ -144,25 +144,25 @@ func setupDevRoutes(router *gin.Engine, cfg *config.Config) {
 					"timeout":  cfg.MongoTimeout,
 				},
 				"security": gin.H{
-					"cors_origins":     cfg.CORSOrigins,
-					"rate_limit_rps":   cfg.RateLimitRPS,
+					"cors_origins":      cfg.CORSOrigins,
+					"rate_limit_rps":    cfg.RateLimitRPS,
 					"enable_rate_limit": cfg.EnableRateLimit,
 				},
 			})
 		})
-		
+
 		// Request info endpoint for debugging
 		dev.GET("/request-info", func(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
-				"method":      c.Request.Method,
-				"url":         c.Request.URL.String(),
-				"headers":     c.Request.Header,
-				"client_ip":   c.ClientIP(),
-				"user_agent":  c.GetHeader("User-Agent"),
+				"method":       c.Request.Method,
+				"url":          c.Request.URL.String(),
+				"headers":      c.Request.Header,
+				"client_ip":    c.ClientIP(),
+				"user_agent":   c.GetHeader("User-Agent"),
 				"query_params": c.Request.URL.Query(),
 			})
 		})
-		
+
 		// Test endpoint for Bugsnag error reporting
 		dev.GET("/test-error", func(c *gin.Context) {
 			// This will trigger a panic that Bugsnag should catch

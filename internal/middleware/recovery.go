@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/dav88dev/myWebsite-go/internal/models"
+	"github.com/gin-gonic/gin"
 )
 
 // Recovery returns a middleware that recovers from panics and displays 500 error page

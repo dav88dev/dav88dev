@@ -40,7 +40,7 @@ func (cv *CVController) GetCV(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Load CV data from JSON file
 	cvData, err := cv.loadCVData()
 	if err != nil {
@@ -50,10 +50,10 @@ func (cv *CVController) GetCV(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Cache the data
 	cv.cvDataCache = cvData
-	
+
 	c.JSON(http.StatusOK, CVResponse{
 		Success: true,
 		Data:    cvData,
@@ -64,7 +64,7 @@ func (cv *CVController) GetCV(c *gin.Context) {
 // GET /api/cv/:section
 func (cv *CVController) GetCVSection(c *gin.Context) {
 	section := c.Param("section")
-	
+
 	// Validate section parameter
 	if !isValidSection(section) {
 		c.JSON(http.StatusBadRequest, CVResponse{
@@ -73,7 +73,7 @@ func (cv *CVController) GetCVSection(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Load CV data if not cached
 	if len(cv.cvDataCache) == 0 {
 		cvData, err := cv.loadCVData()
@@ -86,7 +86,7 @@ func (cv *CVController) GetCVSection(c *gin.Context) {
 		}
 		cv.cvDataCache = cvData
 	}
-	
+
 	// Get specific section
 	if sectionData, exists := cv.cvDataCache[section]; exists {
 		c.JSON(http.StatusOK, CVResponse{
@@ -97,7 +97,7 @@ func (cv *CVController) GetCVSection(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	// Section not found
 	c.JSON(http.StatusNotFound, CVResponse{
 		Success: false,
@@ -115,40 +115,40 @@ func (cv *CVController) loadCVData() (map[string]interface{}, error) {
 		"static/data/cv_data.json",
 		"assets/cv_data.json",
 	}
-	
+
 	var data map[string]interface{}
-	
+
 	// Get the working directory to ensure we only read from project
 	workDir, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, path := range possiblePaths {
 		absPath, err := filepath.Abs(path)
 		if err != nil {
 			continue
 		}
-		
+
 		// Security: Ensure path is within project directory
 		if !strings.HasPrefix(absPath, workDir) {
 			continue
 		}
-		
+
 		fileData, err := os.ReadFile(absPath)
 		if err != nil {
 			continue
 		}
-		
+
 		err = json.Unmarshal(fileData, &data)
 		if err != nil {
 			continue
 		}
-		
+
 		// Successfully loaded data
 		return data, nil
 	}
-	
+
 	// If no file found, return mock data
 	return cv.getMockCVData(), nil
 }
@@ -214,7 +214,7 @@ func isValidSection(section string) bool {
 		"languages",
 		"interests",
 	}
-	
+
 	for _, valid := range validSections {
 		if section == valid {
 			return true

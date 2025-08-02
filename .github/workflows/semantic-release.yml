@@ -53,8 +53,12 @@ jobs:
 
       - name: 📦 Install root dependencies
         run: |
-          npm audit signatures
-          npm ci
+          if [ -f "package.json" ]; then
+            npm audit signatures
+            npm ci
+          else
+            echo "ℹ️ No package.json found in root - skipping root dependencies"
+          fi
 
       - name: 📥 Install frontend dependencies
         working-directory: frontend

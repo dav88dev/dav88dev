@@ -19,12 +19,12 @@ type CVData struct {
 
 // PersonalInfo contains personal information
 type PersonalInfo struct {
-	Name        string `json:"name"`
-	Title       string `json:"title"`
-	Email       string `json:"email"`
-	Location    string `json:"location"`
-	Summary     string `json:"summary"`
-	AboutMe     string `json:"about_me"`
+	Name     string `json:"name"`
+	Title    string `json:"title"`
+	Email    string `json:"email"`
+	Location string `json:"location"`
+	Summary  string `json:"summary"`
+	AboutMe  string `json:"about_me"`
 }
 
 // Experience represents work experience
@@ -79,16 +79,16 @@ func LoadCVData() (*CVData, error) {
 	// Try to load from a JSON file first
 	possiblePaths := []string{
 		"cv_data.json",
-		"data/cv_data.json", 
+		"data/cv_data.json",
 		"static/data/cv_data.json",
 	}
-	
+
 	for _, path := range possiblePaths {
 		if data, err := loadFromFile(path); err == nil {
 			return data, nil
 		}
 	}
-	
+
 	// Return default data if no file found
 	return getDefaultCVData(), nil
 }
@@ -100,29 +100,29 @@ func loadFromFile(path string) (*CVData, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Get absolute path
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Security: Ensure path is within project directory
 	if !strings.HasPrefix(absPath, workDir) {
 		return nil, os.ErrPermission
 	}
-	
+
 	data, err := os.ReadFile(absPath)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var cvData CVData
 	err = json.Unmarshal(data, &cvData)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &cvData, nil
 }
 
@@ -180,7 +180,7 @@ func getDefaultCVData() *CVData {
 			},
 			{
 				Degree:      "BSc Insurance",
-				Institution: "Armenian National Agrarian University", 
+				Institution: "Armenian National Agrarian University",
 				Year:        "2005–2009",
 				GPA:         "Actuarial Science and Insurance focus",
 			},
@@ -198,23 +198,23 @@ func getDefaultCVData() *CVData {
 		},
 		Projects: []Project{
 			{
-				Name:        "Stock Price Forecasting ML Tool",
-				Description: "Machine learning system for stock price prediction using advanced algorithms and real-time data processing. Published thesis on Academia.edu",
+				Name:         "Stock Price Forecasting ML Tool",
+				Description:  "Machine learning system for stock price prediction using advanced algorithms and real-time data processing. Published thesis on Academia.edu",
 				Technologies: []string{"Python", "TensorFlow", "Machine Learning", "Data Analysis"},
-				GithubURL:   "https://github.com/dav88dev",
-				DemoURL:     "https://www.dav88.dev/",
+				GithubURL:    "https://github.com/dav88dev",
+				DemoURL:      "https://www.dav88.dev/",
 			},
 			{
-				Name:        "Hotel Management Platform",
-				Description: "Full-stack hotel management system deployed in 100+ EU hotels with Vue.js frontend and Laravel backend",
+				Name:         "Hotel Management Platform",
+				Description:  "Full-stack hotel management system deployed in 100+ EU hotels with Vue.js frontend and Laravel backend",
 				Technologies: []string{"Vue.js", "Laravel", "MySQL", "REST APIs"},
-				GithubURL:   "https://github.com/dav88dev",
+				GithubURL:    "https://github.com/dav88dev",
 			},
 			{
-				Name:        "Enterprise Production Systems",
-				Description: "Scalable production systems for enterprise clients with 24/7 uptime, real-time monitoring, and automated deployments",
+				Name:         "Enterprise Production Systems",
+				Description:  "Scalable production systems for enterprise clients with 24/7 uptime, real-time monitoring, and automated deployments",
 				Technologies: []string{"PHP", "Python", "DevOps", "Monitoring"},
-				GithubURL:   "https://github.com/dav88dev",
+				GithubURL:    "https://github.com/dav88dev",
 			},
 		},
 	}
@@ -224,40 +224,40 @@ func getDefaultCVData() *CVData {
 func LoadAssets() (*Assets, error) {
 	// Load the Vite manifest to get asset paths
 	manifestPath := "static/.vite/manifest.json"
-	
+
 	// Security check
 	absPath, err := filepath.Abs(manifestPath)
 	if err != nil {
 		return getDefaultAssets(), nil
 	}
-	
+
 	workDir, err := os.Getwd()
 	if err != nil {
 		return getDefaultAssets(), nil
 	}
-	
+
 	if !strings.HasPrefix(absPath, workDir) {
 		return getDefaultAssets(), nil
 	}
-	
+
 	manifestData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		// Return default paths if manifest not found
 		return getDefaultAssets(), nil
 	}
-	
+
 	var manifest map[string]interface{}
 	err = json.Unmarshal(manifestData, &manifest)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	assets := &Assets{
 		CSSMain:      "/static/css/style-vzPr3PIw.css", // Default fallback
 		JSMain:       "/static/js/main-CpuuI82n.js",
 		JSThreeScene: "/static/js/threeScene-1KqCK-lv.js",
 	}
-	
+
 	// Extract actual asset paths from manifest
 	if mainJS, ok := manifest["js/main.js"].(map[string]interface{}); ok {
 		if file, ok := mainJS["file"].(string); ok {
@@ -269,13 +269,13 @@ func LoadAssets() (*Assets, error) {
 			}
 		}
 	}
-	
+
 	if threeJS, ok := manifest["js/three-scene.js"].(map[string]interface{}); ok {
 		if file, ok := threeJS["file"].(string); ok {
 			assets.JSThreeScene = "/static/" + file
 		}
 	}
-	
+
 	return assets, nil
 }
 

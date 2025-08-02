@@ -8,9 +8,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/dav88dev/myWebsite-go/config"
 	"github.com/dav88dev/myWebsite-go/internal/middleware"
+	"github.com/gin-gonic/gin"
 )
 
 // HealthController handles health check endpoints
@@ -41,7 +41,7 @@ type HealthResponse struct {
 // GET /health
 func (h *HealthController) GetHealth(c *gin.Context) {
 	uptime := time.Since(h.startTime)
-	
+
 	response := HealthResponse{
 		Status:      "healthy",
 		Timestamp:   time.Now(),
@@ -49,7 +49,7 @@ func (h *HealthController) GetHealth(c *gin.Context) {
 		Uptime:      uptime.String(),
 		Version:     "1.0.0", // TODO: Get from build info
 	}
-	
+
 	c.JSON(http.StatusOK, response)
 }
 
@@ -57,13 +57,13 @@ func (h *HealthController) GetHealth(c *gin.Context) {
 // GET /health/detailed
 func (h *HealthController) GetDetailedHealth(c *gin.Context) {
 	uptime := time.Since(h.startTime)
-	
+
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	
+
 	// Get application metrics
 	appMetrics := middleware.GetMetrics()
-	
+
 	response := HealthResponse{
 		Status:      "healthy",
 		Timestamp:   time.Now(),
@@ -72,13 +72,13 @@ func (h *HealthController) GetDetailedHealth(c *gin.Context) {
 		Version:     "1.0.0",
 		Details: map[string]interface{}{
 			"system": map[string]interface{}{
-				"go_version":     runtime.Version(),
-				"goroutines":     runtime.NumGoroutine(),
-				"memory_alloc":   formatBytes(memStats.Alloc),
-				"memory_total":   formatBytes(memStats.TotalAlloc),
-				"memory_sys":     formatBytes(memStats.Sys),
-				"gc_runs":        memStats.NumGC,
-				"cpu_count":      runtime.NumCPU(),
+				"go_version":   runtime.Version(),
+				"goroutines":   runtime.NumGoroutine(),
+				"memory_alloc": formatBytes(memStats.Alloc),
+				"memory_total": formatBytes(memStats.TotalAlloc),
+				"memory_sys":   formatBytes(memStats.Sys),
+				"gc_runs":      memStats.NumGC,
+				"cpu_count":    runtime.NumCPU(),
 			},
 			"application": appMetrics,
 			"database": map[string]interface{}{
@@ -87,14 +87,14 @@ func (h *HealthController) GetDetailedHealth(c *gin.Context) {
 				"timeout":  h.config.MongoTimeout,
 			},
 			"configuration": map[string]interface{}{
-				"port":            h.config.Port,
-				"log_level":       h.config.LogLevel,
-				"rate_limiting":   h.config.EnableRateLimit,
-				"cors_enabled":    h.config.CORSOrigins != "",
+				"port":          h.config.Port,
+				"log_level":     h.config.LogLevel,
+				"rate_limiting": h.config.EnableRateLimit,
+				"cors_enabled":  h.config.CORSOrigins != "",
 			},
 		},
 	}
-	
+
 	c.JSON(http.StatusOK, response)
 }
 

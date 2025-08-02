@@ -14,7 +14,7 @@ import (
 func Logger(logLevel string) gin.HandlerFunc {
 	// Configure log output format based on environment
 	// gin.DefaultWriter is already configured by default
-	
+
 	return gin.HandlerFunc(func(c *gin.Context) {
 		// Start timer
 		start := time.Now()
@@ -26,12 +26,12 @@ func Logger(logLevel string) gin.HandlerFunc {
 
 		// Calculate request processing time
 		latency := time.Since(start)
-		
+
 		// Get response details
 		statusCode := c.Writer.Status()
 		method := c.Request.Method
 		clientIP := c.ClientIP()
-		
+
 		// Construct full path with query string
 		if raw != "" {
 			path = path + "?" + raw
