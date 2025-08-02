@@ -75,6 +75,45 @@ body {
     pointer-events: none;
     z-index: 9999;
     transition: all 0.1s ease;
+    left: var(--cursor-x, 0);
+    top: var(--cursor-y, 0);
+    transform: translate(-50%, -50%);
+}
+
+.cursor-trail.cursor-hover {
+    transform: translate(-50%, -50%) scale(2);
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, transparent 70%);
+}
+
+.cursor-pointer {
+    cursor: pointer !important;
+}
+
+.skills-tooltip, .wasm-skills-tooltip {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 300px;
+    border: 1px solid var(--skill-color, #6366f1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    left: var(--tooltip-x, 0);
+    top: var(--tooltip-y, 0);
+    display: none;
+    transition: opacity 0.2s ease;
+}
+
+.skills-tooltip.visible, .wasm-skills-tooltip.visible {
+    display: block;
+    opacity: 1;
+}
+
+.skills-tooltip .skill-name, .wasm-skills-tooltip .skill-name {
+    color: var(--skill-color, #6366f1);
 }
 
 .page-transition {
