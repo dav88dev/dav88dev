@@ -1,5 +1,10 @@
 name: 🐳 Docker Build & Deploy
 
+# Prevent concurrent deployments
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
 on:
   push:
     branches: [ master, main ]
@@ -17,9 +22,11 @@ env:
   PRODUCTION_USER: "ubuntu"
 
 permissions:
-  contents: read
-  packages: write
-  id-token: write
+  contents: read          # Required for checkout
+  packages: write         # Required for pushing to GHCR
+  id-token: write        # Required for OIDC token generation
+  actions: read          # Required for build attestations
+  attestations: write    # Required for build attestations
 
 jobs:
   # Enhanced Docker build with multi-platform support
@@ -34,8 +41,17 @@ jobs:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
+      - name: 🔍 Run Dockerfile security scan
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+          install: true
 
       - name: 🔑 Log in to Container Registry
         uses: docker/login-action@v3
@@ -81,8 +97,12 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: |
+            type=gha,mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
           provenance: true

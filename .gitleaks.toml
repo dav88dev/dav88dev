@@ -1,0 +1,56 @@
+# GitLeaks configuration for portfolio website
+# https://github.com/gitleaks/gitleaks
+
+title = "Portfolio Website GitLeaks Configuration"
+
+[extend]
+# Extend default configuration
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API key"
+regex = '''(?i)(api[_-]?key|apikey)['"]*\s*[:=]\s*['"][a-zA-Z0-9_\-]{16,}['"]'''
+tags = ["key", "API", "generic"]
+
+[[rules]]
+id = "jwt-token"
+description = "JWT token"
+regex = '''ey[A-Za-z0-9_-]*\.ey[A-Za-z0-9_-]*\.[A-Za-z0-9_\-]*'''
+tags = ["jwt", "token"]
+
+[[rules]]
+id = "docker-hub-token"
+description = "Docker Hub token"
+regex = '''dckr_pat_[a-zA-Z0-9_-]{20,}'''
+tags = ["docker", "token"]
+
+# Allowlist for specific patterns
+[[rules.allowlist]]
+commits = []
+paths = [
+    ".gitleaks.toml",
+    "docs/",
+    "*.md",
+    "frontend/src/js/",  # Frontend code may have example tokens
+]
+regexes = [
+    '''test[_-]?secret''',
+    '''example[_-]?key''',
+    '''fake[_-]?token''',
+    '''placeholder''',
+    '''<your[_-]?.*>''',
+]
+
+# Global allowlist for common false positives
+[allowlist]
+description = "Global allowlist"
+commits = []
+paths = []
+regexes = [
+    # Common false positives
+    '''test-jwt-secret''',
+    '''test-session-secret''',
+    '''placeholder-key''',
+    '''example-token''',
+]
