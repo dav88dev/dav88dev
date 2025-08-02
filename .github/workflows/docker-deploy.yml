@@ -221,6 +221,10 @@ jobs:
           CONTAINER_NAME="portfolio-app"
           CONTAINER_NAME_NEW="portfolio-app-new"
           
+          # Login to Docker registry
+          echo "🔑 Logging into Docker registry..."
+          echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+          
           # Pull new image
           echo "📥 Pulling new Docker image..."
           docker pull $IMAGE_NAME
