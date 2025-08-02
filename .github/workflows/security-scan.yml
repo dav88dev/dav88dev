@@ -73,31 +73,5 @@ jobs:
         with:
           sarif_file: hadolint-results.sarif
 
-  codeql-analysis:
-    name: 🕵️ CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'go', 'javascript' ]
-    steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🔍 Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          queries: security-and-quality
-
-      - name: 🔧 Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: 🕵️ Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{matrix.language}}"
+  # CodeQL analysis disabled - not needed for portfolio website
+  # Re-enable only if security scanning is specifically required
