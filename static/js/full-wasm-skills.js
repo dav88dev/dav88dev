@@ -91,29 +91,24 @@ class FullWasmSkills {
         if (!this.tooltipElement) {
             this.tooltipElement = document.createElement('div');
             this.tooltipElement.id = 'wasm-skills-tooltip';
-            this.tooltipElement.style.cssText = `
-                position: fixed;
-                background: rgba(0, 0, 0, 0.9);
-                color: white;
-                padding: 12px 16px;
-                border-radius: 8px;
-                font-size: 14px;
-                pointer-events: none;
-                z-index: 1000;
-                max-width: 300px;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            `;
+            this.tooltipElement.className = 'wasm-skills-tooltip';
             document.body.appendChild(this.tooltipElement);
         }
         
-        this.tooltipElement.style.border = `1px solid ${skill.color}`;
-        this.tooltipElement.innerHTML = `
-            <strong style="color: ${skill.color}">${skill.name}</strong><br>
-            <small>${skill.description}</small>
-        `;
+        // Only set dynamic positioning and border color via style (safe)
         this.tooltipElement.style.left = (x + 10) + 'px';
         this.tooltipElement.style.top = (y - 60) + 'px';
+        this.tooltipElement.style.borderColor = skill.color;
         this.tooltipElement.style.display = 'block';
+        
+        // Set CSS custom property for dynamic color
+        this.tooltipElement.style.setProperty('--skill-color', skill.color);
+        
+        // Use safe HTML structure with CSS classes
+        this.tooltipElement.innerHTML = `
+            <strong class="skill-name">${skill.name}</strong>
+            <small>${skill.description}</small>
+        `;
     }
 
     hideTooltip() {
@@ -126,15 +121,10 @@ class FullWasmSkills {
         const skillsContainer = document.querySelector('.skills-container');
         if (skillsContainer) {
             skillsContainer.innerHTML = `
-                <div style="
-                    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                    border-radius: 12px;
-                    padding: 40px;
-                    text-align: center;
-                ">
-                    <h3 style="color: #334155; margin-bottom: 20px;">🚀 Technical Expertise</h3>
-                    <p style="color: #64748b; margin-bottom: 20px;">Full WASM visualization failed to load</p>
-                    <p style="color: #94a3b8; font-size: 14px;">Please refresh the page or check your browser console for errors.</p>
+                <div class="wasm-skills-error">
+                    <h3>🚀 Technical Expertise</h3>
+                    <p>Full WASM visualization failed to load</p>
+                    <p class="error-details">Please refresh the page or check your browser console for errors.</p>
                 </div>
             `;
         }
