@@ -278,16 +278,7 @@ export function initMagneticButtons() {
 // Scroll progress indicator
 export function initScrollProgress() {
     const progressBar = document.createElement('div');
-    progressBar.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4);
-        z-index: 999;
-        transition: width 0.1s ease;
-    `;
+    progressBar.className = 'scroll-progress-bar';
     document.body.appendChild(progressBar);
     
     function updateProgress() {
