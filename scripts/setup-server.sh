@@ -117,19 +117,19 @@ ExecStop=/usr/bin/docker stop -t 10 portfolio
 WantedBy=multi-user.target
 EOF
 
-# Don't enable the service yet - CircleCI will manage the container
+# Don't enable the service yet - GitHub Actions will manage the container
 
 echo "✅ Server setup complete!"
 echo ""
 echo "⚠️  IMPORTANT NEXT STEPS:"
 echo "1. Log out and back in for docker group membership to take effect"
-echo "2. Generate SSH key for CircleCI deployment:"
-echo "   ssh-keygen -t rsa -b 4096 -C 'circleci-deploy' -f ~/.ssh/circleci_deploy"
+echo "2. Generate SSH key for GitHub Actions deployment:"
+echo "   ssh-keygen -t rsa -b 4096 -C 'github-actions-deploy' -f ~/.ssh/github_deploy"
 echo "3. Add the public key to authorized_keys:"
-echo "   cat ~/.ssh/circleci_deploy.pub >> ~/.ssh/authorized_keys"
-echo "4. Get the private key for CircleCI (base64 encoded):"
-echo "   cat ~/.ssh/circleci_deploy | base64 -w 0"
-echo "5. Get the host key for CircleCI:"
+echo "   cat ~/.ssh/github_deploy.pub >> ~/.ssh/authorized_keys"
+echo "4. Get the private key for GitHub Actions:"
+echo "   cat ~/.ssh/github_deploy"
+echo "5. Add server IP to GitHub Actions workflow:"
 echo "   ssh-keyscan 129.153.229.28"
 echo ""
-echo "🎉 Your server is ready for CircleCI deployments!"
+echo "🎉 Your server is ready for GitHub Actions deployments!"

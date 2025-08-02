@@ -254,9 +254,9 @@ sudo fail2ban-client set sshd unbanip YOUR_IP
 After server setup:
 
 1. **Test the setup**: Verify all services are running
-2. **Configure CircleCI**: Update deployment keys and server IP
+2. **Configure GitHub Actions**: Update deployment keys and server IP in GitHub secrets
 3. **Set up SSL**: Add Let's Encrypt certificates (optional)
 4. **Configure monitoring**: Set up external monitoring if needed
 5. **Create backups**: Set up automated backups (optional)
 
-Your server is now ready for automated Docker portfolio deployment via CircleCI! 🚀
+Your server is now ready for automated Docker portfolio deployment via GitHub Actions! 🚀
