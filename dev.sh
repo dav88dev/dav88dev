@@ -14,8 +14,13 @@ cleanup() {
 # Trap exit signals to cleanup
 trap cleanup SIGINT SIGTERM EXIT
 
-# Build frontend assets first
-echo "📦 Initial frontend build..."
+# Check if WASM is already built (don't rebuild for speed)
+if [ ! -f "static/wasm/wasm_frontend.js" ]; then
+    echo "🦀 WASM not found - run ./build.sh for full WASM build"
+fi
+
+# Build frontend assets
+echo "📦 Building frontend..."
 cd frontend && npm run build && cd ..
 
 # Check if we have file watchers available
