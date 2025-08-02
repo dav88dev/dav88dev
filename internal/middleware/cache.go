@@ -79,5 +79,11 @@ func generateETag(path string) string {
 	
 	// Use current hour for cache busting (simple approach)
 	hourly := time.Now().Hour()
-	return strings.ReplaceAll(strings.Trim(strings.Fields(strings.Split(path, "/"))[len(strings.Fields(strings.Split(path, "/")))-1], "[]"), ".", "") + "-" + string(rune(hourly+'0'))
+	
+	// Simple ETag generation
+	pathParts := strings.Split(path, "/")
+	filename := pathParts[len(pathParts)-1]
+	cleanName := strings.ReplaceAll(filename, ".", "-")
+	
+	return cleanName + "-" + string(rune(hourly+'0'))
 }

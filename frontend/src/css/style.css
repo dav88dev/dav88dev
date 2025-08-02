@@ -2047,3 +2047,11 @@ h6 { font-size: 1rem; }
     z-index: -2;
     opacity: 0.1;
 }
+
+/* Tilt Effect Shadow */
+.tilt-shadow {
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.1),
+        5px 5px 20px rgba(99, 102, 241, 0.2);
+    transition: box-shadow 0.3s ease;
+}
