@@ -1,0 +1,121 @@
+{
+  "name": "@dav88dev/portfolio-website",
+  "version": "1.0.0",
+  "description": "Interactive personal website and resume built with Go backend, modern frontend, and WASM skills visualization",
+  "main": "main.go",
+  "private": false,
+  "author": {
+    "name": "dav88dev",
+    "email": "noreply@dav88.dev",
+    "url": "https://dav88.dev"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dav88dev/dav88dev.git"
+  },
+  "homepage": "https://dav88.dev",
+  "bugs": {
+    "url": "https://github.com/dav88dev/dav88dev/issues"
+  },
+  "keywords": [
+    "portfolio",
+    "website",
+    "go",
+    "wasm",
+    "rust",
+    "vite",
+    "gin",
+    "semantic-versioning",
+    "github-actions",
+    "ci-cd"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "build": "cd frontend && npm run build",
+    "dev": "./dev.sh",
+    "test": "go test -v ./...",
+    "lint": "cd frontend && npm run lint",
+    "format": "gofmt -s -w . && cd frontend && npm run format",
+    "clean": "rm -rf static/js static/css static/.vite && cd frontend && npm run clean",
+    "version": "npm run build && git add static/",
+    "preversion": "npm run test && npm run lint",
+    "postversion": "git push && git push --tags",
+    "release": "npx semantic-release",
+    "release:dry": "npx semantic-release --dry-run",
+    "changelog": "npx conventional-changelog -p conventionalcommits -i CHANGELOG.md -s",
+    "commit": "npx git-cz"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^11.1.0",
+    "@semantic-release/exec": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^9.2.6",
+    "@semantic-release/release-notes-generator": "^12.1.0",
+    "commitizen": "^4.3.0",
+    "conventional-changelog-cli": "^4.1.0",
+    "conventional-changelog-conventionalcommits": "^7.0.2",
+    "cz-conventional-changelog": "^3.3.0",
+    "semantic-release": "^22.0.12"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "release": {
+    "branches": [
+      "master",
+      {
+        "name": "develop",
+        "prerelease": "beta"
+      }
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "type-enum": [
+        2,
+        "always",
+        [
+          "feat",
+          "fix",
+          "docs",
+          "style",
+          "refactor",
+          "perf",
+          "test",
+          "build",
+          "ci",
+          "chore",
+          "revert"
+        ]
+      ],
+      "scope-enum": [
+        2,
+        "always",
+        [
+          "frontend",
+          "backend",
+          "wasm",
+          "ci",
+          "docs",
+          "deps",
+          "config",
+          "security",
+          "performance",
+          "ui",
+          "api",
+          "release"
+        ]
+      ]
+    }
+  }
+}
