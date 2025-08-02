@@ -123,8 +123,8 @@ jobs:
           docker run -d --name test-portfolio -p 8000:8000 \
             -e SERVER_ENV=production \
             -e SERVER_PORT=8000 \
-            -e SECURITY_JWT_SECRET="test-jwt-secret" \
-            -e SECURITY_SESSION_SECRET="test-session-secret" \
+            -e SECURITY_JWT_SECRET="test-docker-secret" \
+            -e SECURITY_SESSION_SECRET="test-docker-secret" \
             $IMAGE_TAG
           
           # Wait for container to be ready (improved logic)

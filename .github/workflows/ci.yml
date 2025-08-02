@@ -172,8 +172,8 @@ jobs:
           chmod +x portfolio-server
           export SERVER_ENV=development
           export SERVER_PORT=8000
-          export SECURITY_JWT_SECRET=test-jwt-secret
-          export SECURITY_SESSION_SECRET=test-session-secret
+          export SECURITY_JWT_SECRET=test-integration-secret
+          export SECURITY_SESSION_SECRET=test-integration-secret
           ./portfolio-server &
           sleep 5
 

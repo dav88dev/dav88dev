@@ -175,6 +175,19 @@ secrets/
 *.cert
 *.crt
 
+# SSH keys and base64 encoded keys
+ssh_key_base64.txt
+ssh_key*.txt
+*_key_base64.txt
+id_rsa*
+id_ed25519*
+
+# Production environment files  
+production.env
+server-production.env
+.env.production.local
+.env.prod
+
 # Database files
 *.db
 *.sqlite
