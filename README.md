@@ -2,6 +2,13 @@
 
 A modern, high-performance portfolio website built with Go, featuring real-time error monitoring, 3D animations, and enterprise-grade security.
 
+## 🚀 CI/CD Status
+[![CI/CD Pipeline](https://img.shields.io/github/actions/workflow/status/dav88dev/dav88dev/ci.yml?branch=master&label=CI%2FCD&logo=github)](https://github.com/dav88dev/dav88dev/actions/workflows/ci.yml)
+[![Security Scanning](https://img.shields.io/github/actions/workflow/status/dav88dev/dav88dev/security-scan.yml?branch=master&label=Security&logo=github)](https://github.com/dav88dev/dav88dev/actions/workflows/security-scan.yml)
+[![Docker Deploy](https://img.shields.io/github/actions/workflow/status/dav88dev/dav88dev/docker-deploy.yml?branch=master&label=Deploy&logo=docker)](https://github.com/dav88dev/dav88dev/actions/workflows/docker-deploy.yml)
+
+**All GitHub Actions workflows are now fully operational!** ✅
+
 ## Features
 
 - **High-Performance Backend**: Built with Go and Gin framework for blazing-fast response times
