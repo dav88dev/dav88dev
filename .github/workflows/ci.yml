@@ -193,23 +193,27 @@ jobs:
       - name: 🚀 Start application
         run: |
           chmod +x portfolio-server
+          export SERVER_ENV=development
+          export SERVER_PORT=8000
+          export SECURITY_JWT_SECRET=test-jwt-secret
+          export SECURITY_SESSION_SECRET=test-session-secret
           ./portfolio-server &
           sleep 5
 
       - name: 🧪 Run health check
         run: |
-          curl -f http://localhost:8080/health || exit 1
+          curl -f http://localhost:8000/health || exit 1
           echo "✅ Health check passed"
 
       - name: 🧪 Test API endpoints
         run: |
-          curl -f http://localhost:8080/api/cv || exit 1
+          curl -f http://localhost:8000/api/cv || exit 1
           echo "✅ API endpoints working"
 
       - name: 🧪 Test static files
         run: |
-          curl -f http://localhost:8080/static/css/ || echo "Warning: CSS check failed"
-          curl -f http://localhost:8080/static/js/ || echo "Warning: JS check failed"
+          curl -f http://localhost:8000/static/css/ || echo "Warning: CSS check failed"
+          curl -f http://localhost:8000/static/js/ || echo "Warning: JS check failed"
 
   # Performance Tests
   performance:

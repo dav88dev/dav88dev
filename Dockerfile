@@ -1,13 +1,19 @@
 # Multi-stage Dockerfile for Go web application with WASM frontend
 # Optimized for production deployment
 
-# Stage 1: WASM Builder
+# Stage 1: WASM Builder (optional if wasm-frontend exists)
 FROM rust:1.83-alpine AS wasm-builder
 RUN apk add --no-cache curl musl-dev
 RUN curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 WORKDIR /wasm
 COPY wasm-frontend/ ./
-RUN wasm-pack build --target web --out-dir ../static/wasm
+RUN if [ -f "Cargo.toml" ]; then \
+        wasm-pack build --target web --out-dir ../static/wasm; \
+        echo "✅ WASM build completed"; \
+    else \
+        echo "ℹ️ No WASM project found - creating empty wasm directory"; \
+        mkdir -p ../static/wasm; \
+    fi
 
 # Stage 2: Frontend Builder  
 FROM node:22-alpine AS frontend-builder
