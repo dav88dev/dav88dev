@@ -295,14 +295,25 @@ jobs:
             --restart unless-stopped \
             $IMAGE_NAME
           
-          # Final health check
-          sleep 5
-          if curl -f http://localhost:8000/health > /dev/null 2>&1; then
-            echo "✅ Deployment successful!"
-          else
-            echo "❌ Final health check failed"
-            exit 1
-          fi
+          # Final health check with better debugging
+          echo "⏳ Waiting for final container to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+              echo "✅ Deployment successful!"
+              break
+            elif [ $i -eq 30 ]; then
+              echo "❌ Final health check failed"
+              echo "🔍 Container status:"
+              docker ps -a | grep $CONTAINER_NAME || echo "No container found"
+              echo "🔍 Container logs:"
+              docker logs $CONTAINER_NAME || echo "No logs available"
+              echo "🔍 Port usage:"
+              netstat -tlnp | grep :8000 || echo "Port 8000 not in use"
+              exit 1
+            fi
+            echo "  Health check attempt $i/30..."
+            sleep 2
+          done
           
           # Cleanup old images (keep last 3)
           echo "🧹 Cleaning up old images..."
