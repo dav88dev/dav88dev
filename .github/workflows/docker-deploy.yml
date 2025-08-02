@@ -55,27 +55,47 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
             type=schedule,pattern={{date 'YYYYMMDD'}}
+          labels: |
+            org.opencontainers.image.title=Portfolio Website
+            org.opencontainers.image.description=Interactive personal portfolio with Go backend and WASM frontend
+            org.opencontainers.image.vendor=dav88dev
+            org.opencontainers.image.url=https://dav88.dev
+            org.opencontainers.image.source=https://github.com/dav88dev/dav88dev
+            org.opencontainers.image.documentation=https://github.com/dav88dev/dav88dev#readme
+            org.opencontainers.image.licenses=MIT
+          annotations: |
+            org.opencontainers.image.title=Portfolio Website
+            org.opencontainers.image.description=Interactive personal portfolio with Go backend and WASM frontend
+            org.opencontainers.image.vendor=dav88dev
+          flavor: |
+            latest=auto
 
       - name: 🏗️ Build and push Docker image
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
+          provenance: true
+          sbom: true
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push=true
 
       - name: 🧪 Test Docker image (Health Check)
         run: |
           echo "🧪 Testing Docker image..."
           
           # Pull the image we just built
-          IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          IMAGE_TAG="$(echo '${{ steps.meta.outputs.tags }}' | head -n1)"
+          echo "Testing image: $IMAGE_TAG"
           docker pull $IMAGE_TAG
           
           # Start container for testing
@@ -174,7 +194,9 @@ jobs:
           echo "🚀 Starting zero-downtime deployment..."
           
           # Configuration
-          IMAGE_NAME="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          IMAGE_TAG="$(echo '${{ steps.meta.outputs.tags }}' | head -n1)"
+          IMAGE_NAME="$IMAGE_TAG"
+          echo "Deploying image: $IMAGE_NAME"
           CONTAINER_NAME="portfolio-app"
           CONTAINER_NAME_NEW="portfolio-app-new"
           
