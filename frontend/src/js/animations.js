@@ -285,7 +285,7 @@ export function initScrollProgress() {
         width: 0;
         height: 3px;
         background: linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4);
-        z-index: 9999;
+        z-index: 999;
         transition: width 0.1s ease;
     `;
     document.body.appendChild(progressBar);

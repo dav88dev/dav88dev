@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Development script for Rust Website
+# Development script for Go Website
 
 echo "🔥 Starting development mode..."
 
@@ -37,7 +37,7 @@ else
     echo "   sudo apt-get install inotify-tools"
 fi
 
-# Start Rust application
-echo "🦀 Starting Rust application on http://localhost:8000"
-echo "📝 Visit http://localhost:8000 to see your site"
-cargo run
+# Start Go application on port 8081 (8080 busy with Jenkins)
+echo "🚀 Starting Go application on http://localhost:8081"
+echo "📝 Visit http://localhost:8081 to see your site"
+SERVER_PORT=8081 go run main.go

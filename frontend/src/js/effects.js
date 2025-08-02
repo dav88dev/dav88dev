@@ -142,7 +142,8 @@ export function initPreloader() {
             ease: 'power2.inOut',
             onComplete: () => {
                 loader.style.display = 'none';
-                document.body.classList.add('page-transition');
+                // REMOVED: document.body.classList.add('page-transition');
+                // This was causing navigation to disappear
             }
         });
     }, 2000);
