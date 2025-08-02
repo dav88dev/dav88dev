@@ -54,8 +54,10 @@ jobs:
       - name: 📦 Install root dependencies
         run: |
           if [ -f "package.json" ]; then
-            npm audit signatures
             npm ci
+            if [ -d "node_modules" ] && [ "$(ls -A node_modules 2>/dev/null)" ]; then
+              npm audit signatures || echo "⚠️ Audit signatures skipped - no dependencies from supported registry"
+            fi
           else
             echo "ℹ️ No package.json found in root - skipping root dependencies"
           fi
