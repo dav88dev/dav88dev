@@ -32,11 +32,13 @@ jobs:
 
       - name: 🧹 Run ESLint
         working-directory: frontend
-        run: npm run lint || echo "Warning: Linting issues found"
+        run: |
+          npm run lint || echo "Warning: Linting issues found"
 
       - name: 🧪 Run tests
         working-directory: frontend
-        run: npm test || echo "Warning: No tests configured yet"
+        run: |
+          npm test || echo "Warning: No tests configured yet"
 
       - name: 🏗️ Build frontend
         working-directory: frontend
