@@ -70,7 +70,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "echo 'Preparing release ${nextRelease.version}' && echo 'Building project...'",
+        "prepareCmd": "echo 'Preparing release ${nextRelease.version}' && echo 'Building project...' && tar -czf frontend-assets.tar.gz -C static .",
         "publishCmd": "echo 'Publishing version ${nextRelease.version}' && echo 'Deployment completed!'"
       }
     ],
@@ -84,7 +84,7 @@
             "label": "Portfolio Server Binary (Linux)"
           },
           {
-            "path": "static/**/*",
+            "path": "frontend-assets.tar.gz",
             "name": "frontend-assets-${nextRelease.gitTag}.tar.gz",
             "label": "Frontend Assets"
           }
