@@ -22,6 +22,7 @@ permissions:
   id-token: write        # Required for OIDC token generation
   actions: read          # Required for build attestations
   attestations: write    # Required for build attestations
+  issues: write          # Required for creating failure notification issues
 
 jobs:
   # Quality gates - Go testing and validation before build
@@ -263,9 +264,9 @@ jobs:
           sudo chown $USER:$USER $DEPLOY_DIR
           cd $DEPLOY_DIR
           
-          # Login to Docker registry using PAT for enhanced security
+          # Login to Docker registry using GITHUB_TOKEN (temporary fix)
           echo "🔑 Logging into Docker registry..."
-          echo '${{ secrets.GHCR_READ_TOKEN }}' | docker login ghcr.io -u '${{ secrets.GHCR_READ_USER }}' --password-stdin
+          echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
           
           # Create environment file
           echo "📝 Creating environment file..."
