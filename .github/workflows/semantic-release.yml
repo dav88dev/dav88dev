@@ -47,8 +47,7 @@ jobs:
           cache: true
 
       - name: 🦀 Setup Rust
-        uses: dtolnay/rust-toolchain@7b1c307e0dcbda6122208f10795a713336d9b35a
-        # Pin: dtolnay/rust-toolchain@stable (2025 security - SHA pinned for supply chain protection)
+        uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
 
