@@ -43,16 +43,32 @@ updates:
       prefix: "⬆️"
       include: "scope"
 
-  # GitHub Actions
+  # GitHub Actions - Enhanced 2025 security for SHA-pinned actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 3
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "security" 
+      - "github-actions"
     reviewers:
       - "dav88dev"
     commit-message:
-      prefix: "⬆️"
+      prefix: "deps(actions)"
       include: "scope"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "version-update:semver-patch"
+          - "version-update:semver-minor"
+    # Major version updates require manual review for security
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
