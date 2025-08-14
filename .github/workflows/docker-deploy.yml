@@ -207,7 +207,7 @@ jobs:
     if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     environment: 
       name: production
-      url: http://129.80.244.212:8000
+      url: https://dav88.dev
     env:
       SERVER_ENV: ${{ vars.SERVER_ENV }}
       SERVER_PORT: ${{ vars.SERVER_PORT }}
@@ -430,7 +430,7 @@ jobs:
           echo "🔍 To monitor deployment status, SSH to server and run:"
           echo "   tail -f /tmp/deploy.log"
           echo "🏥 To check final status after deployment completes:"
-          echo "   curl http://129.80.244.212:8000/health"
+          echo "   curl https://dav88.dev/health"
           echo "✅ GitHub Actions job complete - deployment continues on server"
 
       - name: 📢 Notify on failure
