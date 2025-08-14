@@ -421,7 +421,7 @@ jobs:
                  SECURITY_RATE_LIMIT_RPS='${{ env.SECURITY_RATE_LIMIT_RPS }}' \
                  BUGSNAG_API_KEY='${{ env.BUGSNAG_API_KEY }}' \
                  /tmp/deploy.sh \
-               \" > /tmp/deploy.log 2>&1 &"
+               \" > /tmp/deploy.log 2>&1 & sleep 2 && exit 0"
 
       - name: ✅ Deployment triggered successfully
         run: |
