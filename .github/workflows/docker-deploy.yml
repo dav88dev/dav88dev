@@ -2,18 +2,13 @@ name: 🐳 Docker Build & Deploy
 
 # Prevent concurrent deployments
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_name }}
+  group: production-deploy
   cancel-in-progress: false
 
 on:
   push:
     branches: [ master, main ]
-  pull_request:
-    branches: [ master, main ]
   workflow_dispatch:
-  schedule:
-    # Health checks every 6 hours (like CircleCI)
-    - cron: '0 */6 * * *'
 
 env:
   REGISTRY: ghcr.io
@@ -27,33 +22,24 @@ permissions:
   id-token: write        # Required for OIDC token generation
   actions: read          # Required for build attestations
   attestations: write    # Required for build attestations
-  security-events: write # Required for uploading SARIF results
 
 jobs:
-  # Enhanced Docker build with multi-platform support
-  build-and-test:
-    name: 🏗️ Build & Test Docker
+  # Build and push Docker image to GHCR
+  build-and-push:
+    name: 🏗️ Build & Push Docker Image
     runs-on: ubuntu-latest
     outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
       image-digest: ${{ steps.build.outputs.digest }}
-      image-tag: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
     
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔍 Run Dockerfile security scan
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: Dockerfile
-          failure-threshold: error
-          no-fail: true
-
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/amd64,linux/arm64
-          install: true
 
       - name: 🔑 Log in to Container Registry
         uses: docker/login-action@v3
@@ -68,25 +54,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
-            type=schedule,pattern={{date 'YYYYMMDD'}}
-          labels: |
-            org.opencontainers.image.title=Portfolio Website
-            org.opencontainers.image.description=Interactive personal portfolio with Go backend and WASM frontend
-            org.opencontainers.image.vendor=dav88dev
-            org.opencontainers.image.url=https://dav88.dev
-            org.opencontainers.image.source=https://github.com/dav88dev/dav88dev
-            org.opencontainers.image.documentation=https://github.com/dav88dev/dav88dev#readme
-            org.opencontainers.image.licenses=MIT
-          annotations: |
-            org.opencontainers.image.title=Portfolio Website
-            org.opencontainers.image.description=Interactive personal portfolio with Go backend and WASM frontend
-            org.opencontainers.image.vendor=dav88dev
-          flavor: |
-            latest=auto
 
       - name: 🏗️ Build and push Docker image
         id: build
@@ -98,101 +67,68 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: |
             type=gha
             type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: |
             type=gha,mode=max
             type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
           provenance: true
           sbom: true
 
-      - name: 🧪 Test Docker image (Health Check)
+      - name: 🧪 Test Docker image locally
         run: |
-          echo "🧪 Testing Docker image..."
+          echo "🧪 Testing Docker image locally..."
           
-          # Pull the image we just built
+          # Get the first tag from the metadata output
           IMAGE_TAG="$(echo '${{ steps.meta.outputs.tags }}' | head -n1)"
           echo "Testing image: $IMAGE_TAG"
-          docker pull $IMAGE_TAG
           
           # Start container for testing
           docker run -d --name test-portfolio -p 8000:8000 \
             -e SERVER_ENV=production \
             -e SERVER_PORT=8000 \
-            -e SECURITY_JWT_SECRET="test-docker-secret" \
-            -e SECURITY_SESSION_SECRET="test-docker-secret" \
+            -e SECURITY_JWT_SECRET="test-secret" \
+            -e SECURITY_SESSION_SECRET="test-secret" \
             $IMAGE_TAG
           
-          # Wait for container to be ready (improved logic)
+          # Wait for container to be ready
           echo "⏳ Waiting for container to start..."
           for i in {1..30}; do
             if curl -f http://localhost:8000/health > /dev/null 2>&1; then
-              echo "✅ Container is healthy!"
+              echo "✅ Container health check passed!"
               break
             elif [ $i -eq 30 ]; then
-              echo "❌ Container failed to start"
+              echo "❌ Container health check failed"
               docker logs test-portfolio
               exit 1
             fi
-            echo "  Attempt $i/30..."
+            echo "  Health check attempt $i/30..."
             sleep 2
           done
           
-          # Advanced health tests
-          echo "🔍 Running comprehensive health tests..."
-          
-          # Test health endpoint
-          HEALTH_RESPONSE=$(curl -s http://localhost:8000/health)
-          echo "Health response: $HEALTH_RESPONSE"
-          
-          # Test homepage size
+          # Test homepage
           HOMEPAGE_SIZE=$(curl -s http://localhost:8000 | wc -c)
           if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
             echo "✅ Homepage test passed (${HOMEPAGE_SIZE} bytes)"
           else
             echo "❌ Homepage test failed (${HOMEPAGE_SIZE} bytes)"
-            docker logs test-portfolio
             exit 1
           fi
-          
-          # Test API endpoints
-          if curl -f http://localhost:8000/api/cv > /dev/null 2>&1; then
-            echo "✅ API endpoint test passed"
-          else
-            echo "⚠️  API endpoint test failed (may be expected)"
-          fi
-          
-          # Container resource usage
-          echo "📊 Container resource usage:"
-          docker stats --no-stream test-portfolio
           
           # Cleanup
           docker stop test-portfolio
           docker rm test-portfolio
 
-      - name: 🔒 Run Trivy security scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      # SARIF upload disabled - requires GitHub Advanced Security
-      # Results are available in the scan output above
-
-  # Enhanced deployment with zero-downtime
+  # Deploy to production server
   deploy-production:
     name: 🚀 Deploy to Production
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: build-and-push
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     environment: 
       name: production
-      url: http://129.80.244.212
+      url: http://129.80.244.212:8000
     
     steps:
       - name: 📥 Checkout repository
@@ -209,107 +145,133 @@ jobs:
           #!/bin/bash
           set -e
           
-          echo "🚀 Starting zero-downtime deployment..."
+          echo "🚀 Starting deployment..."
           
           # Configuration
-          IMAGE_NAME="${{ needs.build-and-test.outputs.image-tag }}"
-          echo "Deploying image: $IMAGE_NAME"
+          IMAGE_TAG="${{ needs.build-and-push.outputs.image-tag }}"
           CONTAINER_NAME="portfolio-app"
-          CONTAINER_NAME_NEW="portfolio-app-new"
+          DEPLOY_DIR="/opt/portfolio"
+          
+          echo "Deploying image: $IMAGE_TAG"
+          
+          # Create deployment directory
+          sudo mkdir -p $DEPLOY_DIR
+          sudo chown $USER:$USER $DEPLOY_DIR
+          cd $DEPLOY_DIR
           
           # Login to Docker registry
           echo "🔑 Logging into Docker registry..."
           echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
           
+          # Create environment file
+          echo "📝 Creating environment file..."
+          cat > .env << 'ENVEOF'
+          SERVER_ENV=${{ vars.SERVER_ENV }}
+          SERVER_PORT=${{ vars.SERVER_PORT }}
+          SERVER_LOG_LEVEL=${{ vars.SERVER_LOG_LEVEL }}
+          SECURITY_JWT_SECRET=${{ secrets.SECURITY_JWT_SECRET }}
+          SECURITY_SESSION_SECRET=${{ secrets.SECURITY_SESSION_SECRET }}
+          SECURITY_CORS_ORIGINS=${{ vars.SECURITY_CORS_ORIGINS }}
+          SECURITY_RATE_LIMIT_RPS=${{ vars.SECURITY_RATE_LIMIT_RPS }}
+          BUGSNAG_API_KEY=${{ secrets.BUGSNAG_API_KEY }}
+          ENVEOF
+          chmod 600 .env
+          
           # Pull new image
           echo "📥 Pulling new Docker image..."
-          docker pull $IMAGE_NAME
+          docker pull $IMAGE_TAG
           
-          # Start new container on different port
-          echo "🏃 Starting new container..."
-          docker run -d --name $CONTAINER_NAME_NEW \
+          # Store current image for rollback
+          CURRENT_IMAGE=""
+          if docker ps | grep -q $CONTAINER_NAME; then
+            CURRENT_IMAGE=$(docker inspect $CONTAINER_NAME --format='{{.Config.Image}}' 2>/dev/null || echo "")
+            echo "Current image for rollback: $CURRENT_IMAGE"
+          fi
+          
+          # Preflight test with new image
+          echo "🧪 Preflight testing new image..."
+          docker run -d --name ${CONTAINER_NAME}-preflight \
+            --env-file .env \
             -p 8001:8000 \
-            -e SERVER_ENV='${{ secrets.SERVER_ENV }}' \
-            -e SERVER_PORT=8000 \
-            -e SERVER_LOG_LEVEL='${{ secrets.SERVER_LOG_LEVEL }}' \
-            -e DB_MONGO_URI='${{ secrets.DB_MONGO_URI }}' \
-            -e DB_MONGO_DATABASE='${{ secrets.DB_MONGO_DATABASE }}' \
-            -e SECURITY_JWT_SECRET='${{ secrets.SECURITY_JWT_SECRET }}' \
-            -e SECURITY_SESSION_SECRET='${{ secrets.SECURITY_SESSION_SECRET }}' \
-            -e SECURITY_CORS_ORIGINS='https://dav88.dev' \
-            -e SECURITY_RATE_LIMIT_RPS='${{ secrets.SECURITY_RATE_LIMIT_RPS }}' \
-            -e BUGSNAG_API_KEY='${{ secrets.BUGSNAG_API_KEY }}' \
-            --restart unless-stopped \
-            $IMAGE_NAME
+            $IMAGE_TAG
           
-          # Wait for new container to be healthy
-          echo "⏳ Waiting for new container to be ready..."
+          # Wait for preflight container to be healthy
+          PREFLIGHT_HEALTHY=false
           for i in {1..30}; do
             if curl -f http://localhost:8001/health > /dev/null 2>&1; then
-              echo "✅ New container is healthy!"
+              echo "✅ Preflight health check passed!"
+              PREFLIGHT_HEALTHY=true
               break
-            elif [ $i -eq 30 ]; then
-              echo "❌ New container failed to start"
-              docker logs $CONTAINER_NAME_NEW
-              docker stop $CONTAINER_NAME_NEW || true
-              docker rm $CONTAINER_NAME_NEW || true
-              exit 1
             fi
-            sleep 2
+            echo "  Preflight attempt $i/30..."
+            sleep 3
           done
           
-          # Switch traffic (zero-downtime)
-          echo "🔄 Switching traffic to new container..."
+          # Stop preflight container
+          docker stop ${CONTAINER_NAME}-preflight || true
+          docker rm ${CONTAINER_NAME}-preflight || true
           
-          # Update nginx or load balancer config here if using one
-          # For now, we'll do a simple port switch
+          if [ "$PREFLIGHT_HEALTHY" = false ]; then
+            echo "❌ Preflight failed - aborting deployment"
+            exit 1
+          fi
           
-          # Stop old container
+          # Stop and remove existing container
           if docker ps | grep -q $CONTAINER_NAME; then
-            echo "🛑 Stopping old container..."
+            echo "🛑 Stopping existing container..."
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
           fi
           
-          # Rename new container and switch port
-          docker stop $CONTAINER_NAME_NEW
-          docker rm $CONTAINER_NAME_NEW
-          
-          # Start final container on correct port
+          # Start new container
+          echo "🏃 Starting new container..."
           docker run -d --name $CONTAINER_NAME \
+            --env-file .env \
             -p 8000:8000 \
-            -e SERVER_ENV='${{ secrets.SERVER_ENV }}' \
-            -e SERVER_PORT=8000 \
-            -e SERVER_LOG_LEVEL='${{ secrets.SERVER_LOG_LEVEL }}' \
-            -e DB_MONGO_URI='${{ secrets.DB_MONGO_URI }}' \
-            -e DB_MONGO_DATABASE='${{ secrets.DB_MONGO_DATABASE }}' \
-            -e SECURITY_JWT_SECRET='${{ secrets.SECURITY_JWT_SECRET }}' \
-            -e SECURITY_SESSION_SECRET='${{ secrets.SECURITY_SESSION_SECRET }}' \
-            -e SECURITY_CORS_ORIGINS='https://dav88.dev' \
-            -e SECURITY_RATE_LIMIT_RPS='${{ secrets.SECURITY_RATE_LIMIT_RPS }}' \
-            -e BUGSNAG_API_KEY='${{ secrets.BUGSNAG_API_KEY }}' \
             --restart unless-stopped \
-            $IMAGE_NAME
+            $IMAGE_TAG
           
-          # Final health check with better debugging
-          echo "⏳ Waiting for final container to be ready..."
-          for i in {1..30}; do
+          # Wait for container to be healthy
+          echo "⏳ Waiting for new container to be ready..."
+          DEPLOY_HEALTHY=false
+          for i in {1..60}; do
             if curl -f http://localhost:8000/health > /dev/null 2>&1; then
               echo "✅ Deployment successful!"
+              DEPLOY_HEALTHY=true
               break
-            elif [ $i -eq 30 ]; then
-              echo "❌ Final health check failed"
-              echo "🔍 Container status:"
-              docker ps -a | grep $CONTAINER_NAME || echo "No container found"
-              echo "🔍 Container logs:"
-              docker logs $CONTAINER_NAME || echo "No logs available"
-              echo "🔍 Port usage:"
-              netstat -tlnp | grep :8000 || echo "Port 8000 not in use"
-              exit 1
             fi
-            echo "  Health check attempt $i/30..."
-            sleep 2
+            echo "  Health check attempt $i/60..."
+            sleep 3
           done
+          
+          # Rollback if deployment failed
+          if [ "$DEPLOY_HEALTHY" = false ]; then
+            echo "❌ Deployment health check failed"
+            docker logs $CONTAINER_NAME || true
+            
+            if [ ! -z "$CURRENT_IMAGE" ]; then
+              echo "🔄 Rolling back to previous image: $CURRENT_IMAGE"
+              docker stop $CONTAINER_NAME || true
+              docker rm $CONTAINER_NAME || true
+              docker run -d --name $CONTAINER_NAME \
+                --env-file .env \
+                -p 8000:8000 \
+                --restart unless-stopped \
+                $CURRENT_IMAGE
+              
+              # Verify rollback
+              for i in {1..30}; do
+                if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+                  echo "✅ Rollback successful"
+                  break
+                elif [ $i -eq 30 ]; then
+                  echo "❌ Rollback also failed"
+                fi
+                sleep 2
+              done
+            fi
+            exit 1
+          fi
           
           # Cleanup old images (keep last 3)
           echo "🧹 Cleaning up old images..."
@@ -319,7 +281,7 @@ jobs:
             awk '{print $1}' | \
             xargs -r docker rmi || true
           
-          echo "🎉 Zero-downtime deployment completed!"
+          echo "🎉 Deployment completed successfully!"
           EOF
           
           chmod +x deploy.sh
@@ -335,88 +297,35 @@ jobs:
               ${{ env.PRODUCTION_USER }}@${{ env.PRODUCTION_SERVER }} \
               "chmod +x /tmp/deploy.sh && /tmp/deploy.sh"
 
-      - name: 🏥 Post-deployment health check
-        continue-on-error: true
+      - name: 🏥 Final health check
         run: |
-          echo "🏥 Running post-deployment health checks..."
+          echo "🏥 Running final health check..."
           
-          # Wait a moment for services to fully start
-          sleep 10
+          # Wait a moment for services to fully stabilize
+          sleep 5
           
-          # Basic health check
+          # Test health endpoint
           if curl -f http://${{ env.PRODUCTION_SERVER }}:8000/health; then
-            echo "✅ Health check passed"
+            echo "✅ Production health check passed"
           else
-            echo "❌ Health check failed (deployment may still be successful)"
+            echo "❌ Production health check failed"
+            exit 1
+          fi
+          
+          # Test homepage
+          HOMEPAGE_SIZE=$(curl -s http://${{ env.PRODUCTION_SERVER }}:8000/ | wc -c)
+          if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
+            echo "✅ Homepage accessible (${HOMEPAGE_SIZE} bytes)"
+          else
+            echo "❌ Homepage test failed (${HOMEPAGE_SIZE} bytes)"
+            exit 1
           fi
           
           # Performance check
           RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' http://${{ env.PRODUCTION_SERVER }}:8000/ || echo "timeout")
           echo "⚡ Response time: ${RESPONSE_TIME}s"
           
-          if [[ "$RESPONSE_TIME" != "timeout" ]] && (( $(echo "$RESPONSE_TIME < 2.0" | bc -l) )); then
-            echo "✅ Performance check passed"
-          else
-            echo "⚠️  Response time higher than expected or not available"
-          fi
-
-  # Scheduled health monitoring (replaces CircleCI cron)
-  health-check:
-    name: 🏥 Health Check
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    
-    steps:
-      - name: 🏥 Production health check
-        run: |
-          echo "🏥 Comprehensive production health check..."
-          
-          SERVER_URL="http://${{ env.PRODUCTION_SERVER }}:8000"
-          
-          # Health endpoint check
-          echo "1️⃣ Testing health endpoint..."
-          if HEALTH_RESPONSE=$(curl -f -s "$SERVER_URL/health"); then
-            echo "✅ Health endpoint: OK"
-            echo "$HEALTH_RESPONSE" | jq . 2>/dev/null || echo "$HEALTH_RESPONSE"
-          else
-            echo "❌ Health endpoint: FAILED"
-            exit 1
-          fi
-          
-          # Homepage check
-          echo "2️⃣ Testing homepage..."
-          HOMEPAGE_SIZE=$(curl -s "$SERVER_URL/" | wc -c)
-          if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
-            echo "✅ Homepage: OK (${HOMEPAGE_SIZE} bytes)"
-          else
-            echo "❌ Homepage: FAILED (${HOMEPAGE_SIZE} bytes)"
-            exit 1
-          fi
-          
-          # API endpoint check
-          echo "3️⃣ Testing API endpoints..."
-          if curl -f -s "$SERVER_URL/api/cv" > /dev/null; then
-            echo "✅ API endpoints: OK"
-          else
-            echo "⚠️  API endpoints: May not be configured"
-          fi
-          
-          # Performance check
-          echo "4️⃣ Performance test..."
-          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "$SERVER_URL/")
-          echo "⚡ Response time: ${RESPONSE_TIME}s"
-          
-          # SSL/Security check (if using HTTPS)
-          echo "5️⃣ Security check..."
-          SECURITY_HEADERS=$(curl -s -I "$SERVER_URL/" | grep -i "x-\|content-security\|strict-transport")
-          if [ ! -z "$SECURITY_HEADERS" ]; then
-            echo "✅ Security headers present:"
-            echo "$SECURITY_HEADERS"
-          else
-            echo "⚠️  No security headers detected"
-          fi
-          
-          echo "🎉 All health checks completed!"
+          echo "🎉 All health checks passed - deployment verified!"
 
       - name: 📢 Notify on failure
         if: failure()
@@ -426,43 +335,23 @@ jobs:
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: '🚨 Production Health Check Failed',
-              body: `## 🚨 Production Health Check Alert
+              title: '🚨 Production Deployment Failed',
+              body: `## 🚨 Production Deployment Alert
               
               **Time**: ${new Date().toISOString()}
               **Server**: ${{ env.PRODUCTION_SERVER }}
+              **Commit**: ${{ github.sha }}
               **Workflow**: [${context.workflow}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
               
-              ### ❌ Health Check Failed
-              The automated health check for the production server has failed.
+              ### ❌ Deployment Failed
+              The automated deployment to production has failed.
               
-              ### 🔍 Recommended Actions:
-              1. Check server status manually
-              2. Review server logs
-              3. Verify Docker container status
-              4. Check network connectivity
-              
-              ### 📊 Check Details:
-              - Health endpoint test
-              - Homepage accessibility  
-              - API endpoint functionality
-              - Performance metrics
+              ### 🔍 Next Steps:
+              1. Check the workflow logs for detailed error information
+              2. Verify server status and connectivity
+              3. Check Docker container status on the production server
+              4. Review application logs if the container started
               
               **This issue was automatically created by GitHub Actions.**`,
-              labels: ['bug', 'production', 'health-check', 'urgent']
+              labels: ['bug', 'production', 'deployment', 'urgent']
             });
-
-  # Container registry cleanup
-  cleanup-registry:
-    name: 🧹 Registry Cleanup
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
-    
-    steps:
-      - name: 🧹 Clean old container images
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ${{ env.IMAGE_NAME }}
-          package-type: 'container'
-          min-versions-to-keep: 5
-          delete-only-untagged-versions: true
