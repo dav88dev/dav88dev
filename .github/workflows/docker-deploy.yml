@@ -317,6 +317,12 @@ jobs:
           
           if [ "$PREFLIGHT_HEALTHY" = false ]; then
             echo "❌ Preflight failed - aborting deployment"
+            echo "🔍 Container logs for debugging:"
+            docker logs ${CONTAINER_NAME}-preflight || true
+            echo "🔍 Environment file contents:"
+            cat .env || true
+            echo "🔍 Container inspect:"
+            docker inspect ${CONTAINER_NAME}-preflight --format='{{.State.Status}}: {{.State.Error}}' || true
             exit 1
           fi
           
