@@ -1,4 +1,4 @@
-// Personal Portfolio Website - Go Migration  
+// Personal Portfolio Website - Go Migration
 // Enterprise-grade web application using Gin framework
 // Following Go 1.24+ best practices and modern architecture patterns
 // Version: Workflow fixes completed - All GitHub Actions now operational ✅
