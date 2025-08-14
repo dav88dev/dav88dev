@@ -3,19 +3,19 @@ module github.com/dav88dev/myWebsite-go
 go 1.24
 
 require (
-	github.com/caarlos0/env/v11 v11.2.2
+	github.com/bugsnag/bugsnag-go-gin v1.0.0
+	github.com/bugsnag/bugsnag-go/v2 v2.6.1
+	github.com/caarlos0/env/v11 v11.3.1
 	github.com/gin-contrib/cors v1.7.0
 	github.com/gin-contrib/gzip v1.0.1
 	github.com/gin-contrib/static v1.1.2
 	github.com/gin-gonic/gin v1.10.1
 	github.com/joho/godotenv v1.5.1
 	github.com/kamva/mgm/v3 v3.5.0
-	go.mongodb.org/mongo-driver/v2 v2.2.2
+	go.mongodb.org/mongo-driver v1.8.3
 )
 
 require (
-	github.com/bugsnag/bugsnag-go-gin v1.0.0 // indirect
-	github.com/bugsnag/bugsnag-go/v2 v2.6.1 // indirect
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
@@ -30,6 +30,7 @@ require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -50,7 +51,6 @@ require (
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
-	go.mongodb.org/mongo-driver v1.8.3 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
