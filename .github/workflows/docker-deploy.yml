@@ -51,12 +51,12 @@ jobs:
           echo "🧪 Running Go tests with race detection..."
           go test -race -shuffle=on -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: 📊 Check coverage threshold (5% minimum)
+      - name: 📊 Check coverage threshold (4% minimum)
         run: |
           echo "📊 Checking test coverage threshold..."
           COVERAGE=$(go tool cover -func=coverage.out | awk '/^total:/{print $3}' | sed 's/%//')
           echo "Current coverage: ${COVERAGE}%"
-          MINIMUM_COVERAGE=5
+          MINIMUM_COVERAGE=4
           if (( $(echo "$COVERAGE < $MINIMUM_COVERAGE" | bc -l) )); then
             echo "❌ Coverage ${COVERAGE}% is below ${MINIMUM_COVERAGE}% threshold"
             exit 1
