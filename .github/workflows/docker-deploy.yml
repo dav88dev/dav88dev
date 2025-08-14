@@ -204,7 +204,7 @@ jobs:
     name: 🚀 Deploy to Production
     runs-on: ubuntu-latest
     needs: [test-and-quality, build-and-push]  # Both quality gates and build must pass
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     environment: 
       name: production
       url: http://129.80.244.212:8000
