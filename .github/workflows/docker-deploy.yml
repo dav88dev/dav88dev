@@ -7,7 +7,7 @@ concurrency:
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ master ]
   workflow_dispatch:
 
 env:
@@ -37,7 +37,7 @@ jobs:
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5
         # Pin: actions/setup-go@v5 (2025 security - SHA pinned for supply chain protection)
         with:
-          go-version: '1.24'
+          go-version-file: 'go.mod'
           cache: true
 
       - name: 📦 Download dependencies
@@ -57,16 +57,17 @@ jobs:
           COVERAGE=$(go tool cover -func=coverage.out | awk '/^total:/{print $3}' | sed 's/%//')
           echo "Current coverage: ${COVERAGE}%"
           MINIMUM_COVERAGE=4
-          if (( $(echo "$COVERAGE < $MINIMUM_COVERAGE" | bc -l) )); then
+          # Use awk for floating point comparison instead of bc
+          if awk "BEGIN {exit !($COVERAGE < $MINIMUM_COVERAGE)}"; then
             echo "❌ Coverage ${COVERAGE}% is below ${MINIMUM_COVERAGE}% threshold"
             exit 1
           else
             echo "✅ Coverage ${COVERAGE}% meets ${MINIMUM_COVERAGE}% threshold"
-            if (( $(echo "$COVERAGE >= 30" | bc -l) )); then
+            if awk "BEGIN {exit !($COVERAGE >= 30)}"; then
               echo "🎯 Excellent! Coverage is above 30% - production ready!"
-            elif (( $(echo "$COVERAGE >= 15" | bc -l) )); then
+            elif awk "BEGIN {exit !($COVERAGE >= 15)}"; then
               echo "👍 Good! Coverage is above 15% - getting there!"
-            elif (( $(echo "$COVERAGE >= 10" | bc -l) )); then
+            elif awk "BEGIN {exit !($COVERAGE >= 10)}"; then
               echo "📈 Fair! Coverage is above 10% - room for improvement"
             fi
           fi
@@ -90,7 +91,7 @@ jobs:
       - name: 🔒 Security scan with govulncheck
         run: |
           echo "🔒 Installing govulncheck..."
-          go install golang.org/x/vuln/cmd/govulncheck@latest
+          go install golang.org/x/vuln/cmd/govulncheck@v1.1.3
           echo "🔍 Running security vulnerability scan..."
           export PATH=$PATH:$(go env GOPATH)/bin
           govulncheck ./...
@@ -107,10 +108,6 @@ jobs:
       - name: 📥 Checkout repository
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         # Pin: actions/checkout@v4 (2025 security - SHA pinned for supply chain protection)
-
-      - name: 🔧 Set up QEMU
-        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392
-        # Pin: docker/setup-qemu-action@v3 (2025 security - SHA pinned for supply chain protection)
 
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
@@ -164,7 +161,8 @@ jobs:
           echo "Testing image: $IMAGE_TAG"
           
           # Start container for testing
-          docker run -d --name test-portfolio -p 8000:8000 \
+          TEST_CONTAINER_NAME="test-portfolio-$(date +%s)"
+          docker run -d --name $TEST_CONTAINER_NAME -p 8000:8000 \
             -e SERVER_ENV=production \
             -e SERVER_PORT=8000 \
             -e SECURITY_JWT_SECRET="test-secret" \
@@ -179,7 +177,7 @@ jobs:
               break
             elif [ $i -eq 30 ]; then
               echo "❌ Container health check failed"
-              docker logs test-portfolio
+              docker logs $TEST_CONTAINER_NAME
               exit 1
             fi
             echo "  Health check attempt $i/30..."
@@ -196,8 +194,8 @@ jobs:
           fi
           
           # Cleanup
-          docker stop test-portfolio
-          docker rm test-portfolio
+          docker stop $TEST_CONTAINER_NAME
+          docker rm $TEST_CONTAINER_NAME
 
   # Deploy to production server
   deploy-production:
@@ -233,7 +231,7 @@ jobs:
         run: |
           cat > deploy.sh << 'EOF'
           #!/bin/bash
-          set -e
+          set -euo pipefail
           
           echo "🚀 Starting deployment..."
           
@@ -241,6 +239,8 @@ jobs:
           IMAGE_DIGEST="${{ needs.build-and-push.outputs.image-digest }}"
           IMAGE_REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${IMAGE_DIGEST}"
           CONTAINER_NAME="portfolio-app"
+          CONTAINER_NAME_PREFLIGHT="portfolio-app-preflight-$(date +%s)"
+          CONTAINER_NAME_TEST="test-portfolio-$(date +%s)"
           DEPLOY_DIR="/opt/portfolio"
           
           echo "Deploying image digest: $IMAGE_REF"
@@ -263,9 +263,9 @@ jobs:
           sudo chown $USER:$USER $DEPLOY_DIR
           cd $DEPLOY_DIR
           
-          # Login to Docker registry
+          # Login to Docker registry using PAT for enhanced security
           echo "🔑 Logging into Docker registry..."
-          echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+          echo '${{ secrets.GHCR_READ_TOKEN }}' | docker login ghcr.io -u '${{ secrets.GHCR_READ_USER }}' --password-stdin
           
           # Create environment file
           echo "📝 Creating environment file..."
@@ -294,7 +294,7 @@ jobs:
           
           # Preflight test with new image
           echo "🧪 Preflight testing new image..."
-          docker run -d --name ${CONTAINER_NAME}-preflight \
+          docker run -d --name $CONTAINER_NAME_PREFLIGHT \
             --env-file .env \
             -p 8001:8000 \
             $IMAGE_REF
@@ -312,17 +312,16 @@ jobs:
           done
           
           # Stop preflight container
-          docker stop ${CONTAINER_NAME}-preflight || true
-          docker rm ${CONTAINER_NAME}-preflight || true
+          docker stop $CONTAINER_NAME_PREFLIGHT || true
+          docker rm $CONTAINER_NAME_PREFLIGHT || true
           
           if [ "$PREFLIGHT_HEALTHY" = false ]; then
             echo "❌ Preflight failed - aborting deployment"
             echo "🔍 Container logs for debugging:"
-            docker logs ${CONTAINER_NAME}-preflight || true
-            echo "🔍 Environment file contents:"
-            cat .env || true
+            docker logs $CONTAINER_NAME_PREFLIGHT || true
             echo "🔍 Container inspect:"
-            docker inspect ${CONTAINER_NAME}-preflight --format='{{.State.Status}}: {{.State.Error}}' || true
+            docker inspect $CONTAINER_NAME_PREFLIGHT --format='{{.State.Status}}: {{.State.Error}}' || true
+            echo "⚠️  Environment file exists but contents hidden for security"
             exit 1
           fi
           
@@ -383,12 +382,15 @@ jobs:
             exit 1
           fi
           
-          # Cleanup old images (keep last 3)
+          # Cleanup old images (keep last 3 versions)
           echo "🧹 Cleaning up old images..."
-          docker images --format "table {{.Repository}}:{{.Tag}}\t{{.CreatedAt}}" | \
-            grep "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | \
-            tail -n +4 | \
-            awk '{print $1}' | \
+          # Remove unused images older than 24h, but keep the current one
+          docker image prune -f --filter "until=24h" || true
+          # Remove old tagged images (keep last 3)
+          docker images "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" --format "{{.Repository}}:{{.Tag}}" | \
+            grep -v "latest" | \
+            sort -V | \
+            head -n -3 | \
             xargs -r docker rmi || true
           
           echo "🎉 Deployment completed successfully!"
@@ -411,27 +413,21 @@ jobs:
         run: |
           ssh ${{ env.PRODUCTION_USER }}@${{ env.PRODUCTION_SERVER }} \
               "chmod +x /tmp/deploy.sh && \
-               nohup bash -c \" \
-                 SERVER_ENV='${{ env.SERVER_ENV }}' \
-                 SERVER_PORT='${{ env.SERVER_PORT }}' \
-                 SERVER_LOG_LEVEL='${{ env.SERVER_LOG_LEVEL }}' \
-                 SECURITY_JWT_SECRET='${{ env.SECURITY_JWT_SECRET }}' \
-                 SECURITY_SESSION_SECRET='${{ env.SECURITY_SESSION_SECRET }}' \
-                 SECURITY_CORS_ORIGINS='${{ env.SECURITY_CORS_ORIGINS }}' \
-                 SECURITY_RATE_LIMIT_RPS='${{ env.SECURITY_RATE_LIMIT_RPS }}' \
-                 BUGSNAG_API_KEY='${{ env.BUGSNAG_API_KEY }}' \
-                 /tmp/deploy.sh \
-               \" > /tmp/deploy.log 2>&1 & sleep 2 && exit 0"
+               SERVER_ENV='${{ env.SERVER_ENV }}' \
+               SERVER_PORT='${{ env.SERVER_PORT }}' \
+               SERVER_LOG_LEVEL='${{ env.SERVER_LOG_LEVEL }}' \
+               SECURITY_JWT_SECRET='${{ env.SECURITY_JWT_SECRET }}' \
+               SECURITY_SESSION_SECRET='${{ env.SECURITY_SESSION_SECRET }}' \
+               SECURITY_CORS_ORIGINS='${{ env.SECURITY_CORS_ORIGINS }}' \
+               SECURITY_RATE_LIMIT_RPS='${{ env.SECURITY_RATE_LIMIT_RPS }}' \
+               BUGSNAG_API_KEY='${{ env.BUGSNAG_API_KEY }}' \
+               /tmp/deploy.sh"
 
-      - name: ✅ Deployment triggered successfully
+      - name: ✅ Deployment completed successfully
         run: |
-          echo "🚀 Deployment has been triggered in background on production server"
-          echo "📝 Deployment logs are being written to: /tmp/deploy.log"
-          echo "🔍 To monitor deployment status, SSH to server and run:"
-          echo "   tail -f /tmp/deploy.log"
-          echo "🏥 To check final status after deployment completes:"
-          echo "   curl https://dav88.dev/health"
-          echo "✅ GitHub Actions job complete - deployment continues on server"
+          echo "✅ Deployment completed successfully!"
+          echo "🌐 Application available at: https://dav88.dev"
+          echo "🏥 Health check: curl https://dav88.dev/health"
 
       - name: 📢 Notify on failure
         if: failure()
