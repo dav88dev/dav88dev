@@ -5,6 +5,7 @@
 FROM rust:1.83-alpine AS wasm-builder
 RUN apk add --no-cache curl musl-dev
 RUN curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+RUN rustup target add wasm32-unknown-unknown
 WORKDIR /wasm
 COPY wasm-frontend/ ./
 RUN if [ -f "Cargo.toml" ]; then \
@@ -16,10 +17,10 @@ RUN if [ -f "Cargo.toml" ]; then \
     fi
 
 # Stage 2: Frontend Builder  
-FROM node:22-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 COPY frontend/package*.json ./frontend/
-RUN cd frontend && npm ci
+RUN cd frontend && npm ci --only=production=false
 COPY frontend/ ./frontend/
 COPY static/ ./static/
 RUN cd frontend && npm run build
@@ -27,11 +28,12 @@ RUN cd frontend && npm run build
 # Stage 3: Go Builder
 FROM golang:1.24-alpine AS go-builder
 RUN apk add --no-cache git ca-certificates tzdata
+ENV CGO_ENABLED=0
 WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o portfolio-server .
+RUN go build -ldflags="-s -w" -o portfolio-server .
 
 # Stage 4: Final Runtime Image
 FROM alpine:3.20

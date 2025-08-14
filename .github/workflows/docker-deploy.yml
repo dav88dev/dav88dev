@@ -29,17 +29,18 @@ jobs:
     name: 🏗️ Build & Push Docker Image
     runs-on: ubuntu-latest
     outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
+      image-tag: ${{ steps.resolve-tag.outputs.image_tag }}
       image-digest: ${{ steps.build.outputs.digest }}
     
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
+      - name: 🔧 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          platforms: linux/amd64,linux/arm64
 
       - name: 🔑 Log in to Container Registry
         uses: docker/login-action@v3
@@ -56,6 +57,16 @@ jobs:
           tags: |
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🎯 Resolve deployment tag
+        id: resolve-tag
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-12)
+          if [[ "${{ github.ref_name }}" == "master" ]]; then
+            echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:master-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: 🏗️ Build and push Docker image
         id: build
@@ -80,8 +91,8 @@ jobs:
         run: |
           echo "🧪 Testing Docker image locally..."
           
-          # Get the first tag from the metadata output
-          IMAGE_TAG="$(echo '${{ steps.meta.outputs.tags }}' | head -n1)"
+          # Use the resolved deployment tag
+          IMAGE_TAG="${{ steps.resolve-tag.outputs.image_tag }}"
           echo "Testing image: $IMAGE_TAG"
           
           # Start container for testing
@@ -129,6 +140,15 @@ jobs:
     environment: 
       name: production
       url: http://129.80.244.212:8000
+    env:
+      SERVER_ENV: ${{ vars.SERVER_ENV }}
+      SERVER_PORT: ${{ vars.SERVER_PORT }}
+      SERVER_LOG_LEVEL: ${{ vars.SERVER_LOG_LEVEL }}
+      SECURITY_CORS_ORIGINS: ${{ vars.SECURITY_CORS_ORIGINS }}
+      SECURITY_RATE_LIMIT_RPS: ${{ vars.SECURITY_RATE_LIMIT_RPS }}
+      SECURITY_JWT_SECRET: ${{ secrets.SECURITY_JWT_SECRET }}
+      SECURITY_SESSION_SECRET: ${{ secrets.SECURITY_SESSION_SECRET }}
+      BUGSNAG_API_KEY: ${{ secrets.BUGSNAG_API_KEY }}
     
     steps:
       - name: 📥 Checkout repository
@@ -165,15 +185,15 @@ jobs:
           
           # Create environment file
           echo "📝 Creating environment file..."
-          cat > .env << 'ENVEOF'
-          SERVER_ENV=${{ vars.SERVER_ENV }}
-          SERVER_PORT=${{ vars.SERVER_PORT }}
-          SERVER_LOG_LEVEL=${{ vars.SERVER_LOG_LEVEL }}
-          SECURITY_JWT_SECRET=${{ secrets.SECURITY_JWT_SECRET }}
-          SECURITY_SESSION_SECRET=${{ secrets.SECURITY_SESSION_SECRET }}
-          SECURITY_CORS_ORIGINS=${{ vars.SECURITY_CORS_ORIGINS }}
-          SECURITY_RATE_LIMIT_RPS=${{ vars.SECURITY_RATE_LIMIT_RPS }}
-          BUGSNAG_API_KEY=${{ secrets.BUGSNAG_API_KEY }}
+          cat > .env << ENVEOF
+          SERVER_ENV=$SERVER_ENV
+          SERVER_PORT=$SERVER_PORT
+          SERVER_LOG_LEVEL=$SERVER_LOG_LEVEL
+          SECURITY_JWT_SECRET=$SECURITY_JWT_SECRET
+          SECURITY_SESSION_SECRET=$SECURITY_SESSION_SECRET
+          SECURITY_CORS_ORIGINS=$SECURITY_CORS_ORIGINS
+          SECURITY_RATE_LIMIT_RPS=$SECURITY_RATE_LIMIT_RPS
+          BUGSNAG_API_KEY=$BUGSNAG_API_KEY
           ENVEOF
           chmod 600 .env
           
