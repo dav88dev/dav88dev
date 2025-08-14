@@ -4,10 +4,6 @@
     {
       "name": "develop",
       "prerelease": "beta"
-    },
-    {
-      "name": "feature/*",
-      "prerelease": true
     }
   ],
   "repositoryUrl": "https://github.com/dav88dev/dav88dev.git",
