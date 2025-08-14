@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.0.1](https://github.com/dav88dev/dav88dev/compare/v1.0.0...v1.0.1) (2025-08-14)
+
+
+### 🐛 Bug Fixes
+
+* adjust desktop nav logo size and spacing ([48ae555](https://github.com/dav88dev/dav88dev/commit/48ae555f4f540384bceb60a774259e1f854c7e33))
+
 ## 1.0.0 (2025-08-14)
 
 
