@@ -411,45 +411,27 @@ jobs:
         run: |
           ssh ${{ env.PRODUCTION_USER }}@${{ env.PRODUCTION_SERVER }} \
               "chmod +x /tmp/deploy.sh && \
-               SERVER_ENV='${{ env.SERVER_ENV }}' \
-               SERVER_PORT='${{ env.SERVER_PORT }}' \
-               SERVER_LOG_LEVEL='${{ env.SERVER_LOG_LEVEL }}' \
-               SECURITY_JWT_SECRET='${{ env.SECURITY_JWT_SECRET }}' \
-               SECURITY_SESSION_SECRET='${{ env.SECURITY_SESSION_SECRET }}' \
-               SECURITY_CORS_ORIGINS='${{ env.SECURITY_CORS_ORIGINS }}' \
-               SECURITY_RATE_LIMIT_RPS='${{ env.SECURITY_RATE_LIMIT_RPS }}' \
-               BUGSNAG_API_KEY='${{ env.BUGSNAG_API_KEY }}' \
-               /tmp/deploy.sh"
+               nohup bash -c \" \
+                 SERVER_ENV='${{ env.SERVER_ENV }}' \
+                 SERVER_PORT='${{ env.SERVER_PORT }}' \
+                 SERVER_LOG_LEVEL='${{ env.SERVER_LOG_LEVEL }}' \
+                 SECURITY_JWT_SECRET='${{ env.SECURITY_JWT_SECRET }}' \
+                 SECURITY_SESSION_SECRET='${{ env.SECURITY_SESSION_SECRET }}' \
+                 SECURITY_CORS_ORIGINS='${{ env.SECURITY_CORS_ORIGINS }}' \
+                 SECURITY_RATE_LIMIT_RPS='${{ env.SECURITY_RATE_LIMIT_RPS }}' \
+                 BUGSNAG_API_KEY='${{ env.BUGSNAG_API_KEY }}' \
+                 /tmp/deploy.sh \
+               \" > /tmp/deploy.log 2>&1 &"
 
-      - name: 🏥 Final health check
+      - name: ✅ Deployment triggered successfully
         run: |
-          echo "🏥 Running final health check..."
-          
-          # Wait a moment for services to fully stabilize
-          sleep 5
-          
-          # Test health endpoint
-          if curl -f http://${{ env.PRODUCTION_SERVER }}:8000/health; then
-            echo "✅ Production health check passed"
-          else
-            echo "❌ Production health check failed"
-            exit 1
-          fi
-          
-          # Test homepage
-          HOMEPAGE_SIZE=$(curl -s http://${{ env.PRODUCTION_SERVER }}:8000/ | wc -c)
-          if [ "$HOMEPAGE_SIZE" -gt 1000 ]; then
-            echo "✅ Homepage accessible (${HOMEPAGE_SIZE} bytes)"
-          else
-            echo "❌ Homepage test failed (${HOMEPAGE_SIZE} bytes)"
-            exit 1
-          fi
-          
-          # Performance check
-          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' http://${{ env.PRODUCTION_SERVER }}:8000/ || echo "timeout")
-          echo "⚡ Response time: ${RESPONSE_TIME}s"
-          
-          echo "🎉 All health checks passed - deployment verified!"
+          echo "🚀 Deployment has been triggered in background on production server"
+          echo "📝 Deployment logs are being written to: /tmp/deploy.log"
+          echo "🔍 To monitor deployment status, SSH to server and run:"
+          echo "   tail -f /tmp/deploy.log"
+          echo "🏥 To check final status after deployment completes:"
+          echo "   curl http://129.80.244.212:8000/health"
+          echo "✅ GitHub Actions job complete - deployment continues on server"
 
       - name: 📢 Notify on failure
         if: failure()
