@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.1.3](https://github.com/dav88dev/dav88dev/compare/v1.1.2...v1.1.3) (2025-08-16)
+
+
+### 🐛 Bug Fixes
+
+* semantic release build process for proper assets ([6d82be5](https://github.com/dav88dev/dav88dev/commit/6d82be5c0a35e89d16f05efe4cec96766ff9ffa5))
+
 ## [1.1.2](https://github.com/dav88dev/dav88dev/compare/v1.1.1...v1.1.2) (2025-08-16)
 
 
