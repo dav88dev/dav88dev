@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.0.3](https://github.com/dav88dev/dav88dev/compare/v1.0.2...v1.0.3) (2025-08-16)
+
+
+### 🐛 Bug Fixes
+
+* Ensure full-wasm-skills.js is copied during build ([fa6653d](https://github.com/dav88dev/dav88dev/commit/fa6653d70ff7af844a7238ee81db2ee1f5b10610))
+
 ## [1.0.2](https://github.com/dav88dev/dav88dev/compare/v1.0.1...v1.0.2) (2025-08-16)
 
 
