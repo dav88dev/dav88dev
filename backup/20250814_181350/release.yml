@@ -1,0 +1,161 @@
+name: 📦 Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  NODE_VERSION: '20'
+  GO_VERSION: '1.24'
+
+jobs:
+  release:
+    name: 🚀 Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 🦀 Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: 📦 Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: 📥 Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: 🏗️ Build WASM (if exists)
+        run: |
+          if [ -d "wasm-frontend" ] && [ -f "wasm-frontend/Cargo.toml" ]; then
+            cd wasm-frontend
+            wasm-pack build --target web --out-dir ../static/wasm
+          else
+            echo "No WASM project found - skipping"
+          fi
+
+      - name: 🏗️ Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: 🏗️ Build backend
+        run: |
+          go mod download
+          CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o portfolio-server main.go
+
+      - name: 📦 Create distribution package
+        run: |
+          mkdir -p dist
+          cp portfolio-server dist/
+          cp -r static dist/
+          cp -r templates dist/
+          cp README.md dist/ || echo "No README found"
+          cp LICENSE dist/ || echo "No LICENSE found"
+          tar -czf portfolio-website-${GITHUB_REF#refs/tags/}.tar.gz -C dist .
+
+      - name: 📊 Generate changelog
+        id: changelog
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            echo "changelog<<EOF" >> $GITHUB_OUTPUT
+            cat CHANGELOG.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "changelog=Automated release from tag ${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## 🚀 Portfolio Website Release ${{ github.ref_name }}
+            
+            ### 📋 What's Included:
+            - ✅ Go backend server with Gin framework
+            - ✅ Modern frontend with Vite build system  
+            - ✅ WASM skills visualization
+            - ✅ Production-ready Docker configuration
+            - ✅ Security headers and CSP compliance
+            
+            ### 🔽 Download:
+            - `portfolio-website-${{ github.ref_name }}.tar.gz` - Complete application bundle
+            
+            ### 🚀 Quick Start:
+            ```bash
+            tar -xzf portfolio-website-${{ github.ref_name }}.tar.gz
+            cd portfolio-website-${{ github.ref_name }}
+            ./portfolio-server
+            ```
+            
+            ${{ steps.changelog.outputs.changelog }}
+            
+            ---
+            🤖 *This release was automatically generated*
+          files: |
+            portfolio-website-${{ github.ref_name }}.tar.gz
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+
+  docker:
+    name: 🐳 Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🏷️ Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: dav88dev/portfolio-website
+          tags: |
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      - name: 🏗️ Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
