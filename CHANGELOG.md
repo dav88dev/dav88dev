@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.1.2](https://github.com/dav88dev/dav88dev/compare/v1.1.1...v1.1.2) (2025-08-16)
+
+
+### 🐛 Bug Fixes
+
+* Deploy to REAL server IP 129.80.244.212 instead of DNS ([6822a86](https://github.com/dav88dev/dav88dev/commit/6822a86236f0dc97db32f26ef1048df1ff55245d))
+
 ## [1.1.1](https://github.com/dav88dev/dav88dev/compare/v1.1.0...v1.1.1) (2025-08-16)
 
 
