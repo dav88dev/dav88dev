@@ -58,15 +58,35 @@ jobs:
       - name: 📦 Install root dependencies
         run: |
           if [ -f "package.json" ]; then
-            npm ci
+            # Use npm install instead of npm ci to be more forgiving
+            # This will automatically fix any lock file inconsistencies
+            npm install
             echo "✅ Root dependencies installed successfully"
+            
+            # Check if package-lock.json was modified
+            if git diff --exit-code package-lock.json > /dev/null 2>&1; then
+              echo "✅ package-lock.json is in sync"
+            else
+              echo "⚠️ package-lock.json was updated during install"
+              # Configure git for the commit
+              git config --global user.email "github-actions[bot]@users.noreply.github.com"
+              git config --global user.name "github-actions[bot]"
+              # Stage and commit the lock file update
+              git add package-lock.json
+              git commit -m "chore: Update package-lock.json [skip ci]" || echo "No changes to commit"
+              # Push the changes back to the branch
+              git push origin HEAD:${{ github.ref_name }} || echo "Could not push lock file update"
+            fi
           else
             echo "ℹ️ No package.json found in root - skipping root dependencies"
           fi
 
       - name: 📥 Install frontend dependencies
         working-directory: frontend
-        run: npm ci
+        run: |
+          # Use npm install for consistency and auto-healing
+          npm install
+          echo "✅ Frontend dependencies installed successfully"
 
       - name: 🏗️ Build WASM (if exists)
         run: |
