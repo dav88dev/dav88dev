@@ -135,10 +135,85 @@ jobs:
 
       - name: 🚀 Deploy to production server
         run: |
-          echo "🚀 Production deployment would happen here"
-          echo "This could include:"
-          echo "  • SSH deployment to your server"
-          echo "  • Docker container update"
-          echo "  • CDN cache invalidation"
-          echo "  • Health checks"
-          # Add your actual deployment commands here
+          echo "🚀 Starting production deployment..."
+          
+          # Set up SSH key
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          # Add server to known hosts
+          ssh-keyscan -t rsa dav88.dev >> ~/.ssh/known_hosts
+          
+          # Download release assets
+          echo "📦 Downloading release assets..."
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/dav88dev/dav88dev/releases/latest | jq -r .tag_name)
+          
+          # Download server binary
+          curl -L -o portfolio-server "https://github.com/dav88dev/dav88dev/releases/download/${LATEST_RELEASE}/portfolio-server-${LATEST_RELEASE}"
+          
+          # Download frontend assets
+          curl -L -o frontend-assets.tar.gz "https://github.com/dav88dev/dav88dev/releases/download/${LATEST_RELEASE}/frontend-assets-${LATEST_RELEASE}.tar.gz"
+          
+          # Deploy to server
+          echo "🚀 Deploying to server..."
+          ssh -o StrictHostKeyChecking=no ubuntu@dav88.dev << 'EOF'
+            # Stop existing service
+            sudo systemctl stop personal_website || echo "Service not running"
+            
+            # Create app directory
+            sudo mkdir -p /opt/personal_website
+            sudo chown ubuntu:ubuntu /opt/personal_website
+            
+            # Clean old files
+            rm -rf /opt/personal_website/*
+          EOF
+          
+          # Copy files to server
+          scp -o StrictHostKeyChecking=no portfolio-server ubuntu@dav88.dev:/opt/personal_website/
+          scp -o StrictHostKeyChecking=no frontend-assets.tar.gz ubuntu@dav88.dev:/opt/personal_website/
+          
+          # Setup and start service
+          ssh -o StrictHostKeyChecking=no ubuntu@dav88.dev << 'EOF'
+            cd /opt/personal_website
+            
+            # Extract frontend assets
+            tar -xzf frontend-assets.tar.gz
+            rm frontend-assets.tar.gz
+            
+            # Make binary executable
+            chmod +x portfolio-server
+            
+            # Create systemd service
+            sudo tee /etc/systemd/system/personal_website.service > /dev/null << 'SERVICE'
+          [Unit]
+          Description=Personal Website Server
+          After=network.target
+          
+          [Service]
+          Type=simple
+          User=ubuntu
+          WorkingDirectory=/opt/personal_website
+          ExecStart=/opt/personal_website/portfolio-server
+          Restart=always
+          RestartSec=10
+          Environment=PORT=8000
+          Environment=HOST=0.0.0.0
+          
+          [Install]
+          WantedBy=multi-user.target
+          SERVICE
+            
+            # Enable and start service
+            sudo systemctl daemon-reload
+            sudo systemctl enable personal_website
+            sudo systemctl start personal_website
+            
+            # Wait for service to start
+            sleep 5
+            
+            # Check service status
+            sudo systemctl status personal_website
+            
+            echo "✅ Deployment completed!"
+          EOF
