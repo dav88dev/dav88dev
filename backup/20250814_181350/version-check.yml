@@ -1,0 +1,178 @@
+name: 🏷️ Version Check
+
+on:
+  pull_request:
+    branches: [ master, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  version-check:
+    name: 📋 Version & Changelog Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Install semantic-release
+        run: |
+          npm install -g semantic-release@^22.0.0
+          npm install -g @semantic-release/commit-analyzer@^11.0.0
+
+      - name: 🔍 Check if version bump is needed
+        id: version-check
+        run: |
+          echo "Checking if version bump is needed..."
+          
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          
+          # Check what the next version would be
+          NEXT_VERSION=$(npx semantic-release --dry-run --no-ci 2>/dev/null | grep -o "The next release version is [0-9]*\.[0-9]*\.[0-9]*" | sed 's/The next release version is //' || echo "none")
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          
+          if [ "$NEXT_VERSION" = "none" ]; then
+            echo "needs_release=false" >> $GITHUB_OUTPUT
+            echo "release_type=none" >> $GITHUB_OUTPUT
+          else
+            echo "needs_release=true" >> $GITHUB_OUTPUT
+            
+            # Determine release type
+            IFS='.' read -r curr_major curr_minor curr_patch <<< "$CURRENT_VERSION"
+            IFS='.' read -r next_major next_minor next_patch <<< "$NEXT_VERSION"
+            
+            if [ "$next_major" -gt "$curr_major" ]; then
+              echo "release_type=major" >> $GITHUB_OUTPUT
+            elif [ "$next_minor" -gt "$curr_minor" ]; then
+              echo "release_type=minor" >> $GITHUB_OUTPUT
+            else
+              echo "release_type=patch" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: 📝 Validate commit messages
+        run: |
+          echo "Validating commit messages..."
+          
+          # Get commits in this PR
+          git log --format="%s" origin/master..HEAD > commits.txt
+          
+          # Check each commit message
+          INVALID_COMMITS=""
+          while IFS= read -r commit; do
+            if ! echo "$commit" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'; then
+              INVALID_COMMITS="$INVALID_COMMITS\n- $commit"
+            fi
+          done < commits.txt
+          
+          if [ ! -z "$INVALID_COMMITS" ]; then
+            echo "❌ Invalid commit messages found:"
+            echo -e "$INVALID_COMMITS"
+            echo ""
+            echo "Please follow Conventional Commits format:"
+            echo "  type(scope): description"
+            echo ""
+            echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+            exit 1
+          else
+            echo "✅ All commit messages are valid!"
+          fi
+
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Delete existing version check comments
+            for (const comment of comments) {
+              if (comment.body.includes('🏷️ Version Check Results')) {
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id,
+                });
+              }
+            }
+            
+            const currentVersion = '${{ steps.version-check.outputs.current_version }}';
+            const nextVersion = '${{ steps.version-check.outputs.next_version }}';
+            const needsRelease = '${{ steps.version-check.outputs.needs_release }}';
+            const releaseType = '${{ steps.version-check.outputs.release_type }}';
+            
+            let body = '## 🏷️ Version Check Results\n\n';
+            body += `**Current Version:** \`${currentVersion}\`\n`;
+            
+            if (needsRelease === 'true') {
+              const typeEmoji = {
+                'major': '🚨',
+                'minor': '✨', 
+                'patch': '🐛'
+              }[releaseType] || '📦';
+              
+              body += `**Next Version:** \`${nextVersion}\` ${typeEmoji}\n`;
+              body += `**Release Type:** \`${releaseType}\`\n\n`;
+              body += `### 📋 What this means:\n`;
+              
+              if (releaseType === 'major') {
+                body += '- 🚨 **Major release** - Contains breaking changes\n';
+                body += '- 📚 Make sure to update documentation for breaking changes\n';
+                body += '- 🧪 Thoroughly test all functionality\n';
+              } else if (releaseType === 'minor') {
+                body += '- ✨ **Minor release** - New features added\n';
+                body += '- 📚 Consider updating documentation for new features\n';
+                body += '- 🧪 Test new functionality\n';
+              } else {
+                body += '- 🐛 **Patch release** - Bug fixes and small improvements\n';
+                body += '- ✅ No breaking changes expected\n';
+              }
+              
+              body += `\n### 🚀 Release will be triggered when merged to \`master\`\n`;
+            } else {
+              body += `**Next Version:** No release needed\n`;
+              body += `**Release Type:** \`${releaseType}\`\n\n`;
+              body += `### ℹ️ What this means:\n`;
+              body += '- 📝 This PR contains only documentation, style, or chore changes\n';
+              body += '- 🚫 No version bump will occur\n';
+              body += '- ✅ Changes will be included in the next feature/fix release\n';
+            }
+            
+            body += `\n---\n*Powered by [Semantic Release](https://semantic-release.gitbook.io/)*`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      - name: 📊 Generate preview changelog
+        if: steps.version-check.outputs.needs_release == 'true'
+        run: |
+          echo "Generating preview changelog..."
+          npx semantic-release --dry-run --no-ci > release-preview.log 2>&1 || true
+          
+          if grep -q "Release note" release-preview.log; then
+            echo "📋 Preview changelog generated successfully"
+            echo "Check the logs above for release notes preview"
+          else
+            echo "ℹ️ No release notes preview available"
+          fi

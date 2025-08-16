@@ -270,7 +270,7 @@
                     <h3 class="section-subtitle">Hover over skills to explore connections and experience</h3>
                 </div>
                 <div class="skills-container">
-                    <canvas id="skills-canvas" style="width: 100%; height: 500px; border-radius: 12px; background: #f8fafc;"></canvas>
+                    <canvas id="skills-canvas"></canvas>
                 </div>
             </div>
         </section>

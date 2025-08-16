@@ -1173,10 +1173,10 @@ section .container {
 /* Three.js Canvas */
 #skills-canvas {
     width: 100% !important;
-    height: 80vh !important;
+    height: 500px !important;
     display: block !important;
-    background: transparent !important;
-    border-radius: 20px;
+    background: #f8fafc !important;
+    border-radius: 12px;
 }
 
 /* Control Buttons */
