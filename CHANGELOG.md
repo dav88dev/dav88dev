@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.1.1](https://github.com/dav88dev/dav88dev/compare/v1.1.0...v1.1.1) (2025-08-16)
+
+
+### 🐛 Bug Fixes
+
+* Implement real production deployment to dav88.dev server ([a09f3a8](https://github.com/dav88dev/dav88dev/commit/a09f3a88accac9ced992d5d6836b834f5ffc8c20))
+
 ## [1.1.0](https://github.com/dav88dev/dav88dev/compare/v1.0.3...v1.1.0) (2025-08-16)
 
 
