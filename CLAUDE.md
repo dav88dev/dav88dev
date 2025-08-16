@@ -62,6 +62,28 @@ If ANY test fails:
 
 ---
 
+## 🌍 **PRODUCTION SERVER DETAILS - CARVED IN STONE**
+
+### 🚨 **REAL SERVER IP (NEVER FORGET):**
+**`129.80.244.212`** - This is the ACTUAL production server
+
+### 🔗 **DNS vs REAL IP:**
+- **dav88.dev** → Uses Cloudflare → **129.80.244.212** (REAL SERVER)
+- **ALWAYS deploy to: `129.80.244.212`**
+- **Website loads at: https://dav88.dev (Cloudflare proxy)**
+
+### 🔑 **SSH Details:**
+- **IP**: 129.80.244.212
+- **User**: ubuntu  
+- **Key**: ssh.key (in repo root)
+- **Connection**: `ssh -i ssh.key ubuntu@129.80.244.212`
+
+### ⚠️ **CRITICAL RULE:**
+**ALL DEPLOYMENTS MUST TARGET: `129.80.244.212`**
+**NOT dav88.dev - USE THE IP DIRECTLY**
+
+---
+
 ## 🛠️ Project Structure & Build Commands
 
 ### Frontend Build Process

@@ -143,7 +143,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           
           # Add server to known hosts
-          ssh-keyscan -t rsa dav88.dev >> ~/.ssh/known_hosts
+          ssh-keyscan -t rsa 129.80.244.212 >> ~/.ssh/known_hosts
           
           # Download release assets
           echo "📦 Downloading release assets..."
@@ -157,7 +157,7 @@ jobs:
           
           # Deploy to server
           echo "🚀 Deploying to server..."
-          ssh -o StrictHostKeyChecking=no ubuntu@dav88.dev << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@129.80.244.212 << 'EOF'
             # Stop existing service
             sudo systemctl stop personal_website || echo "Service not running"
             
@@ -170,11 +170,11 @@ jobs:
           EOF
           
           # Copy files to server
-          scp -o StrictHostKeyChecking=no portfolio-server ubuntu@dav88.dev:/opt/personal_website/
-          scp -o StrictHostKeyChecking=no frontend-assets.tar.gz ubuntu@dav88.dev:/opt/personal_website/
+          scp -o StrictHostKeyChecking=no portfolio-server ubuntu@129.80.244.212:/opt/personal_website/
+          scp -o StrictHostKeyChecking=no frontend-assets.tar.gz ubuntu@129.80.244.212:/opt/personal_website/
           
           # Setup and start service
-          ssh -o StrictHostKeyChecking=no ubuntu@dav88.dev << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@129.80.244.212 << 'EOF'
             cd /opt/personal_website
             
             # Extract frontend assets
