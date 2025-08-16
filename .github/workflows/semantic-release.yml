@@ -117,7 +117,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: |
+          echo "Creating release assets manually..."
+          
+          # Build Go binary
+          CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o portfolio-server main.go
+          echo "Binary size: $(ls -lh portfolio-server | awk '{print $5}')"
+          
+          # Create frontend assets
+          tar -czf frontend-assets.tar.gz -C static .
+          echo "Assets size: $(ls -lh frontend-assets.tar.gz | awk '{print $5}')"
+          
+          # Run semantic release (which will now upload correct files)
+          npx semantic-release
 
   deploy-production:
     name: 🌍 Deploy to Production

@@ -66,7 +66,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "echo 'Preparing release ${nextRelease.version}' && echo 'Building Go binary...' && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o portfolio-server main.go && echo 'Binary created:' && ls -la portfolio-server && echo 'Creating frontend assets...' && tar -czf frontend-assets.tar.gz -C static . && echo 'Assets created:' && ls -la frontend-assets.tar.gz && echo 'Build completed successfully!'",
+        "prepareCmd": "echo 'Preparing release ${nextRelease.version}' && echo 'Assets should already be built' && ls -la portfolio-server frontend-assets.tar.gz",
         "publishCmd": "echo 'Publishing version ${nextRelease.version}' && echo 'Deployment completed!'"
       }
     ],
@@ -75,12 +75,12 @@
       {
         "assets": [
           {
-            "path": "portfolio-server",
+            "path": "./portfolio-server",
             "name": "portfolio-server-${nextRelease.gitTag}",
             "label": "Portfolio Server Binary (Linux)"
           },
           {
-            "path": "frontend-assets.tar.gz",
+            "path": "./frontend-assets.tar.gz",
             "name": "frontend-assets-${nextRelease.gitTag}.tar.gz",
             "label": "Frontend Assets"
           }
