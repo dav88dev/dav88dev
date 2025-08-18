@@ -9,7 +9,7 @@
     "minify-three": "[ -f ../static/js/vendor/three.module.js ] && terser ../static/js/vendor/three.module.js --compress --mangle --module --source-map -o ../static/js/vendor/three.module.min.js && rm -f ../static/js/vendor/three.module.js || echo 'three.module.js not found, skipping minification'"
   },
   "devDependencies": {
-    "@vitejs/plugin-legacy": "^5.0.0",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
     "puppeteer": "^24.16.2",
