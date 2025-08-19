@@ -199,8 +199,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@129.80.244.212 << 'EOF'
             cd /opt/personal_website
             
-            # Extract frontend assets
-            tar -xzf frontend-assets.tar.gz
+            # Create static directory and extract frontend assets into it
+            mkdir -p static
+            tar -xzf frontend-assets.tar.gz -C static/
             rm frontend-assets.tar.gz
             
             # Make binary executable
