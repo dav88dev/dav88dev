@@ -15,11 +15,15 @@ import (
 // SetupRoutes configures all application routes
 // Following RESTful API design patterns and enterprise routing structure
 func SetupRoutes(router *gin.Engine, cfg *config.Config) {
-	// Load HTML templates (only the Go templates, not the Tera ones)
+	// Load HTML templates including partials
+	// First load all templates including partials
 	router.LoadHTMLFiles(
 		"templates/index.html",
 		"templates/404.html",
 		"templates/500.html",
+		"templates/partials/navigation.html",
+		"templates/partials/footer.html",
+		"templates/partials/threejs-setup.html",
 	)
 
 	// Initialize controllers
@@ -118,11 +122,24 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 
 		// Load CV data for the template
 		cvData, _ := models.LoadCVData()
+		
+		// Load frontend assets
+		assets, _ := models.LoadAssets()
+		
+		// Get CSP nonce from context
+		cspNonce, exists := c.Get("CSPNonce")
+		if !exists {
+			cspNonce = ""
+		}
 
-		// For non-API requests, serve the 404 page
-		c.HTML(http.StatusNotFound, "404.html", gin.H{
-			"CVData": cvData,
-		})
+		// For non-API requests, serve the 404 page with complete data
+		templateData := models.TemplateData{
+			CVData:   *cvData,
+			Assets:   *assets,
+			CSPNonce: cspNonce.(string),
+		}
+		
+		c.HTML(http.StatusNotFound, "404.html", templateData)
 	})
 }
 

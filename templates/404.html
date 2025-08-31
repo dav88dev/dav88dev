@@ -7,162 +7,247 @@
     <meta name="description" content="The page you're looking for doesn't exist.">
     <meta name="robots" content="noindex, nofollow">
     
-    <!-- Inline critical CSS for error pages -->
-    <style>
-        :root {
-            --primary-color: #6366f1;
-            --secondary-color: #8b5cf6;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --bg-primary: #fff;
-            --bg-secondary: #f9fafb;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: var(--bg-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .error-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
+    <!-- Favicon and app icons -->
+    <link rel="icon" type="image/x-icon" href="/static/images/favicons/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/favicons/apple-touch-icon.webp">
+    <link rel="icon" type="image/webp" sizes="32x32" href="/static/images/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/webp" sizes="16x16" href="/static/images/favicons/favicon-16x16.png">
+    <link rel="manifest" href="/static/images/favicons/site.webmanifest">
+    
+    <!-- Fonts -->
+    <link rel="stylesheet" href="/static/fonts/inter.css">
+    
+    <!-- Main CSS - same as homepage for consistency -->
+    <link rel="stylesheet" href="{{.Assets.CSSMain}}">
+    
+    <!-- Critical CSS for 404 specific styles -->
+    <style nonce="{{.CSPNonce}}">
+        .error-404-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
             text-align: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 0 2rem;
         }
         
-        .error-content {
-            max-width: 600px;
+        .error-404-numbers {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            height: 200px;
         }
         
-        .error-code {
-            font-size: 8rem;
+        .digit {
+            font-size: clamp(6rem, 15vw, 10rem);
             font-weight: 700;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            line-height: 1;
-            margin-bottom: 1rem;
-        }
-        
-        .error-title {
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-        }
-        
-        .error-message {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-        }
-        
-        .error-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
+            background-clip: text;
             display: inline-block;
-            padding: 0.75rem 2rem;
-            font-weight: 600;
+            opacity: 0;
+            line-height: 1;
+        }
+        
+        .error-404-text {
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            color: var(--text-secondary);
+            opacity: 0;
+            margin: 0;
+        }
+        
+        .home-link {
+            color: var(--primary-color);
             text-decoration: none;
-            border-radius: 50px;
+            position: relative;
+            font-weight: 600;
             transition: all 0.3s ease;
+            display: inline-block;
         }
         
-        .btn-primary {
+        .home-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+            transition: width 0.3s ease;
         }
         
-        .btn-primary:hover {
+        .home-link:hover {
+            color: var(--secondary-color);
             transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
         }
         
-        .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            border: 2px solid var(--bg-secondary);
+        .home-link:hover::after {
+            width: 100%;
         }
         
-        .btn-secondary:hover {
-            background: white;
-            border-color: var(--primary-color);
+        /* Hide loader for 404 page */
+        #loader {
+            display: none !important;
+        }
+        
+        /* Ensure proper layering */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .desktop-navbar,
+        .mobile-navigation {
+            z-index: 100;
         }
         
         .footer {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-secondary);
-            border-top: 1px solid var(--bg-secondary);
-        }
-        
-        .ascii-art {
-            font-family: monospace;
-            font-size: 1rem;
-            color: var(--text-secondary);
-            margin: 2rem 0;
-            line-height: 1.2;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
         }
         
         @media (max-width: 768px) {
-            .error-code {
-                font-size: 6rem;
+            .error-404-numbers {
+                gap: 1rem;
+                height: 150px;
             }
             
-            .error-title {
-                font-size: 2rem;
+            .digit {
+                font-size: 5rem;
             }
             
-            .error-message {
-                font-size: 1.125rem;
+            .error-404-text {
+                font-size: 1.25rem;
             }
         }
     </style>
+    
+    <!-- Three.js import map -->
+    <script type="importmap" nonce="{{.CSPNonce}}">
+    {
+        "imports": {
+            "three": "/static/js/vendor/three.module.min.js"
+        }
+    }
+    </script>
+    
+    <!-- Preload GSAP for animations -->
+    <link rel="preload" href="/static/js/vendor/gsap.min.js" as="script">
 </head>
 <body>
-    <div class="error-container">
-        <div class="error-content">
-            <div class="error-code">404</div>
-            <h1 class="error-title">Page Not Found</h1>
-            <p class="error-message">Are you lost? Let me take you home.</p>
-            
-            <pre class="ascii-art">
-     _____ 
-    /     \
-   | () () |
-    \  ^  /
-     |||||
-     |||||
-            </pre>
-            
-            <div class="error-actions">
-                <a href="/" class="btn btn-primary">Take Me Home</a>
-                <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
-            </div>
-        </div>
-    </div>
+    {{template "threejs-setup" .}}
+    {{template "navigation" .}}
     
-    <footer class="footer">
-        <p>&copy; 2025 {{.CVData.PersonalInfo.Name}}. All rights reserved.</p>
-    </footer>
+    <main class="error-404-container">
+        <div class="error-404-numbers">
+            <span class="digit digit-4-left">4</span>
+            <span class="digit digit-0">0</span>
+            <span class="digit digit-4-right">4</span>
+        </div>
+        <p class="error-404-text">
+            Are you lost? Let me <a href="/" class="home-link">take you home</a>.
+        </p>
+    </main>
+    
+    {{template "footer" .}}
+    
+    <!-- Load GSAP for animations -->
+    <script src="/static/js/vendor/gsap.min.js"></script>
+    
+    <!-- Three.js scene -->
+    <script type="module" src="{{.Assets.JSThreeScene}}" nonce="{{.CSPNonce}}"></script>
+    
+    <!-- 404 animations -->
+    <script nonce="{{.CSPNonce}}">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create GSAP timeline for 404 animations
+            const tl = gsap.timeline({
+                defaults: { ease: "power3.out" }
+            });
+            
+            // Set initial positions
+            gsap.set('.digit-4-left', { x: -window.innerWidth, opacity: 0 });
+            gsap.set('.digit-4-right', { x: window.innerWidth, opacity: 0 });
+            gsap.set('.digit-0', { y: -window.innerHeight, opacity: 0 });
+            gsap.set('.error-404-text', { y: 100, opacity: 0 });
+            
+            // Animate elements in sequence
+            tl.to('.digit-4-left', {
+                x: 0,
+                opacity: 1,
+                duration: 1,
+                ease: "power3.out"
+            })
+            .to('.digit-4-right', {
+                x: 0,
+                opacity: 1,
+                duration: 1,
+                ease: "power3.out"
+            }, "-=0.8")
+            .to('.digit-0', {
+                y: 0,
+                opacity: 1,
+                duration: 1.2,
+                ease: "bounce.out"
+            }, "-=0.7")
+            .to('.error-404-text', {
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                ease: "power2.out"
+            }, "-=0.4");
+            
+            // Add subtle floating animation after initial animation
+            tl.to('.error-404-numbers', {
+                y: -10,
+                duration: 2,
+                ease: "power1.inOut",
+                repeat: -1,
+                yoyo: true
+            }, "+=0.5");
+        });
+        
+        // Mobile navigation handler (same as homepage)
+        const mobileHamburger = document.getElementById('mobileHamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (mobileHamburger && mobileMenu) {
+            mobileHamburger.addEventListener('click', function() {
+                const isOpen = mobileMenu.classList.contains('active');
+                
+                if (isOpen) {
+                    mobileMenu.classList.remove('active');
+                    mobileHamburger.classList.remove('active');
+                    mobileHamburger.setAttribute('aria-expanded', 'false');
+                } else {
+                    mobileMenu.classList.add('active');
+                    mobileHamburger.classList.add('active');
+                    mobileHamburger.setAttribute('aria-expanded', 'true');
+                }
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!mobileHamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                    mobileHamburger.classList.remove('active');
+                    mobileHamburger.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
