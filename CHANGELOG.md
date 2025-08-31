@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.2.0](https://github.com/dav88dev/dav88dev/compare/v1.1.8...v1.2.0) (2025-08-31)
+
+
+### 🚀 Features
+
+* enhanced 404 page with animations and homepage consistency ([e007ee8](https://github.com/dav88dev/dav88dev/commit/e007ee888e2fca99711dbc903152794c4e295af0))
+
 ## [1.1.8](https://github.com/dav88dev/dav88dev/compare/v1.1.7...v1.1.8) (2025-08-31)
 
 
