@@ -1,9 +1,21 @@
 name: 📦 Semantic Release
 
+# GitHub Actions Free Tier Limits (Public Repos):
+# - 2000 minutes/month for private repos
+# - Unlimited for public repos
+# - Max 20 concurrent jobs
+# - Max 6 hours per job
+# - Max 72 hours per workflow
+
 on:
   push:
     branches: [ master ]
   workflow_dispatch:
+
+# Workflow-level concurrency to prevent multiple runs
+concurrency:
+  group: semantic-release-${{ github.ref }}
+  cancel-in-progress: true  # Cancel old runs when new one starts
 
 permissions:
   contents: write
@@ -16,9 +28,34 @@ env:
   GO_VERSION: '1.23'
 
 jobs:
+  # Check if we're within free tier limits before running
+  check-free-tier:
+    name: 🆓 Check Free Tier Status
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      can_run: ${{ steps.check.outputs.can_run }}
+    steps:
+      - name: Check repository type and limits
+        id: check
+        run: |
+          # Public repos have unlimited Actions minutes
+          if [[ "${{ github.event.repository.private }}" == "false" ]]; then
+            echo "✅ Public repository - unlimited free Actions"
+            echo "can_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Private repository - would use limited minutes!"
+            echo "⚠️ Blocking execution to prevent charges"
+            echo "can_run=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
   release:
     name: 🚀 Semantic Release
     runs-on: ubuntu-latest
+    needs: check-free-tier
+    if: needs.check-free-tier.outputs.can_run == 'true'
+    timeout-minutes: 10  # Strict 10 minute timeout (free tier safe)
     concurrency:
       group: ${{ github.workflow }}-release-${{ github.ref_name }}
       cancel-in-progress: false
@@ -134,8 +171,12 @@ jobs:
   deploy-production:
     name: 🌍 Deploy to Production
     runs-on: ubuntu-latest
-    needs: release
-    if: github.ref == 'refs/heads/master'
+    timeout-minutes: 10  # Strict 10 minute timeout (free tier safe)
+    needs: [check-free-tier, release]
+    if: |
+      github.ref == 'refs/heads/master' && 
+      needs.check-free-tier.outputs.can_run == 'true' &&
+      needs.release.result == 'success'
     environment: production
     
     steps:

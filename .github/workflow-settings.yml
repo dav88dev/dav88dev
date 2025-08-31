@@ -1,0 +1,48 @@
+# GitHub Actions Workflow Settings
+# This file configures repository-level settings for GitHub Actions
+
+# Spending limits - Stay within free tier
+spending_limits:
+  actions_minutes: 0  # Never use paid minutes
+  packages_bandwidth: 0  # Never use paid packages bandwidth
+  packages_storage: 0  # Never use paid packages storage
+
+# Workflow restrictions
+workflow_restrictions:
+  # Only allow workflows from this repository (no external actions that might cost)
+  allowed_actions: selected
+  selected_actions:
+    - actions/checkout@*
+    - actions/setup-node@*
+    - actions/setup-go@*
+    - dtolnay/rust-toolchain@*
+  
+  # Disable workflows on private repos to avoid minute usage
+  disable_on_private: true
+  
+  # Maximum concurrent workflows
+  max_concurrent_workflows: 1
+  
+  # Maximum concurrent jobs per workflow
+  max_concurrent_jobs: 2
+
+# Free tier optimizations
+optimizations:
+  # Cancel previous runs when new commits are pushed
+  auto_cancel_previous_runs: true
+  
+  # Skip workflows for draft PRs
+  skip_draft_pr_workflows: true
+  
+  # Disable artifact uploads (they count toward storage)
+  disable_artifacts: false  # Keep for debugging if needed
+  
+  # Maximum artifact retention (days)
+  artifact_retention_days: 1  # Minimum to save storage
+
+# Notifications
+notifications:
+  # Alert when approaching limits (even though we set them to 0)
+  alert_threshold: 80  # Alert at 80% of free tier
+  alert_email: true
+  alert_webhook: false
