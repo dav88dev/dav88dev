@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.2.3](https://github.com/dav88dev/dav88dev/compare/v1.2.2...v1.2.3) (2025-09-02)
+
+
+### 🐛 Bug Fixes
+
+* include templates directory in deployment package ([de99d77](https://github.com/dav88dev/dav88dev/commit/de99d77fb843721f4ba8b01625ed7bec00dc4c4d))
+
 ## [1.2.2](https://github.com/dav88dev/dav88dev/compare/v1.2.1...v1.2.2) (2025-09-02)
 
 
