@@ -215,7 +215,7 @@ jobs:
           
           # Create frontend assets directly  
           echo "Creating frontend assets..."
-          tar -czf frontend-assets.tar.gz static/
+          tar -czf frontend-assets.tar.gz static/ templates/
           echo "Assets size: $(ls -lh frontend-assets.tar.gz | awk '{print $5}')"
           
           # Deploy to server
@@ -240,7 +240,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@129.80.244.212 << 'EOF'
             cd /opt/personal_website
             
-            # Extract frontend assets (already contains static/ directory structure)
+            # Extract frontend assets (contains static/ and templates/ directories)
             tar -xzf frontend-assets.tar.gz
             rm frontend-assets.tar.gz
             
