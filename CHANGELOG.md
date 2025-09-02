@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * add strict free tier limits to prevent any GitHub Actions charges ([316f4a5](https://github.com/dav88dev/dav88dev/commit/316f4a51f4b138a8901732237e9aa9f356842aea))
 * correct Go version in semantic release workflow ([15a734d](https://github.com/dav88dev/dav88dev/commit/15a734dd3ba9f67d1894b248658defd78ebb903c))
 
+## [1.2.0](https://github.com/dav88dev/dav88dev/compare/v1.1.8...v1.2.0) (2025-09-02)
+
+
+### 🚀 Features
+
+* enhanced 404 page with animations and homepage consistency ([e007ee8](https://github.com/dav88dev/dav88dev/commit/e007ee888e2fca99711dbc903152794c4e295af0))
+
+
+### 🐛 Bug Fixes
+
+* add strict free tier limits to prevent any GitHub Actions charges ([316f4a5](https://github.com/dav88dev/dav88dev/commit/316f4a51f4b138a8901732237e9aa9f356842aea))
+* correct Go version in semantic release workflow ([15a734d](https://github.com/dav88dev/dav88dev/commit/15a734dd3ba9f67d1894b248658defd78ebb903c))
+
 ## [1.2.0](https://github.com/dav88dev/dav88dev/compare/v1.1.8...v1.2.0) (2025-08-31)
 
 
