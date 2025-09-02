@@ -1,0 +1,77 @@
+name: 🚀 Quick Deploy
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5  # Quick 5 minute timeout
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          
+      - name: 📦 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: 🏗️ Build Everything
+        run: |
+          # Build frontend
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+          
+          # Build Go binary for Linux
+          CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o portfolio-server main.go
+          
+      - name: 🚀 Deploy to Server
+        run: |
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -t rsa 129.80.244.212 >> ~/.ssh/known_hosts
+          
+          # Create deployment package
+          tar -czf deploy.tar.gz portfolio-server static/ templates/
+          
+          # Deploy
+          scp deploy.tar.gz ubuntu@129.80.244.212:/tmp/
+          
+          ssh ubuntu@129.80.244.212 << 'EOF'
+            sudo systemctl stop personal_website || true
+            sudo rm -rf /opt/personal_website
+            sudo mkdir -p /opt/personal_website
+            sudo chown ubuntu:ubuntu /opt/personal_website
+            cd /opt/personal_website
+            tar -xzf /tmp/deploy.tar.gz
+            rm /tmp/deploy.tar.gz
+            chmod +x portfolio-server
+            sudo systemctl start personal_website
+            echo "✅ Deployed!"
+          EOF
+          
+      - name: 🏷️ Create Version Tag
+        if: success()
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          
+          # Create simple version tag
+          VERSION="v$(date +%Y%m%d.%H%M%S)"
+          git tag $VERSION
+          git push origin $VERSION || true
+          
+          echo "✅ Tagged as $VERSION"
