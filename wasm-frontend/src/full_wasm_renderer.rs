@@ -98,15 +98,15 @@ impl FullWasmRenderer {
                 description: "Frontend and Node.js development".to_string(),
             },
             Skill {
-                name: "Rust".to_string(),
-                level: 80,
+                name: "Go".to_string(),
+                level: 85,
                 category: "Backend".to_string(),
-                color: "#CE422B".to_string(),
+                color: "#00ADD8".to_string(),
                 x: 0.0,
                 y: 0.0,
                 base_x: 0.0,
                 base_y: 0.0,
-                description: "Systems programming and WebAssembly".to_string(),
+                description: "Backend development and microservices".to_string(),
             },
             Skill {
                 name: "Vue.js".to_string(),
@@ -218,8 +218,12 @@ impl FullWasmRenderer {
                 to: "Docker".to_string(),
             },
             Connection {
-                from: "Rust".to_string(),
-                to: "JavaScript".to_string(),
+                from: "Go".to_string(),
+                to: "Docker".to_string(),
+            },
+            Connection {
+                from: "Go".to_string(),
+                to: "Kubernetes".to_string(),
             },
             Connection {
                 from: "PHP".to_string(),

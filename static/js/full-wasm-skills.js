@@ -133,7 +133,7 @@ class FullWasmSkills {
                         <div class="wasm-skills-error">
                             <h3>🚀 Technical Expertise</h3>
                             <p>Interactive visualization unavailable</p>
-                            <p class="error-details">Core skills: Machine Learning, PHP, Laravel, JavaScript, Rust, Vue.js, Python, MySQL, Docker, AWS, Kubernetes, Redis</p>
+                            <p class="error-details">Core skills: Machine Learning, PHP, Laravel, JavaScript, Go, Vue.js, Python, MySQL, Docker, AWS, Kubernetes, Redis</p>
                         </div>
                     `;
                 }

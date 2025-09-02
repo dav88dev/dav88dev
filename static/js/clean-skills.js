@@ -27,7 +27,7 @@ class CleanSkills {
                 { name: 'PHP', level: 95, category: 'Backend', color: '#777BB4' },
                 { name: 'Laravel', level: 93, category: 'Backend', color: '#FF2D20' },
                 { name: 'JavaScript', level: 92, category: 'Frontend', color: '#F7DF1E' },
-                { name: 'Rust', level: 80, category: 'Backend', color: '#CE422B' },
+                { name: 'Go', level: 85, category: 'Backend', color: '#00ADD8' },
                 { name: 'Vue.js', level: 88, category: 'Frontend', color: '#4FC08D' },
                 { name: 'Python', level: 90, category: 'Backend', color: '#3776AB' },
                 { name: 'MySQL', level: 90, category: 'Database', color: '#4479A1' },

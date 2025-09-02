@@ -115,12 +115,12 @@ impl CleanSkillsRenderer {
                 connections: vec!["Vue.js".to_string(), "Node.js".to_string(), "TypeScript".to_string()],
             },
             Skill {
-                name: "Rust".to_string(),
-                category: "Systems".to_string(),
-                color: "#CE422B".to_string(),
-                description: "Systems programming with Rust since 2022. Built high-performance web services and WASM applications. This website is powered by Rust!".to_string(),
+                name: "Go".to_string(),
+                category: "Backend".to_string(),
+                color: "#00ADD8".to_string(),
+                description: "Backend development with Go since 2023. Built microservices and cloud-native applications. This website backend is powered by Go!".to_string(),
                 years_experience: 2,
-                connections: vec!["WebAssembly".to_string(), "Axum".to_string()],
+                connections: vec!["Docker".to_string(), "Kubernetes".to_string()],
             },
             Skill {
                 name: "Vue.js".to_string(),
