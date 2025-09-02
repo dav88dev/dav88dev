@@ -17,6 +17,7 @@ pub struct PureRustRenderer {
     canvas: Option<HtmlCanvasElement>,
     skills: Vec<Skill>,
     is_initialized: bool,
+    #[allow(dead_code)]
     camera_position: Vec3,
     animation_time: f32,
     animation_mode: String,
@@ -234,6 +235,7 @@ impl PureRustRenderer {
 }
 
 // Helper function for color parsing
+#[allow(dead_code)]
 fn parse_hex_color(hex: &str) -> [f32; 3] {
     let hex = hex.trim_start_matches('#');
     if hex.len() == 6 {

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{CanvasRenderingContext2d, Element, HtmlCanvasElement, HtmlElement};
+use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Skill {
