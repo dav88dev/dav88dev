@@ -122,10 +122,10 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 
 		// Load CV data for the template
 		cvData, _ := models.LoadCVData()
-		
+
 		// Load frontend assets
 		assets, _ := models.LoadAssets()
-		
+
 		// Get CSP nonce from context
 		cspNonce, exists := c.Get("CSPNonce")
 		if !exists {
@@ -138,7 +138,7 @@ func setupStaticRoutes(router *gin.Engine, cfg *config.Config) {
 			Assets:   *assets,
 			CSPNonce: cspNonce.(string),
 		}
-		
+
 		c.HTML(http.StatusNotFound, "404.html", templateData)
 	})
 }
