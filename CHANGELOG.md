@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.2.2](https://github.com/dav88dev/dav88dev/compare/v1.2.1...v1.2.2) (2025-09-02)
+
+
+### 🐛 Bug Fixes
+
+* apply go fmt formatting ([769c7bc](https://github.com/dav88dev/dav88dev/commit/769c7bce433ddd0e555bb532ffabb3a15d92ec70))
+
 ## [1.2.1](https://github.com/dav88dev/dav88dev/compare/v1.2.0...v1.2.1) (2025-09-02)
 
 
