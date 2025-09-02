@@ -12,8 +12,8 @@ class FullWasmSkills {
 
     async init() {
         try {
-            // Load WASM module
-            const wasmModule = await import('/static/wasm/wasm_frontend.js');
+            // Load WASM module with cache bust
+            const wasmModule = await import('/static/wasm/wasm_frontend.js?v=' + Date.now());
             await wasmModule.default();
             
             // Create WASM renderer

@@ -138,7 +138,7 @@ class CleanSkills {
                     { name: 'PHP', x: 0, y: 0, baseX: 0, baseY: 0, color: '#777BB4', description: 'Backend development with 10+ years experience' },
                     { name: 'Laravel', x: 0, y: 0, baseX: 0, baseY: 0, color: '#FF2D20', description: 'Full-stack Laravel development since 2016' },
                     { name: 'JavaScript', x: 0, y: 0, baseX: 0, baseY: 0, color: '#F7DF1E', description: 'Frontend and Node.js development' },
-                    { name: 'Rust', x: 0, y: 0, baseX: 0, baseY: 0, color: '#CE422B', description: 'Systems programming and WebAssembly' },
+                    { name: 'Go', x: 0, y: 0, baseX: 0, baseY: 0, color: '#00ADD8', description: 'Backend development and microservices' },
                     { name: 'Vue.js', x: 0, y: 0, baseX: 0, baseY: 0, color: '#4FC08D', description: 'Modern reactive frontend frameworks' },
                     { name: 'Python', x: 0, y: 0, baseX: 0, baseY: 0, color: '#3776AB', description: 'Data science and backend automation' },
                     { name: 'MySQL', x: 0, y: 0, baseX: 0, baseY: 0, color: '#4479A1', description: 'Database design and optimization' },
@@ -152,8 +152,8 @@ class CleanSkills {
             this.wasmConnections = [
                 ['PHP', 'Laravel'], ['Laravel', 'MySQL'], ['JavaScript', 'Vue.js'], 
                 ['Python', 'AWS'], ['Docker', 'Kubernetes'],
-                ['MySQL', 'Redis'], ['AWS', 'Docker'], ['Rust', 'JavaScript'],
-                ['PHP', 'JavaScript'], ['Python', 'Docker']
+                ['MySQL', 'Redis'], ['AWS', 'Docker'], ['Go', 'Docker'],
+                ['PHP', 'JavaScript'], ['Python', 'Docker'], ['Go', 'Kubernetes']
             ];
 
             this.hoveredSkill = null;
@@ -240,7 +240,7 @@ class CleanSkills {
             'PHP': 'Backend development with 10+ years experience',
             'Laravel': 'Full-stack Laravel development since 2016',
             'JavaScript': 'Frontend and Node.js development',
-            'Rust': 'Systems programming and WebAssembly',
+            'Go': 'Backend development and microservices',
             'Vue.js': 'Modern reactive frontend frameworks',
             'Python': 'Data science and backend automation',
             'MySQL': 'Database design and optimization',
@@ -455,8 +455,8 @@ class CleanSkills {
                             <strong>JavaScript</strong><br>
                             <small>9+ years experience</small>
                         </div>
-                        <div style="background: #CE422B; color: white; padding: 15px; border-radius: 8px;">
-                            <strong>Rust</strong><br>
+                        <div style="background: #00ADD8; color: white; padding: 15px; border-radius: 8px;">
+                            <strong>Go</strong><br>
                             <small>2+ years experience</small>
                         </div>
                         <div style="background: #4FC08D; color: white; padding: 15px; border-radius: 8px;">

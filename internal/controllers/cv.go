@@ -179,7 +179,7 @@ func (cv *CVController) getMockCVData() map[string]interface{} {
 				"experience": "3+ years",
 			},
 			{
-				"name":       "Rust",
+				"name":       "Go",
 				"category":   "Backend",
 				"level":      8,
 				"experience": "2+ years",
@@ -194,8 +194,8 @@ func (cv *CVController) getMockCVData() map[string]interface{} {
 		"projects": []map[string]interface{}{
 			{
 				"name":         "Personal Portfolio",
-				"description":  "Modern portfolio website built with Rust/Go and modern frontend technologies",
-				"technologies": []string{"Rust", "Go", "TypeScript", "Vite", "WASM"},
+				"description":  "Modern portfolio website built with Go and modern frontend technologies",
+				"technologies": []string{"Go", "TypeScript", "Vite", "WASM", "Docker"},
 				"github_url":   "https://github.com/dav88dev/myWebsite",
 			},
 		},

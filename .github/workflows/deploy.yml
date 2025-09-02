@@ -9,7 +9,7 @@ jobs:
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
-    timeout-minutes: 5  # Quick 5 minute timeout
+    timeout-minutes: 10  # 10 minutes to allow for WASM building
     
     steps:
       - name: 📥 Checkout
