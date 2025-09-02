@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -17,7 +18,6 @@ import (
 	"github.com/bugsnag/bugsnag-go/v2"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
-	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/kamva/mgm/v3"
 
@@ -134,14 +134,20 @@ func setupRouter(cfg *config.Config) *gin.Engine {
 	router.Use(middleware.CacheHeaders())
 
 	// 9. Static file serving with enterprise caching
-	// Serve static files from multiple locations for flexibility
-	router.Use(static.Serve("/", static.LocalFile("./static", false)))
-	router.Use(static.Serve("/static", static.LocalFile("./static", false)))
+	// IMPORTANT: Use router.Static instead of middleware for proper header handling
+	router.Static("/static", "./static")
+	
+	// Also serve static files from root for backward compatibility
+	router.StaticFS("/js", http.Dir("./static/js"))
+	router.StaticFS("/css", http.Dir("./static/css"))
+	router.StaticFS("/fonts", http.Dir("./static/fonts"))
+	router.StaticFS("/images", http.Dir("./static/images"))
+	router.StaticFS("/wasm", http.Dir("./static/wasm"))
 
 	// Additional static paths for frontend assets
 	if cfg.IsDevelopment() {
 		// Development: Serve from dist for Vite builds
-		router.Use(static.Serve("/assets", static.LocalFile("./dist/assets", false)))
+		router.Static("/assets", "./dist/assets")
 	}
 
 	// 10. Request metrics middleware for monitoring

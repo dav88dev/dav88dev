@@ -33,7 +33,7 @@ func SecurityHeaders() gin.HandlerFunc {
 		// Using nonce-based CSP for inline scripts and styles
 		cspBase := fmt.Sprintf(
 			"default-src 'self'; "+
-				"script-src 'self' 'nonce-%s' 'unsafe-inline' https://cdn.jsdelivr.net https://d2wy8f7a9ursnm.cloudfront.net; "+
+				"script-src 'self' 'nonce-%s' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://d2wy8f7a9ursnm.cloudfront.net; "+
 				"style-src 'self' 'nonce-%s' 'unsafe-inline' https://fonts.googleapis.com; "+
 				"font-src 'self' https://fonts.gstatic.com data:; "+
 				"img-src 'self' data: https:; "+

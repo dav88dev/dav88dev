@@ -44,7 +44,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -t rsa 129.80.244.212 >> ~/.ssh/known_hosts
           
-          # Create deployment package
+          # Create deployment package (including ALL static files and WASM)
           tar -czf deploy.tar.gz portfolio-server static/ templates/
           
           # Deploy
@@ -58,7 +58,12 @@ jobs:
             cd /opt/personal_website
             tar -xzf /tmp/deploy.tar.gz
             rm /tmp/deploy.tar.gz
+            
+            # Fix permissions (CRITICAL for Cloudflare)
             chmod +x portfolio-server
+            chmod -R 755 static/
+            chmod -R 755 templates/
+            find static/ -type f -exec chmod 644 {} \;
             sudo systemctl start personal_website
             echo "✅ Deployed!"
           EOF
