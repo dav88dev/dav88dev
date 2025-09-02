@@ -20,7 +20,7 @@ import (
 // Following enterprise patterns with proper validation and defaults
 type Config struct {
 	// Server Configuration
-	Port        string `env:"SERVER_PORT" envDefault:"8081"`
+	Port        string `env:"SERVER_PORT" envDefault:"8000"`
 	Environment string `env:"SERVER_ENV" envDefault:"development"`
 	LogLevel    string `env:"SERVER_LOG_LEVEL" envDefault:"info"`
 	EnableHTTPS bool   `env:"SERVER_ENABLE_HTTPS" envDefault:"false"`
