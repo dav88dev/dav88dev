@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.2.1](https://github.com/dav88dev/dav88dev/compare/v1.2.0...v1.2.1) (2025-09-02)
+
+
+### 🐛 Bug Fixes
+
+* change default port from 8081 to 8000 for production deployment ([3f30243](https://github.com/dav88dev/dav88dev/commit/3f302437dcedb00fbc4a514f45fbd203bc2d9d49))
+
 ## [1.2.0](https://github.com/dav88dev/dav88dev/compare/v1.1.8...v1.2.0) (2025-09-02)
 
 
